@@ -706,45 +706,6 @@ body.theme-homebrew textarea {
   transform: translateY(1px);
 }
 
-.status-toast {
-  position: absolute;
-  top: 0px;
-  left: 10px;
-  right: auto;
-  width: fit-content;
-  max-width: calc(100% - 20px);
-  min-height: 20px;
-  box-sizing: border-box;
-  z-index: 25;
-  padding: 2px 10px;
-  font-size: 10px;
-  font-weight: 700;
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-surface);
-  border: 1px solid var(--accent-primary);
-  color: var(--accent-yellow);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 255, 0, 0.45);
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-  animation: toastPopupIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes toastPopupIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 /* -------------------------------------------------------------
    5. Calendar Month Grid
    ------------------------------------------------------------- */
@@ -1484,6 +1445,14 @@ body.theme-homebrew textarea {
   font-size: 10px;
   color: var(--accent-cyan);
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease;
+}
+
+.footer-sync-time.status-active {
+  color: var(--accent-yellow);
 }
 
 .hint-text {

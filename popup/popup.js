@@ -28,7 +28,8 @@ class DarkCalApp {
     this.activeTodayCell = null;
     this.isMouseOverPopover = false;
     this.isUserEditingCommand = false;
-    this.toastTimeout = null;
+    this.toastAnimationId = 0;
+    this.isToastAnimating = false;
 
     this.cacheDom();
     this.bindEvents();
@@ -461,10 +462,12 @@ class DarkCalApp {
     if (this.calendarSourceStatus) {
       this.calendarSourceStatus.textContent = '';
     }
-    if (isDemo) {
-      this.lastSyncTimeText.textContent = '';
-    } else {
-      this.lastSyncTimeText.textContent = this.formatLastSync(this.lastSyncTimestamp);
+    if (!this.isToastAnimating) {
+      if (isDemo) {
+        this.lastSyncTimeText.textContent = '';
+      } else {
+        this.lastSyncTimeText.textContent = this.formatLastSync(this.lastSyncTimestamp);
+      }
     }
     this.updateCalendarHeader();
   }
@@ -1450,17 +1453,67 @@ class DarkCalApp {
       .replace(/'/g, '&#039;');
   }
 
-  showToast(msg, duration = 3000) {
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout);
-      this.toastTimeout = null;
+  async showToast(msg, duration = 2200) {
+    if (!this.lastSyncTimeText) return;
+
+    const animId = ++this.toastAnimationId;
+    this.isToastAnimating = true;
+    const elem = this.lastSyncTimeText;
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // 1. Remove original line by backspacing one by one character
+    while (elem.textContent.length > 0) {
+      if (this.toastAnimationId !== animId) return;
+      elem.textContent = elem.textContent.slice(0, -1);
+      await sleep(14);
     }
-    this.statusToast.textContent = msg;
-    this.statusToast.classList.remove('hidden');
-    this.toastTimeout = setTimeout(() => {
-      this.statusToast.classList.add('hidden');
-      this.toastTimeout = null;
-    }, duration);
+
+    if (this.toastAnimationId !== animId) return;
+    elem.classList.add('status-active');
+
+    // 2. Type new message one by one character
+    for (let i = 1; i <= msg.length; i++) {
+      if (this.toastAnimationId !== animId) return;
+      elem.textContent = msg.slice(0, i);
+      await sleep(18);
+    }
+
+    // 3. Wait a bit
+    const pauseStart = Date.now();
+    while (Date.now() - pauseStart < duration) {
+      if (this.toastAnimationId !== animId) return;
+      await sleep(40);
+    }
+
+    // 4. Remove by backspacing one by one character
+    while (elem.textContent.length > 0) {
+      if (this.toastAnimationId !== animId) return;
+      elem.textContent = elem.textContent.slice(0, -1);
+      await sleep(12);
+    }
+
+    if (this.toastAnimationId !== animId) return;
+    elem.classList.remove('status-active');
+
+    // 5. Show up SYNC again one by one character
+    const targetText = this.getDefaultFooterText();
+    for (let i = 1; i <= targetText.length; i++) {
+      if (this.toastAnimationId !== animId) return;
+      elem.textContent = targetText.slice(0, i);
+      await sleep(18);
+    }
+
+    if (this.toastAnimationId === animId) {
+      elem.textContent = targetText;
+      this.isToastAnimating = false;
+    }
+  }
+
+  getDefaultFooterText() {
+    if (this.useDemoData || !this.icalUrl) {
+      return '';
+    }
+    return this.formatLastSync(this.lastSyncTimestamp);
   }
 
   openSettings() {
