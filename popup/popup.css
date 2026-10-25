@@ -574,8 +574,7 @@ body.theme-homebrew textarea {
   font-size: 13px;
   font-weight: 700;
   color: var(--accent-yellow);
-  caret-color: var(--accent-cursor);
-  caret-shape: underscore;
+  caret-color: transparent;
   field-sizing: content;
   box-sizing: content-box;
   width: auto;
@@ -588,19 +587,6 @@ body.theme-homebrew textarea {
 .cal-command-input::placeholder {
   color: rgba(229, 229, 0, 0.35);
   font-weight: 400;
-}
-
-.cal-command-input:focus ~ .terminal-cursor {
-  display: none;
-}
-
-@supports not (caret-shape: underscore) {
-  .cal-command-input {
-    caret-color: transparent;
-  }
-  .cal-command-input:focus ~ .terminal-cursor {
-    display: inline-block;
-  }
 }
 
 .visually-hidden {

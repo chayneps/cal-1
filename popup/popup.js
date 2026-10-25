@@ -128,6 +128,10 @@ class DarkCalApp {
       this.calCommandLine.addEventListener('keyup', () => {
         this.syncCommandInputWidth();
       });
+
+      this.calCommandLine.addEventListener('focus', () => {
+        this.syncCommandInputWidth();
+      });
     }
 
     const cmdContainer = document.querySelector('.cmd-input-container');
