@@ -64,6 +64,8 @@ class DarkCalApp {
     this.demoModeToggle = document.getElementById('demoModeToggle');
     this.autoSyncIntervalSelect = document.getElementById('autoSyncIntervalSelect');
     this.themeSelect = document.getElementById('themeSelect');
+    this.crtEffectToggle = document.getElementById('crtEffectToggle');
+    this.crtOverlay = document.getElementById('crtOverlay');
   }
 
   bindEvents() {
@@ -74,6 +76,16 @@ class DarkCalApp {
         this.setTheme(theme);
         await Storage.set({ theme });
         this.showToast(`Theme updated: ${theme === 'homebrew' ? 'Homebrew Terminal' : 'Obsidian Dark'}`);
+      });
+    }
+
+    // CRT Monitor Effects Switcher
+    if (this.crtEffectToggle) {
+      this.crtEffectToggle.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        this.setCrtEffects(enabled);
+        await Storage.set({ crtEffects: enabled });
+        this.showToast(enabled ? 'CRT monitor effects enabled' : 'CRT monitor effects disabled');
       });
     }
 
@@ -165,6 +177,7 @@ class DarkCalApp {
   async init() {
     const stored = await Storage.get([
       'theme',
+      'crtEffects',
       'firstDayOfWeek',
       'useDemoData',
       'autoSyncInterval',
@@ -176,6 +189,10 @@ class DarkCalApp {
     this.theme = stored.theme || 'homebrew';
     this.setTheme(this.theme);
     if (this.themeSelect) this.themeSelect.value = this.theme;
+
+    this.crtEffects = stored.crtEffects !== false;
+    this.setCrtEffects(this.crtEffects);
+    if (this.crtEffectToggle) this.crtEffectToggle.checked = this.crtEffects;
 
     this.firstDayOfWeek = stored.firstDayOfWeek !== undefined ? stored.firstDayOfWeek : 0;
     this.useDemoData = stored.useDemoData !== false;
@@ -210,6 +227,19 @@ class DarkCalApp {
     }
   }
 
+  setCrtEffects(enabled) {
+    this.crtEffects = enabled;
+    if (this.crtOverlay) {
+      if (enabled) {
+        this.crtOverlay.classList.remove('hidden');
+        document.body.classList.add('crt-active');
+      } else {
+        this.crtOverlay.classList.add('hidden');
+        document.body.classList.remove('crt-active');
+      }
+    }
+  }
+
   setTheme(themeName) {
     this.theme = themeName;
     if (themeName === 'obsidian') {
@@ -223,27 +253,27 @@ class DarkCalApp {
 
   updateStatus(isDemo, count = 0) {
     if (isDemo) {
-      this.connectionBadge.textContent = 'Demo Mode';
+      this.connectionBadge.textContent = '[DEMO]';
       this.connectionBadge.className = 'badge badge-demo';
-      this.calendarSourceStatus.textContent = 'Demo Mode • 4 sample calendars';
+      this.calendarSourceStatus.textContent = 'SYS_MODE: DEMO (4 sample feeds)';
       this.lastSyncTimeText.textContent = '';
     } else {
-      this.connectionBadge.textContent = 'Live iCal';
+      this.connectionBadge.textContent = '[ONLINE]';
       this.connectionBadge.className = 'badge badge-live';
-      this.calendarSourceStatus.textContent = `Live Google Calendar (${count} events)`;
+      this.calendarSourceStatus.textContent = `SYS_LIVE: iCal (${count} events indexed)`;
       this.lastSyncTimeText.textContent = this.formatLastSync(this.lastSyncTimestamp);
     }
   }
 
   formatLastSync(timestamp) {
-    if (!timestamp) return '• Synced just now';
+    if (!timestamp) return '• SYNC: now';
     const diffSec = Math.floor((Date.now() - timestamp) / 1000);
-    if (diffSec < 60) return '• Synced just now';
+    if (diffSec < 60) return '• SYNC: now';
     const diffMin = Math.floor(diffSec / 60);
-    if (diffMin < 60) return `• Synced ${diffMin}m ago`;
+    if (diffMin < 60) return `• SYNC: ${diffMin}m ago`;
     const diffHours = Math.floor(diffMin / 60);
-    if (diffHours < 24) return `• Synced ${diffHours}h ago`;
-    return `• Synced ${new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
+    if (diffHours < 24) return `• SYNC: ${diffHours}h ago`;
+    return `• SYNC: ${new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
   }
 
   loadCalendarData() {

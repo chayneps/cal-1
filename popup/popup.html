@@ -6,19 +6,27 @@
   <title>DarkCal - Google Calendar</title>
   <link rel="stylesheet" href="popup.css">
 </head>
-<body class="theme-homebrew">
+<body class="theme-homebrew crt-active">
+  <!-- Retro CRT Scanline & Curvature Vignette Overlay -->
+  <div id="crtOverlay" class="crt-overlay" aria-hidden="true">
+    <div class="crt-scanlines"></div>
+    <div class="crt-vignette"></div>
+  </div>
+
   <div class="calendar-app">
     <!-- Top Header -->
     <header class="app-header">
       <div class="brand">
         <div class="brand-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="4 17 10 11 4 5"></polyline>
             <line x1="12" y1="19" x2="20" y2="19"></line>
           </svg>
         </div>
-        <span class="brand-title">DarkCal</span>
-        <span id="connectionBadge" class="badge badge-demo" title="Calendar source">Demo</span>
+        <div class="brand-text-wrap">
+          <span class="terminal-prefix">SYS:</span><span class="brand-title">darkcal</span>
+        </div>
+        <span id="connectionBadge" class="badge badge-demo" title="Calendar source">[DEMO]</span>
       </div>
 
       <div class="header-actions">
@@ -59,11 +67,13 @@
     <!-- Month Navigation Bar -->
     <section class="month-navigator">
       <div class="month-title-wrap">
+        <span class="terminal-cmd-prompt">$ cal </span>
         <h2 id="currentMonthYear" class="month-heading">October 2026</h2>
+        <span class="terminal-cursor" aria-hidden="true">_</span>
       </div>
 
       <div class="nav-controls">
-        <button id="todayBtn" class="pill-btn today-btn" title="Jump to Today">Today</button>
+        <button id="todayBtn" class="pill-btn today-btn" title="Jump to Today">[ TODAY ]</button>
         <div class="arrow-group">
           <button id="prevMonthBtn" class="icon-btn nav-arrow" title="Previous Month" aria-label="Previous Month">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -105,7 +115,9 @@
       <header class="popover-header">
         <div class="popover-title-row">
           <div class="popover-date-info">
+            <span class="popover-prompt">&gt;</span>
             <h3 id="popoverDateHeading" class="popover-date">October 24, 2026</h3>
+            <span class="terminal-cursor popover-cursor" aria-hidden="true">_</span>
             <span id="popoverRelativeBadge" class="popover-relative">Today</span>
           </div>
           <button id="popoverCloseBtn" class="icon-btn popover-close-btn" title="Close schedule" aria-label="Close">
@@ -162,6 +174,14 @@
                 <option value="homebrew">Homebrew (Terminal Green & Hack Font)</option>
                 <option value="obsidian">Obsidian Dark (Blue & Slate)</option>
               </select>
+            </label>
+
+            <label class="toggle-setting-row">
+              <div class="toggle-label-wrap">
+                <span class="setting-title">Green Screen CRT Monitor</span>
+                <span class="setting-desc">Scanlines, curved bezel vignette & phosphor bloom</span>
+              </div>
+              <input type="checkbox" id="crtEffectToggle" class="switch-input" checked>
             </label>
           </div>
 
