@@ -42,7 +42,7 @@ Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any mo
      - Manual only
 
 4. **Live Sync Status Indicator**:
-   - The footer displays the exact sync status (e.g. `Live Google Calendar (18 events) • Synced 3m ago`).
+   - The footer displays the exact sync status (e.g. `SYNC: 3m ago`).
    - You can also click the **Sync icon** in the top bar to force a manual sync anytime.
 
 ---

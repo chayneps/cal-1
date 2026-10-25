@@ -388,12 +388,12 @@ class DarkCalApp {
         this.connectionBadge.className = 'badge badge-live';
       }
     }
+    if (this.calendarSourceStatus) {
+      this.calendarSourceStatus.textContent = '';
+    }
     if (isDemo) {
-      const filterStr = (this.activeCalendarFilter && this.activeCalendarFilter !== 'all') ? ` [feed: ${this.activeCalendarFilter}]` : ' (4 sample feeds)';
-      this.calendarSourceStatus.textContent = `SYS_MODE: DEMO${filterStr}`;
       this.lastSyncTimeText.textContent = '';
     } else {
-      this.calendarSourceStatus.textContent = `SYS_LIVE: ${this.calendarName} (${count} events indexed)`;
       this.lastSyncTimeText.textContent = this.formatLastSync(this.lastSyncTimestamp);
     }
     this.updateCalendarHeader();
@@ -430,14 +430,14 @@ class DarkCalApp {
   }
 
   formatLastSync(timestamp) {
-    if (!timestamp) return '• SYNC: now';
+    if (!timestamp) return 'SYNC: now';
     const diffSec = Math.floor((Date.now() - timestamp) / 1000);
-    if (diffSec < 60) return '• SYNC: now';
+    if (diffSec < 60) return 'SYNC: now';
     const diffMin = Math.floor(diffSec / 60);
-    if (diffMin < 60) return `• SYNC: ${diffMin}m ago`;
+    if (diffMin < 60) return `SYNC: ${diffMin}m ago`;
     const diffHours = Math.floor(diffMin / 60);
-    if (diffHours < 24) return `• SYNC: ${diffHours}h ago`;
-    return `• SYNC: ${new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
+    if (diffHours < 24) return `SYNC: ${diffHours}h ago`;
+    return `SYNC: ${new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
   }
 
   loadCalendarData() {
@@ -1384,5 +1384,6 @@ class DarkCalApp {
 
 document.addEventListener('DOMContentLoaded', () => {
   const app = new DarkCalApp();
+  window.app = app;
   app.init();
 });
