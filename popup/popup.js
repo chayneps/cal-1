@@ -114,6 +114,29 @@ class DarkCalApp {
           // IME composition safety check
           if (e.isComposing || e.keyCode === 229) return;
           this.handleCalCommandSubmit();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          this.updateMonthHeading();
+          this.calCommandLine.blur();
+        }
+      });
+
+      this.calCommandLine.addEventListener('input', () => {
+        this.syncCommandInputWidth();
+      });
+
+      this.calCommandLine.addEventListener('keyup', () => {
+        this.syncCommandInputWidth();
+      });
+    }
+
+    const cmdContainer = document.querySelector('.cmd-input-container');
+    if (cmdContainer && this.calCommandLine) {
+      cmdContainer.addEventListener('click', (e) => {
+        if (e.target !== this.calCommandLine) {
+          this.calCommandLine.focus();
+          const len = this.calCommandLine.value.length;
+          this.calCommandLine.setSelectionRange(len, len);
         }
       });
     }
@@ -512,10 +535,17 @@ class DarkCalApp {
     const monthStr = monthNames[this.viewMonth];
     if (this.calCommandLine) {
       this.calCommandLine.value = `cal ${monthStr} ${this.viewYear}`;
+      this.syncCommandInputWidth();
     }
     if (this.currentMonthYear) {
       this.currentMonthYear.textContent = `${monthStr} ${this.viewYear}`;
     }
+  }
+
+  syncCommandInputWidth() {
+    if (!this.calCommandLine) return;
+    const len = Math.max(this.calCommandLine.value.length, 1);
+    this.calCommandLine.style.width = `${len}ch`;
   }
 
   async handleCalCommandSubmit() {

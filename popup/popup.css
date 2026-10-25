@@ -269,11 +269,12 @@ body.theme-obsidian .crt-overlay {
   font-weight: 700;
   color: var(--accent-cursor);
   line-height: 1;
-  margin-left: 2px;
+  margin-left: 1px;
   animation: crt-cursor-blink 1s steps(1, start) infinite;
   text-shadow: none;
   user-select: none;
   vertical-align: baseline;
+  pointer-events: none;
 }
 
 .brand-cursor {
@@ -547,6 +548,7 @@ body.theme-homebrew textarea {
   flex: 1;
   min-width: 0;
   position: relative;
+  cursor: text;
 }
 
 .cal-command-input {
@@ -558,10 +560,14 @@ body.theme-homebrew textarea {
   font-weight: 700;
   color: var(--accent-yellow);
   caret-color: var(--accent-cursor);
-  width: 100%;
+  caret-shape: underscore;
+  field-sizing: content;
+  box-sizing: content-box;
+  width: auto;
+  min-width: 1ch;
+  max-width: 100%;
   padding: 2px 0;
   margin: 0;
-  letter-spacing: -0.2px;
 }
 
 .cal-command-input::placeholder {
@@ -571,6 +577,15 @@ body.theme-homebrew textarea {
 
 .cal-command-input:focus ~ .terminal-cursor {
   display: none;
+}
+
+@supports not (caret-shape: underscore) {
+  .cal-command-input {
+    caret-color: transparent;
+  }
+  .cal-command-input:focus ~ .terminal-cursor {
+    display: inline-block;
+  }
 }
 
 .visually-hidden {
