@@ -200,6 +200,16 @@ body::-webkit-scrollbar,
   height: 0 !important;
 }
 
+button {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  outline: none;
+}
+button:focus {
+  outline: none;
+}
+
 .calendar-app {
   display: flex;
   flex-direction: column;
@@ -488,6 +498,7 @@ body.theme-homebrew textarea {
   border-radius: var(--radius-sm);
   background: transparent;
   border: 1px solid transparent;
+  outline: none;
   color: var(--text-muted);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -497,6 +508,10 @@ body.theme-homebrew textarea {
   background-color: var(--bg-surface-hover);
   color: var(--text-primary);
   border-color: var(--border-subtle);
+}
+.icon-btn:focus,
+.icon-btn:focus-visible {
+  outline: none;
 }
 .icon-btn:active {
   background-color: var(--bg-surface-active);
@@ -602,56 +617,98 @@ body.theme-homebrew textarea {
 .nav-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.pill-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 9px;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: var(--font-family);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.pill-btn:hover {
-  background-color: var(--bg-surface-hover);
-  border-color: var(--border-strong);
+  gap: 8px;
+  user-select: none;
 }
 
 .today-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-family);
   color: var(--accent-yellow);
-  border-color: rgba(229, 229, 0, 0.45);
-  background-color: rgba(229, 229, 0, 0.12);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: color var(--transition-fast), text-shadow var(--transition-fast), opacity var(--transition-fast);
 }
+
 .today-btn:hover {
-  background-color: rgba(229, 229, 0, 0.24);
-  border-color: var(--accent-yellow);
+  background: transparent;
+  color: var(--accent-white);
+  text-shadow: var(--glow-yellow);
+}
+
+.today-btn:focus,
+.today-btn:focus-visible {
+  outline: none;
+}
+
+.today-btn:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-yellow);
+}
+
+.today-btn:active {
+  opacity: 0.7;
+  transform: translateY(1px);
 }
 
 .arrow-group {
   display: flex;
   align-items: center;
-  gap: 2px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 1px;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
 }
+
 .nav-arrow {
-  width: 24px;
-  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  min-width: 16px;
+  min-height: 16px;
+  padding: 2px;
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  border-radius: 0;
   color: var(--accent-cyan);
+  cursor: pointer;
+  transition: color var(--transition-fast), filter var(--transition-fast), opacity var(--transition-fast), transform var(--transition-fast);
 }
+
 .nav-arrow:hover {
+  background: transparent;
   color: var(--accent-white);
-  background-color: var(--bg-surface-hover);
+  filter: drop-shadow(0 0 5px var(--accent-cyan));
+}
+
+.nav-arrow:focus,
+.nav-arrow:focus-visible {
+  outline: none;
+}
+
+.nav-arrow:focus-visible {
+  filter: drop-shadow(0 0 5px var(--accent-cyan));
+}
+
+.nav-arrow:active {
+  opacity: 0.7;
+  transform: translateY(1px);
 }
 
 .status-toast {
