@@ -1112,7 +1112,7 @@ class DarkCalApp {
     const appRect = document.querySelector('.calendar-app').getBoundingClientRect();
     const cellRect = cellEl.getBoundingClientRect();
     const popoverWidth = 320;
-    const popoverMaxHeight = 440;
+    const popoverMaxHeight = 370;
 
     const relLeft = cellRect.left - appRect.left;
     const relTop = cellRect.top - appRect.top;
