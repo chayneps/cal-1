@@ -527,15 +527,20 @@ class DarkCalApp {
           const chip = document.createElement('div');
           chip.className = 'event-chip-mini';
           chip.title = evt.summary;
+          const evtColor = evt.color || 'var(--accent-cyan)';
+          chip.style.borderColor = evtColor;
+          chip.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
 
           const dot = document.createElement('span');
           dot.className = 'event-chip-dot';
-          dot.style.backgroundColor = evt.color || 'var(--accent-primary)';
+          dot.style.backgroundColor = evtColor;
+          dot.style.boxShadow = `0 0 3px ${evtColor}`;
           chip.appendChild(dot);
 
           const text = document.createElement('span');
           text.className = 'event-chip-text';
           text.textContent = evt.summary;
+          text.style.color = evtColor;
           chip.appendChild(text);
 
           preview.appendChild(chip);
@@ -544,15 +549,20 @@ class DarkCalApp {
         const firstChip = document.createElement('div');
         firstChip.className = 'event-chip-mini';
         firstChip.title = events[0].summary;
+        const firstColor = events[0].color || 'var(--accent-cyan)';
+        firstChip.style.borderColor = firstColor;
+        firstChip.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
 
         const dot = document.createElement('span');
         dot.className = 'event-chip-dot';
-        dot.style.backgroundColor = events[0].color || 'var(--accent-primary)';
+        dot.style.backgroundColor = firstColor;
+        dot.style.boxShadow = `0 0 3px ${firstColor}`;
         firstChip.appendChild(dot);
 
         const text = document.createElement('span');
         text.className = 'event-chip-text';
         text.textContent = events[0].summary;
+        text.style.color = firstColor;
         firstChip.appendChild(text);
         preview.appendChild(firstChip);
 
@@ -561,7 +571,9 @@ class DarkCalApp {
         for (let i = 1; i < Math.min(events.length, 5); i++) {
           const d = document.createElement('span');
           d.className = 'event-dot';
-          d.style.backgroundColor = events[i].color || 'var(--accent-primary)';
+          const dotColor = events[i].color || 'var(--accent-cyan)';
+          d.style.backgroundColor = dotColor;
+          d.style.boxShadow = `0 0 3px ${dotColor}`;
           dotsRow.appendChild(d);
         }
         preview.appendChild(dotsRow);
@@ -705,6 +717,7 @@ class DarkCalApp {
         const calTag = document.createElement('div');
         calTag.className = 'schedule-calendar-name';
         calTag.textContent = evt.calendarName;
+        calTag.style.color = evt.color || 'var(--text-muted)';
         item.appendChild(calTag);
       }
 

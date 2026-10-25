@@ -23,45 +23,53 @@
    2. Theme Color Palettes
    ------------------------------------------------------------- */
 :root {
-  /* Default: Homebrew (iTerm2 Color Scheme + Vintage CRT Green Phosphor) */
+  /* Default: Homebrew (iTerm2 Multi-Color ANSI Terminal Palette) */
   /* Background: #000000 | Foreground: #00ff00 | Selection: #083905 */
   --bg-app: #000000;
-  --bg-surface: #040e04;
-  --bg-surface-hover: #081d08;
-  --bg-surface-active: #0e2e0e;
-  --bg-card: #010401;
-  --bg-popover: #020702;
+  --bg-surface: #050d05;
+  --bg-surface-hover: #0c1c0c;
+  --bg-surface-active: #142a14;
+  --bg-card: #020702;
+  --bg-popover: #030803;
   --bg-input: #000000;
 
-  --border-subtle: #0d2c0d;
-  --border-strong: #174e17;
+  --border-subtle: #123312;
+  --border-strong: #1e521e;
   --border-focus: #00ff00;
 
   --text-primary: #00ff00;
   --text-secondary: #00dd00;
   --text-muted: #008800;
   --text-dim: #005500;
+  --text-light: #e5e5e5;
+  --text-white: #ffffff;
 
-  /* Homebrew ANSI Accents */
-  --accent-primary: #00ff00;
-  --accent-selection: #083905;
-  --accent-cursor: #23ff18;
-  --accent-cyan: #00e5e5;
-  --accent-yellow: #e5e500;
-  --accent-red: #e50000;
-  --accent-magenta: #e500e5;
-  --accent-blue: #00e5e5;
+  /* Homebrew ANSI Accents (Vibrant multi-color terminal palette) */
+  --accent-primary: #00ff00;     /* Ansi 10 Bright Green / Prompt */
+  --accent-selection: #083905;   /* Homebrew selection green */
+  --accent-cursor: #23ff18;      /* Homebrew cursor phosphor */
+  --accent-cyan: #00e5e5;        /* Ansi 14 Bright Cyan */
+  --accent-yellow: #e5e500;      /* Ansi 11 Bright Yellow */
+  --accent-red: #e50000;         /* Ansi 9 Bright Red */
+  --accent-magenta: #e500e5;     /* Ansi 13 Bright Magenta */
+  --accent-blue: #3b82f6;        /* Ansi 12 Bright Blue */
+  --accent-white: #e5e5e5;       /* Ansi 15 Bright White */
+  --accent-dim-grey: #666666;    /* Ansi 8 Grey */
 
-  /* Font */
-  --font-family: 'Hack', Menlo, Monaco, Consolas, "Courier New", monospace;
-
-  /* Phosphor CRT Glow */
-  --glow-sm: 0 0 5px rgba(0, 255, 0, 0.55);
-  --glow-md: 0 0 12px rgba(0, 255, 0, 0.65), 0 0 20px rgba(0, 255, 0, 0.35);
-  --glow-text: 0 0 3px rgba(0, 255, 0, 0.75), 0 0 8px rgba(0, 255, 0, 0.35);
+  /* Phosphor & ANSI Glows */
+  --glow-green: 0 0 5px rgba(0, 255, 0, 0.55);
+  --glow-cyan: 0 0 5px rgba(0, 229, 229, 0.55);
+  --glow-yellow: 0 0 5px rgba(229, 229, 0, 0.55);
+  --glow-magenta: 0 0 5px rgba(229, 0, 229, 0.55);
+  --glow-red: 0 0 5px rgba(229, 0, 0, 0.55);
+  --glow-sm: 0 0 5px rgba(0, 255, 0, 0.45);
+  --glow-md: 0 0 12px rgba(0, 255, 0, 0.6);
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.7);
   --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.85);
   --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.95), 0 0 0 1px var(--border-strong);
+
+  /* Font */
+  --font-family: 'Hack', Menlo, Monaco, Consolas, "Courier New", monospace;
 
   /* Dimensions */
   --app-width: 460px;
@@ -253,17 +261,9 @@ body.theme-obsidian .crt-overlay {
 }
 
 /* Typography Bloom & Caret */
-body.theme-homebrew {
-  text-shadow: var(--glow-text);
-}
-body.theme-homebrew .brand-title,
-body.theme-homebrew .month-heading,
-body.theme-homebrew .popover-date,
-body.theme-homebrew .day-number {
-  text-shadow: 0 0 4px rgba(0, 255, 0, 0.9), 0 0 10px rgba(0, 255, 0, 0.5);
-}
-
-input, select, textarea {
+body.theme-homebrew input,
+body.theme-homebrew select,
+body.theme-homebrew textarea {
   caret-color: var(--accent-cursor);
 }
 
@@ -315,7 +315,8 @@ input, select, textarea {
 .terminal-prefix {
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--accent-cyan);
+  text-shadow: var(--glow-cyan);
 }
 
 .brand-icon {
@@ -328,14 +329,14 @@ input, select, textarea {
   background: var(--accent-selection);
   border: 1px solid var(--border-strong);
   color: var(--accent-primary);
-  box-shadow: var(--glow-sm);
+  box-shadow: var(--glow-green);
 }
 
 .brand-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
-  text-shadow: var(--glow-sm);
+  color: var(--accent-primary);
+  text-shadow: var(--glow-green);
   font-family: var(--font-family);
 }
 
@@ -348,20 +349,39 @@ input, select, textarea {
   letter-spacing: 0.5px;
 }
 .badge-demo {
-  background-color: var(--accent-selection);
-  color: var(--accent-primary);
-  border: 1px solid var(--border-strong);
+  background-color: rgba(229, 229, 0, 0.15);
+  color: var(--accent-yellow);
+  border: 1px solid rgba(229, 229, 0, 0.45);
+  text-shadow: var(--glow-yellow);
 }
 .badge-live {
   background-color: rgba(0, 229, 229, 0.15);
   color: var(--accent-cyan);
-  border: 1px solid rgba(0, 229, 229, 0.4);
+  border: 1px solid rgba(0, 229, 229, 0.45);
+  text-shadow: var(--glow-cyan);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 3px;
+}
+
+#newEventBtn:hover {
+  color: var(--accent-primary);
+  box-shadow: var(--glow-green);
+}
+#syncBtn:hover {
+  color: var(--accent-cyan);
+  box-shadow: var(--glow-cyan);
+}
+#openWebBtn:hover {
+  color: var(--accent-blue);
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+}
+#settingsBtn:hover {
+  color: var(--accent-yellow);
+  box-shadow: var(--glow-yellow);
 }
 
 .icon-btn {
@@ -417,7 +437,7 @@ input, select, textarea {
 .terminal-cmd-prompt {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: #00dd00;
   user-select: none;
   white-space: pre;
 }
@@ -425,8 +445,8 @@ input, select, textarea {
 .month-heading {
   font-size: 14px;
   font-weight: 700;
-  color: var(--text-primary);
-  text-shadow: var(--glow-sm);
+  color: var(--accent-yellow);
+  text-shadow: var(--glow-yellow);
   font-family: var(--font-family);
 }
 
@@ -457,13 +477,15 @@ input, select, textarea {
 }
 
 .today-btn {
-  color: var(--accent-primary);
-  border-color: var(--border-strong);
-  background-color: var(--accent-selection);
+  color: var(--accent-yellow);
+  border-color: rgba(229, 229, 0, 0.45);
+  background-color: rgba(229, 229, 0, 0.12);
+  text-shadow: var(--glow-yellow);
 }
 .today-btn:hover {
-  background-color: var(--bg-surface-active);
-  box-shadow: var(--glow-sm);
+  background-color: rgba(229, 229, 0, 0.24);
+  border-color: var(--accent-yellow);
+  box-shadow: var(--glow-yellow);
 }
 
 .arrow-group {
@@ -478,6 +500,12 @@ input, select, textarea {
 .nav-arrow {
   width: 24px;
   height: 24px;
+  color: var(--accent-cyan);
+}
+.nav-arrow:hover {
+  color: var(--accent-white);
+  background-color: var(--bg-surface-hover);
+  box-shadow: var(--glow-cyan);
 }
 
 .status-toast {
@@ -515,10 +543,12 @@ input, select, textarea {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--accent-cyan);
+  text-shadow: var(--glow-cyan);
 }
 .weekday-col.weekend {
-  color: #00aa00;
+  color: var(--accent-magenta);
+  text-shadow: var(--glow-magenta);
 }
 
 .month-grid {
@@ -573,6 +603,7 @@ input, select, textarea {
 .day-cell.is-today {
   border-color: var(--accent-primary);
   background-color: var(--accent-selection);
+  box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.25);
 }
 .day-cell.is-today .day-number {
   background-color: var(--accent-primary);
@@ -585,7 +616,7 @@ input, select, textarea {
   justify-content: center;
   padding: 0 3px;
   font-weight: 700;
-  box-shadow: var(--glow-sm);
+  box-shadow: var(--glow-green);
 }
 
 .day-cell-top {
@@ -599,20 +630,21 @@ input, select, textarea {
 .day-number {
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--accent-white);
 }
 .day-cell:hover .day-number {
-  color: var(--text-primary);
+  color: var(--accent-yellow);
+  text-shadow: var(--glow-yellow);
 }
 
 .day-event-count {
   font-size: 9px;
   font-weight: 700;
-  padding: 0 3px;
+  padding: 0 4px;
   border-radius: 2px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
+  background-color: rgba(0, 229, 229, 0.12);
+  border: 1px solid rgba(0, 229, 229, 0.35);
+  color: var(--accent-cyan);
 }
 
 .day-events-preview {
@@ -631,10 +663,10 @@ input, select, textarea {
   width: 100%;
   padding: 1px 3px;
   border-radius: 2px;
-  background-color: rgba(0, 255, 0, 0.08);
-  border: 1px solid rgba(0, 255, 0, 0.15);
+  background-color: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(0, 229, 229, 0.3);
   font-size: 9px;
-  color: var(--text-primary);
+  color: var(--accent-white);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -662,7 +694,7 @@ input, select, textarea {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background-color: var(--accent-primary);
+  background-color: var(--accent-cyan);
 }
 
 /* -------------------------------------------------------------
@@ -719,15 +751,15 @@ input, select, textarea {
 .popover-prompt {
   font-size: 13px;
   font-weight: 700;
-  color: var(--accent-primary);
+  color: var(--accent-cyan);
+  text-shadow: var(--glow-cyan);
   user-select: none;
 }
 
 .popover-date {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
-  text-shadow: var(--glow-sm);
+  color: var(--accent-white);
 }
 
 .popover-relative {
@@ -735,9 +767,10 @@ input, select, textarea {
   font-weight: 700;
   padding: 1px 5px;
   border-radius: 2px;
-  background-color: var(--accent-selection);
-  border: 1px solid var(--border-strong);
-  color: var(--accent-primary);
+  background-color: rgba(229, 0, 0, 0.2);
+  border: 1px solid rgba(229, 0, 0, 0.5);
+  color: var(--accent-red);
+  text-shadow: var(--glow-red);
 }
 
 .popover-close-btn {
@@ -754,7 +787,8 @@ input, select, textarea {
 
 .popover-event-summary {
   font-size: 10px;
-  color: var(--text-secondary);
+  color: var(--accent-white);
+  opacity: 0.85;
 }
 
 .popover-add-link {
@@ -765,15 +799,15 @@ input, select, textarea {
   font-weight: 700;
   color: var(--accent-primary);
   text-decoration: none;
-  padding: 2px 5px;
+  padding: 2px 6px;
   border-radius: 2px;
-  background-color: var(--accent-selection);
-  border: 1px solid var(--border-subtle);
+  background-color: rgba(0, 255, 0, 0.12);
+  border: 1px solid rgba(0, 255, 0, 0.35);
   transition: all var(--transition-fast);
 }
 .popover-add-link:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--glow-sm);
+  border-color: var(--accent-primary);
+  box-shadow: var(--glow-green);
 }
 
 .popover-schedule-list {
@@ -814,23 +848,25 @@ input, select, textarea {
   gap: 4px;
   font-size: 10px;
   font-weight: 700;
-  color: var(--accent-primary);
+  color: var(--accent-cyan);
+  text-shadow: var(--glow-cyan);
 }
 
 .schedule-duration {
   font-size: 9px;
-  font-weight: 600;
-  padding: 1px 4px;
+  font-weight: 700;
+  padding: 1px 5px;
   border-radius: 2px;
-  background-color: var(--accent-selection);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
+  background-color: rgba(229, 229, 0, 0.14);
+  border: 1px solid rgba(229, 229, 0, 0.35);
+  color: var(--accent-yellow);
+  text-shadow: var(--glow-yellow);
 }
 
 .schedule-title {
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--accent-white);
   line-height: 1.3;
 }
 
@@ -851,25 +887,30 @@ input, select, textarea {
   align-items: center;
   gap: 4px;
   font-size: 10px;
-  color: var(--text-secondary);
+  color: var(--text-light);
 }
 
 .schedule-meet-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 7px;
+  padding: 3px 8px;
   border-radius: 2px;
-  background-color: var(--accent-selection);
-  color: var(--accent-primary);
+  background-color: rgba(0, 229, 229, 0.14);
+  color: var(--accent-cyan);
   font-size: 10px;
   font-weight: 700;
   text-decoration: none;
   width: fit-content;
-  border: 1px solid var(--border-strong);
+  border: 1px solid rgba(0, 229, 229, 0.4);
   margin-top: 2px;
+  text-shadow: var(--glow-cyan);
 }
 .schedule-meet-btn:hover {
+  background-color: rgba(0, 229, 229, 0.25);
+  border-color: var(--accent-cyan);
+  box-shadow: var(--glow-cyan);
+}
   background-color: var(--bg-surface-hover);
   box-shadow: var(--glow-sm);
 }
@@ -928,18 +969,20 @@ input, select, textarea {
 
 .footer-meta {
   font-size: 10px;
-  color: var(--text-muted);
+  color: #00dd00;
+  font-weight: 600;
 }
 
 .footer-sync-time {
   font-size: 10px;
   color: var(--accent-cyan);
-  font-weight: 600;
+  font-weight: 700;
+  text-shadow: var(--glow-cyan);
 }
 
 .hint-text {
   font-size: 9px;
-  color: var(--text-muted);
+  color: #888888;
 }
 
 /* -------------------------------------------------------------
