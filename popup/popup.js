@@ -638,12 +638,16 @@ class DarkCalApp {
   // -------------------------------------------------------------
   // Month Grid & Day Cells
   // -------------------------------------------------------------
-  updateMonthHeading() {
+  getMonthName(monthIndex = this.viewMonth) {
     const monthNames = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
-    const monthStr = monthNames[this.viewMonth];
+    return monthNames[monthIndex];
+  }
+
+  updateMonthHeading() {
+    const monthStr = this.getMonthName();
     if (this.calCommandLine) {
       this.calCommandLine.value = `cal ${monthStr} ${this.viewYear}`;
       this.isUserEditingCommand = false;
@@ -728,11 +732,7 @@ class DarkCalApp {
       this.renderMonthGrid();
     }
 
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    this.showToast(result.msg || `cal(1) ➜ ${monthNames[this.viewMonth]} ${this.viewYear}`);
+    this.showToast(result.msg || `cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
   parseCalCommand(cmdStr, currentYear, currentMonth) {
@@ -894,6 +894,7 @@ class DarkCalApp {
     } else {
       this.renderMonthGrid();
     }
+    this.showToast(`cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
   navigateYear(delta) {
@@ -905,6 +906,7 @@ class DarkCalApp {
     } else {
       this.renderMonthGrid();
     }
+    this.showToast(`cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
   jumpToToday() {
@@ -923,6 +925,7 @@ class DarkCalApp {
         this.handleIcalSync(false);
       }
     }
+    this.showToast(`cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
   renderMonthGrid() {
@@ -1494,7 +1497,7 @@ class DarkCalApp {
     while (elem.textContent.length > 0) {
       if (this.toastAnimationId !== animId) return;
       elem.textContent = elem.textContent.slice(0, -1);
-      await sleep(14);
+      await sleep(10);
     }
 
     if (this.toastAnimationId !== animId) return;
@@ -1504,21 +1507,21 @@ class DarkCalApp {
     for (let i = 1; i <= msg.length; i++) {
       if (this.toastAnimationId !== animId) return;
       elem.textContent = msg.slice(0, i);
-      await sleep(18);
+      await sleep(15);
     }
 
     // 3. Wait a bit
     const pauseStart = Date.now();
     while (Date.now() - pauseStart < duration) {
       if (this.toastAnimationId !== animId) return;
-      await sleep(40);
+      await sleep(35);
     }
 
     // 4. Remove by backspacing one by one character
     while (elem.textContent.length > 0) {
       if (this.toastAnimationId !== animId) return;
       elem.textContent = elem.textContent.slice(0, -1);
-      await sleep(12);
+      await sleep(10);
     }
 
     if (this.toastAnimationId !== animId) return;
@@ -1529,7 +1532,7 @@ class DarkCalApp {
     for (let i = 1; i <= targetText.length; i++) {
       if (this.toastAnimationId !== animId) return;
       elem.textContent = targetText.slice(0, i);
-      await sleep(18);
+      await sleep(15);
     }
 
     if (this.toastAnimationId === animId) {
