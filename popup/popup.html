@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DarkCal - Google Calendar</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="theme-homebrew">
+  <div class="calendar-app">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+        </div>
+        <span class="brand-title">DarkCal</span>
+        <span id="connectionBadge" class="badge badge-demo" title="Calendar source">Demo</span>
+      </div>
+
+      <div class="header-actions">
+        <!-- New Event Quick Link -->
+        <a id="newEventBtn" href="https://calendar.google.com/calendar/r/eventedit" target="_blank" class="icon-btn" title="Create New Event on Google Calendar" aria-label="Create New Event">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </a>
+
+        <!-- Sync Button -->
+        <button id="syncBtn" class="icon-btn" title="Refresh & Sync Calendar" aria-label="Sync Calendar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sync-icon">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+
+        <!-- Open Web Calendar in Tab -->
+        <a id="openWebBtn" href="https://calendar.google.com" target="_blank" class="icon-btn" title="Open Google Calendar in New Tab" aria-label="Open Google Calendar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </a>
+
+        <!-- Settings -->
+        <button id="settingsBtn" class="icon-btn" title="Settings & Auto-Sync" aria-label="Settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Month Navigation Bar -->
+    <section class="month-navigator">
+      <div class="month-title-wrap">
+        <h2 id="currentMonthYear" class="month-heading">October 2026</h2>
+      </div>
+
+      <div class="nav-controls">
+        <button id="todayBtn" class="pill-btn today-btn" title="Jump to Today">Today</button>
+        <div class="arrow-group">
+          <button id="prevMonthBtn" class="icon-btn nav-arrow" title="Previous Month" aria-label="Previous Month">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <button id="nextMonthBtn" class="icon-btn nav-arrow" title="Next Month" aria-label="Next Month">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Status Toast -->
+    <div id="statusToast" class="status-toast hidden"></div>
+
+    <!-- Calendar Month View Container -->
+    <main class="calendar-viewport">
+      <div id="weekdayHeader" class="weekday-header"></div>
+      <div id="monthGrid" class="month-grid" role="grid" aria-label="Monthly Calendar"></div>
+    </main>
+
+    <!-- Bottom Bar with Auto-Sync & Last Sync indicator -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span id="calendarSourceStatus" class="footer-meta">Demo Mode • 4 calendars</span>
+        <span id="lastSyncTimeText" class="footer-sync-time"></span>
+      </div>
+      <div class="footer-right">
+        <span class="hint-text">Hover day for details • Click to pin</span>
+      </div>
+    </footer>
+
+    <!-- Day Details Hover / Pinned Popover (Top to Bottom Schedule) -->
+    <section id="dayDetailPopover" class="day-popover hidden" role="dialog" aria-modal="false" aria-labelledby="popoverDateHeading">
+      <!-- Popover Header -->
+      <header class="popover-header">
+        <div class="popover-title-row">
+          <div class="popover-date-info">
+            <h3 id="popoverDateHeading" class="popover-date">October 24, 2026</h3>
+            <span id="popoverRelativeBadge" class="popover-relative">Today</span>
+          </div>
+          <button id="popoverCloseBtn" class="icon-btn popover-close-btn" title="Close schedule" aria-label="Close">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="popover-meta-row">
+          <span id="popoverEventSummary" class="popover-event-summary">3 events scheduled</span>
+          <a id="popoverAddEventBtn" href="https://calendar.google.com/calendar/r/eventedit" target="_blank" class="popover-add-link" title="Add event to this day">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>+ Add Event</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Chronological Day Schedule (From Top to Bottom) -->
+      <div id="popoverScheduleList" class="popover-schedule-list"></div>
+    </section>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 id="settingsModalTitle" class="modal-title">DarkCal Settings</h3>
+            <span class="modal-subtitle">Theme & Calendar Sync</span>
+          </div>
+          <button id="closeSettingsBtn" class="icon-btn" aria-label="Close settings">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Theme & Font Selection -->
+          <div class="settings-section">
+            <h4 class="section-heading">Theme & Typography</h4>
+
+            <label class="setting-field-row">
+              <div class="field-label-wrap">
+                <span class="setting-title">Color Scheme</span>
+                <span class="setting-desc">iTerm2 Homebrew Terminal or Obsidian Dark</span>
+              </div>
+              <select id="themeSelect" class="styled-select">
+                <option value="homebrew">Homebrew (Terminal Green & Hack Font)</option>
+                <option value="obsidian">Obsidian Dark (Blue & Slate)</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Easy iCal Sync -->
+          <div class="settings-section">
+            <h4 class="section-heading">Google Calendar Connection</h4>
+            <p class="section-tip">
+              Sync real events using your calendar's private iCal link:
+            </p>
+
+            <div class="steps-mini-guide">
+              <div class="step-line"><strong>1.</strong> Google Calendar on web &rarr; gear (Settings).</div>
+              <div class="step-line"><strong>2.</strong> Click your calendar name in left sidebar.</div>
+              <div class="step-line"><strong>3.</strong> Scroll to <em>"Integrate calendar"</em> &rarr; copy <strong>"Secret address in iCal format"</strong>.</div>
+              <div class="step-line"><strong>4.</strong> Paste below and click <strong>Sync</strong>:</div>
+            </div>
+
+            <div class="input-with-button">
+              <input type="text" id="icalUrlInput" class="text-input" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics">
+              <button id="syncIcalBtn" class="primary-btn">Sync</button>
+            </div>
+
+            <div id="icalSyncStatus" class="ical-sync-status hidden"></div>
+          </div>
+
+          <!-- Auto-Sync Configuration -->
+          <div class="settings-section">
+            <h4 class="section-heading">Auto-Sync Schedule</h4>
+
+            <label class="setting-field-row">
+              <div class="field-label-wrap">
+                <span class="setting-title">Background Auto-Sync</span>
+                <span class="setting-desc">Sync interval for fetching latest updates</span>
+              </div>
+              <select id="autoSyncIntervalSelect" class="styled-select">
+                <option value="15">Every 15 minutes (Recommended)</option>
+                <option value="30">Every 30 minutes</option>
+                <option value="60">Every 1 hour</option>
+                <option value="120">Every 2 hours</option>
+                <option value="0">Manual sync only</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Preferences -->
+          <div class="settings-section">
+            <h4 class="section-heading">Preferences</h4>
+
+            <label class="setting-field-row">
+              <div class="field-label-wrap">
+                <span class="setting-title">First Day of Week</span>
+                <span class="setting-desc">Choose between Sunday or Monday</span>
+              </div>
+              <select id="firstDaySelect" class="styled-select">
+                <option value="0">Sunday</option>
+                <option value="1">Monday</option>
+              </select>
+            </label>
+
+            <label class="toggle-setting-row">
+              <div class="toggle-label-wrap">
+                <span class="setting-title">Demo / Sample Mode</span>
+                <span class="setting-desc">Use sample events when no iCal feed is set</span>
+              </div>
+              <input type="checkbox" id="demoModeToggle" class="switch-input" checked>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="closeModalFooterBtn" class="secondary-btn">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
