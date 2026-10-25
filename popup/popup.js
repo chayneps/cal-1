@@ -121,10 +121,23 @@ class DarkCalApp {
         }
       });
 
-      ['input', 'keyup', 'keydown', 'click', 'select', 'focus', 'blur'].forEach((evt) => {
-        this.calCommandLine.addEventListener(evt, () => {
-          requestAnimationFrame(() => this.syncCommandInputWidth());
-        });
+      this.calCommandLine.addEventListener('input', () => {
+        this.syncCommandInputWidth();
+      });
+
+      this.calCommandLine.addEventListener('keyup', () => {
+        this.syncCommandInputWidth();
+      });
+
+      this.calCommandLine.addEventListener('focus', () => {
+        const len = this.calCommandLine.value.length;
+        this.calCommandLine.setSelectionRange(len, len);
+        this.syncCommandInputWidth();
+      });
+
+      this.calCommandLine.addEventListener('click', () => {
+        const len = this.calCommandLine.value.length;
+        this.calCommandLine.setSelectionRange(len, len);
       });
     }
 
@@ -135,7 +148,7 @@ class DarkCalApp {
           this.calCommandLine.focus();
           const len = this.calCommandLine.value.length;
           this.calCommandLine.setSelectionRange(len, len);
-          requestAnimationFrame(() => this.syncCommandInputWidth());
+          this.syncCommandInputWidth();
         }
       });
     }
@@ -543,24 +556,8 @@ class DarkCalApp {
 
   syncCommandInputWidth() {
     if (!this.calCommandLine) return;
-    const val = this.calCommandLine.value;
-    const len = Math.max(val.length, 1);
+    const len = Math.max(this.calCommandLine.value.length, 1);
     this.calCommandLine.style.width = `${len}ch`;
-
-    if (!this.calCursor) return;
-    const isFocused = document.activeElement === this.calCommandLine;
-    const start = this.calCommandLine.selectionStart ?? len;
-    const end = this.calCommandLine.selectionEnd ?? len;
-
-    // If multi-character text selection is active, hide underscore during selection highlight
-    if (isFocused && start !== end) {
-      this.calCursor.style.opacity = '0';
-      return;
-    }
-
-    this.calCursor.style.opacity = '1';
-    const pos = isFocused ? start : len;
-    this.calCursor.style.transform = `translateX(${pos}ch)`;
   }
 
   async handleCalCommandSubmit() {
