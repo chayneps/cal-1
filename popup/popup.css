@@ -827,7 +827,7 @@ body.theme-homebrew textarea {
   justify-content: flex-start;
   padding: 2px 3px;
   border-radius: var(--radius-sm);
-  cursor: pointer;
+  cursor: default;
   transition: all var(--transition-fast);
   overflow: hidden;
   min-height: 0;
@@ -963,11 +963,33 @@ body.theme-homebrew textarea {
   box-shadow: 0 0 6px rgba(0, 255, 0, 0.7);
 }
 
-/* Pinned / Selected Cell */
-.day-cell.is-pinned {
-  border-color: #ffffff !important;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 14px rgba(255, 255, 255, 0.65) !important;
+/* Active Day Cell on Hover & Popover Shown (Slow CRT Phosphor Pulse) */
+@keyframes date-cell-slow-blink {
+  0%, 100% {
+    border-color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.75), inset 0 0 8px rgba(255, 255, 255, 0.22) !important;
+    filter: brightness(1.25);
+    opacity: 1;
+  }
+  50% {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.15) !important;
+    filter: brightness(0.8);
+    opacity: 0.42;
+  }
+}
+
+.day-cell.popover-active {
+  animation: date-cell-slow-blink 1.4s ease-in-out infinite !important;
   z-index: 5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .day-cell.popover-active {
+    animation: none !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.75) !important;
+  }
 }
 
 .day-cell-top {

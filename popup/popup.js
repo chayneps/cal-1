@@ -21,7 +21,7 @@ class DarkCalApp {
     this.detectedCalendarName = '';
     this.customCalendarName = '';
     this.activeCalendarFilter = 'all';
-    this.pinnedDayKey = null;
+    this.activeHoverCell = null;
     this.hoverTimeout = null;
     this.isMouseOverPopover = false;
 
@@ -219,9 +219,8 @@ class DarkCalApp {
       this.showToast(interval > 0 ? `Auto-sync set to every ${interval}m` : 'Auto-sync disabled (Manual only)');
     });
 
-    // Popover Close & Persistence
+    // Popover Close
     this.popoverCloseBtn.addEventListener('click', () => {
-      this.unpinDay();
       this.hidePopover();
     });
 
@@ -232,7 +231,7 @@ class DarkCalApp {
 
     this.dayDetailPopover.addEventListener('mouseleave', () => {
       this.isMouseOverPopover = false;
-      if (!this.pinnedDayKey) this.hidePopover();
+      this.hidePopover();
     });
 
     // Global keyboard shortcuts
@@ -240,8 +239,7 @@ class DarkCalApp {
       if (e.key === 'Escape') {
         if (!this.settingsModal.classList.contains('hidden')) {
           this.closeSettings();
-        } else if (this.pinnedDayKey || !this.dayDetailPopover.classList.contains('hidden')) {
-          this.unpinDay();
+        } else if (!this.dayDetailPopover.classList.contains('hidden')) {
           this.hidePopover();
         }
       } else if ((e.key === '/' || e.key === ':') && !e.metaKey && !e.ctrlKey) {
@@ -607,7 +605,6 @@ class DarkCalApp {
       return;
     }
 
-    this.unpinDay();
     this.hidePopover();
     this.viewYear = result.year;
     this.viewMonth = result.month;
@@ -770,7 +767,6 @@ class DarkCalApp {
   }
 
   navigateMonth(delta) {
-    this.unpinDay();
     this.hidePopover();
     this.viewMonth += delta;
     if (this.viewMonth < 0) {
@@ -789,7 +785,6 @@ class DarkCalApp {
   }
 
   jumpToToday() {
-    this.unpinDay();
     this.hidePopover();
     this.today = new Date();
     this.viewYear = this.today.getFullYear();
@@ -883,7 +878,6 @@ class DarkCalApp {
 
     if (isOtherMonth) cell.classList.add('other-month');
     if (isToday) cell.classList.add('is-today');
-    if (this.pinnedDayKey === dayKey) cell.classList.add('is-pinned');
 
     const topRow = document.createElement('div');
     topRow.className = 'day-cell-top';
@@ -968,35 +962,31 @@ class DarkCalApp {
     cell.addEventListener('mouseenter', () => {
       if (this.hoverTimeout) clearTimeout(this.hoverTimeout);
       this.hoverTimeout = setTimeout(() => {
-        if (!this.pinnedDayKey || this.pinnedDayKey === dayKey) {
-          this.showDaySchedulePopover(cell, date, events);
-        }
-      }, 70);
+        this.showDaySchedulePopover(cell, date, events);
+      }, 350);
     });
 
     cell.addEventListener('mouseleave', () => {
       if (this.hoverTimeout) clearTimeout(this.hoverTimeout);
       this.hoverTimeout = setTimeout(() => {
-        if (!this.pinnedDayKey && !this.isMouseOverPopover) {
+        if (!this.isMouseOverPopover) {
           this.hidePopover();
         }
       }, 180);
-    });
-
-    cell.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (this.pinnedDayKey === dayKey) {
-        this.unpinDay();
-        this.hidePopover();
-      } else {
-        this.pinDay(dayKey, cell, date, events);
-      }
     });
 
     return cell;
   }
 
   showDaySchedulePopover(cellEl, date, events) {
+    if (this.activeHoverCell && this.activeHoverCell !== cellEl) {
+      this.activeHoverCell.classList.remove('popover-active');
+    }
+    this.activeHoverCell = cellEl;
+    if (cellEl) {
+      cellEl.classList.add('popover-active');
+    }
+
     const formattedHeading = date.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'short',
@@ -1177,23 +1167,12 @@ class DarkCalApp {
     this.dayDetailPopover.style.top = `${targetTop}px`;
   }
 
-  pinDay(dayKey, cellEl, date, events) {
-    this.unpinDay();
-    this.pinnedDayKey = dayKey;
-    cellEl.classList.add('is-pinned');
-    this.showDaySchedulePopover(cellEl, date, events);
-  }
-
-  unpinDay() {
-    if (this.pinnedDayKey) {
-      const prevCell = this.monthGrid.querySelector(`[data-date="${this.pinnedDayKey}"]`);
-      if (prevCell) prevCell.classList.remove('is-pinned');
-      this.pinnedDayKey = null;
-    }
-  }
-
   hidePopover() {
     this.dayDetailPopover.classList.add('hidden');
+    if (this.activeHoverCell) {
+      this.activeHoverCell.classList.remove('popover-active');
+      this.activeHoverCell = null;
+    }
   }
 
   formatDateKey(d) {
@@ -1267,7 +1246,6 @@ class DarkCalApp {
   }
 
   openSettings() {
-    this.unpinDay();
     this.hidePopover();
     this.settingsModal.classList.remove('hidden');
   }
