@@ -892,7 +892,7 @@ class DarkCalApp {
 
     // After all tiles finish scanning in, trigger 2 blinks on todayCell and lock on bright green
     if (todayCell) {
-      const totalScanDuration = (totalCells - 1) * 42 + 220;
+      const totalScanDuration = (totalCells - 1) * 28 + 160;
       this.todayBlinkTimeout = setTimeout(() => {
         todayCell.classList.add('is-today', 'today-blinking');
         todayCell.addEventListener('animationend', (e) => {
@@ -900,14 +900,14 @@ class DarkCalApp {
             todayCell.classList.remove('today-blinking');
           }
         }, { once: true });
-      }, totalScanDuration + 50);
+      }, totalScanDuration + 25);
     }
   }
 
   createDayCell({ date, dayNum, dayKey, isOtherMonth, isToday, events, cellIndex = 0 }) {
     const cell = document.createElement('div');
     cell.className = 'day-cell tile-appear';
-    cell.style.animationDelay = `${cellIndex * 42}ms`;
+    cell.style.animationDelay = `${cellIndex * 28}ms`;
     cell.addEventListener('animationend', () => {
       cell.classList.remove('tile-appear');
       cell.style.animationDelay = '';

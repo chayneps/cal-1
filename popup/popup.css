@@ -1016,11 +1016,11 @@ body.theme-homebrew textarea {
 }
 
 .day-cell.today-blinking {
-  animation: todayTwoBlinks 0.72s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+  animation: todayTwoBlinks 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
   z-index: 4;
 }
 .day-cell.today-blinking .day-number {
-  animation: todayNumberTwoBlinks 0.72s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+  animation: todayNumberTwoBlinks 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
 
 /* Active Day Cell on Hover & Popover Shown (Slow CRT Phosphor Pulse) */
@@ -1082,11 +1082,11 @@ body.theme-homebrew textarea {
 }
 
 .day-cell.tile-appear {
-  animation: tileScanIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: tileScanIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .day-cell.other-month.tile-appear {
-  animation: tileScanInOtherMonth 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: tileScanInOtherMonth 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
