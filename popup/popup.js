@@ -972,7 +972,7 @@ class DarkCalApp {
         if (!this.isMouseOverPopover) {
           this.hidePopover();
         }
-      }, 180);
+      }, 220);
     });
 
     return cell;
@@ -1024,8 +1024,8 @@ class DarkCalApp {
     this.popoverAddEventBtn.href = `https://calendar.google.com/calendar/r/eventedit?dates=${dateParam}/${dateParam}`;
 
     this.renderPopoverSchedule(events, date);
-    this.positionPopover(cellEl);
     this.dayDetailPopover.classList.remove('hidden');
+    this.positionPopover(cellEl);
   }
 
   renderPopoverSchedule(events, date) {
@@ -1141,34 +1141,81 @@ class DarkCalApp {
   }
 
   positionPopover(cellEl) {
-    const appRect = document.querySelector('.calendar-app').getBoundingClientRect();
+    const appEl = document.querySelector('.calendar-app');
+    if (!appEl || !cellEl) return;
+
+    const appRect = appEl.getBoundingClientRect();
     const cellRect = cellEl.getBoundingClientRect();
-    const popoverWidth = 320;
-    const popoverMaxHeight = 370;
 
-    const relLeft = cellRect.left - appRect.left;
-    const relTop = cellRect.top - appRect.top;
+    const popoverWidth = 295;
+    const marginX = 10;
+    const topBoundary = 70; // Just below month navigation bar
+    const bottomBoundary = appRect.height - 30; // Just above footer
 
-    let targetLeft = relLeft + cellRect.width / 2 - popoverWidth / 2;
-    const minLeft = 14;
-    const maxLeft = appRect.width - popoverWidth - 14;
-    if (targetLeft < minLeft) targetLeft = minLeft;
-    if (targetLeft > maxLeft) targetLeft = maxLeft;
+    const relCellLeft = cellRect.left - appRect.left;
+    const relCellRight = cellRect.right - appRect.left;
+    const relCellTop = cellRect.top - appRect.top;
+    const relCellBottom = cellRect.bottom - appRect.top;
+    const relCellCenterX = relCellLeft + cellRect.width / 2;
+    const relCellCenterY = relCellTop + cellRect.height / 2;
 
-    let targetTop;
-    if (relTop + cellRect.height + popoverMaxHeight > appRect.height - 20) {
-      targetTop = relTop - popoverMaxHeight - 6;
-      if (targetTop < 50) targetTop = 50;
+    const appMidX = appRect.width / 2;
+    const appMidY = appRect.height / 2;
+
+    // 1. Horizontal opposite side:
+    // Cell on left half -> popover on right corner
+    // Cell on right half -> popover on left corner
+    let targetLeft;
+    if (relCellCenterX <= appMidX) {
+      targetLeft = appRect.width - popoverWidth - marginX;
     } else {
-      targetTop = relTop + cellRect.height + 6;
+      targetLeft = marginX;
+    }
+    const targetRight = targetLeft + popoverWidth;
+
+    // Check if cell and popover share horizontal columns
+    const horizontalOverlap = !(relCellRight <= targetLeft || relCellLeft >= targetRight);
+
+    // Measure natural height of rendered popover
+    const naturalHeight = this.dayDetailPopover.offsetHeight || 220;
+
+    // 2. Vertical opposite side:
+    // Cell in top half -> popover in bottom corner
+    // Cell in bottom half -> popover in top corner
+    let targetTop;
+    let effectiveMaxHeight = 330;
+
+    if (relCellCenterY <= appMidY) {
+      // Cell in TOP half -> Popover in BOTTOM corner
+      if (horizontalOverlap) {
+        // Guarantee popover sits strictly below hovered cell
+        const minTopBelowCell = relCellBottom + 4;
+        effectiveMaxHeight = Math.max(140, bottomBoundary - minTopBelowCell);
+        const computedHeight = Math.min(naturalHeight, effectiveMaxHeight);
+        targetTop = Math.max(minTopBelowCell, bottomBoundary - computedHeight);
+      } else {
+        // Clear horizontal separation (e.g. Oct 5) -> Dock neatly above footer
+        const computedHeight = Math.min(naturalHeight, effectiveMaxHeight);
+        targetTop = bottomBoundary - computedHeight;
+      }
+    } else {
+      // Cell in BOTTOM half -> Popover in TOP corner
+      targetTop = topBoundary;
+      if (horizontalOverlap) {
+        // Guarantee popover sits strictly above hovered cell
+        effectiveMaxHeight = Math.max(140, relCellTop - 4 - topBoundary);
+      }
     }
 
-    this.dayDetailPopover.style.left = `${targetLeft}px`;
-    this.dayDetailPopover.style.top = `${targetTop}px`;
+    this.dayDetailPopover.style.width = `${popoverWidth}px`;
+    this.dayDetailPopover.style.maxHeight = `${Math.round(effectiveMaxHeight)}px`;
+    this.dayDetailPopover.style.left = `${Math.round(targetLeft)}px`;
+    this.dayDetailPopover.style.top = `${Math.round(targetTop)}px`;
   }
 
   hidePopover() {
     this.dayDetailPopover.classList.add('hidden');
+    this.dayDetailPopover.style.maxHeight = '';
     if (this.activeHoverCell) {
       this.activeHoverCell.classList.remove('popover-active');
       this.activeHoverCell = null;

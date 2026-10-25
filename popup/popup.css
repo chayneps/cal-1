@@ -1081,8 +1081,8 @@ body.theme-homebrew textarea {
    ------------------------------------------------------------- */
 .day-popover {
   position: absolute;
-  width: 320px;
-  max-height: 370px;
+  width: 295px;
+  max-height: 330px;
   background-color: var(--bg-popover);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
@@ -1092,6 +1092,7 @@ body.theme-homebrew textarea {
   z-index: 50;
   animation: popoverFadeIn 0.14s ease-out;
   pointer-events: auto;
+  overflow: hidden;
 }
 
 @keyframes popoverFadeIn {
@@ -1111,6 +1112,7 @@ body.theme-homebrew textarea {
   background-color: var(--bg-surface);
   border-top-left-radius: var(--radius-md);
   border-top-right-radius: var(--radius-md);
+  flex-shrink: 0;
 }
 
 .popover-title-row {
@@ -1189,10 +1191,31 @@ body.theme-homebrew textarea {
 .popover-schedule-list {
   padding: 8px 10px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) rgba(0, 0, 0, 0.4);
+}
+
+.popover-schedule-list::-webkit-scrollbar {
+  width: 5px;
+}
+.popover-schedule-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
+}
+.popover-schedule-list::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-radius: 3px;
+  box-shadow: 0 0 3px var(--accent-primary);
+}
+.popover-schedule-list::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 4px var(--accent-cyan);
 }
 
 .schedule-item {
@@ -1288,10 +1311,7 @@ body.theme-homebrew textarea {
   font-size: 10px;
   color: var(--text-muted);
   line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  word-break: break-word;
 }
 
 .schedule-empty {
