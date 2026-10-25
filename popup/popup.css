@@ -963,64 +963,39 @@ body.theme-homebrew textarea {
   box-shadow: 0 0 6px rgba(0, 255, 0, 0.7);
 }
 
-/* 2-Blink Entrance on Today Tile after grid scan finishes */
-@keyframes todayTwoBlinks {
-  0% {
-    border-color: inherit;
-    box-shadow: none;
-    filter: brightness(1);
-  }
-  /* Blink 1 ON */
-  18% {
+/* Continuous Blink on Today Tile until user interaction */
+@keyframes todayBlink {
+  0%, 100% {
     border-color: var(--accent-primary) !important;
     box-shadow: 0 0 0 2px var(--accent-primary), 0 0 16px rgba(0, 255, 0, 0.85) !important;
-    filter: brightness(1.6);
+    filter: brightness(1.35);
   }
-  /* Blink 1 OFF */
-  38% {
-    border-color: rgba(0, 255, 0, 0.15) !important;
-    box-shadow: none;
-    filter: brightness(0.85);
-  }
-  /* Blink 2 ON */
-  58% {
-    border-color: var(--accent-primary) !important;
-    box-shadow: 0 0 0 2px var(--accent-primary), 0 0 16px rgba(0, 255, 0, 0.85) !important;
-    filter: brightness(1.6);
-  }
-  /* Blink 2 OFF */
-  78% {
-    border-color: rgba(0, 255, 0, 0.15) !important;
-    box-shadow: none;
-    filter: brightness(0.85);
-  }
-  /* Locked ON (Bright Green) */
-  100% {
-    border-color: var(--accent-primary) !important;
-    box-shadow: 0 0 0 2px var(--accent-primary), 0 0 14px rgba(0, 255, 0, 0.65) !important;
-    filter: brightness(1);
+  50% {
+    border-color: rgba(0, 255, 0, 0.2) !important;
+    box-shadow: 0 0 4px rgba(0, 255, 0, 0.15) !important;
+    filter: brightness(0.7);
   }
 }
 
-@keyframes todayNumberTwoBlinks {
-  0%, 38%, 78% {
+@keyframes todayNumberBlink {
+  0%, 100% {
+    background-color: var(--accent-primary) !important;
+    color: #000000 !important;
+    box-shadow: 0 0 6px rgba(0, 255, 0, 0.7);
+  }
+  50% {
     background-color: transparent !important;
     color: var(--accent-white) !important;
     box-shadow: none !important;
   }
-  18%, 58%, 100% {
-    background-color: var(--accent-primary) !important;
-    color: #000000 !important;
-    box-shadow: 0 0 6px rgba(0, 255, 0, 0.7) !important;
-  }
 }
 
 .day-cell.today-blinking {
-  animation: todayTwoBlinks 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+  animation: todayBlink 0.75s ease-in-out infinite !important;
   z-index: 4;
 }
 .day-cell.today-blinking .day-number {
-  animation: todayNumberTwoBlinks 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+  animation: todayNumberBlink 0.75s ease-in-out infinite !important;
 }
 
 /* Active Day Cell on Hover & Popover Shown (Slow CRT Phosphor Pulse) */

@@ -24,6 +24,8 @@ class DarkCalApp {
     this.activeHoverCell = null;
     this.hoverTimeout = null;
     this.todayBlinkTimeout = null;
+    this.todayInteractionCleanup = null;
+    this.activeTodayCell = null;
     this.isMouseOverPopover = false;
 
     this.cacheDom();
@@ -811,6 +813,7 @@ class DarkCalApp {
       clearTimeout(this.todayBlinkTimeout);
       this.todayBlinkTimeout = null;
     }
+    this.stopTodayBlinking();
 
     const firstDayOfMonth = new Date(this.viewYear, this.viewMonth, 1);
     const lastDayOfMonth = new Date(this.viewYear, this.viewMonth + 1, 0);
@@ -890,17 +893,52 @@ class DarkCalApp {
       this.monthGrid.appendChild(cell);
     }
 
-    // After all tiles finish scanning in, trigger 2 blinks on todayCell and lock on bright green
+    // After all tiles finish scanning in, trigger continuous bright-green blinking on todayCell until user interaction
     if (todayCell) {
       const totalScanDuration = (totalCells - 1) * 28 + 160;
       this.todayBlinkTimeout = setTimeout(() => {
-        todayCell.classList.add('is-today', 'today-blinking');
-        todayCell.addEventListener('animationend', (e) => {
-          if (e.animationName === 'todayTwoBlinks') {
-            todayCell.classList.remove('today-blinking');
-          }
-        }, { once: true });
+        this.startTodayBlinking(todayCell);
       }, totalScanDuration + 25);
+    }
+  }
+
+  startTodayBlinking(todayCell) {
+    if (!todayCell) return;
+    this.activeTodayCell = todayCell;
+    todayCell.classList.add('is-today', 'today-blinking');
+
+    const onUserInteraction = (e) => {
+      // Ignore phantom mousemoves with no actual displacement
+      if (e.type === 'mousemove' && e.movementX === 0 && e.movementY === 0) {
+        return;
+      }
+      this.stopTodayBlinking();
+    };
+
+    this.todayInteractionCleanup = () => {
+      window.removeEventListener('mousemove', onUserInteraction);
+      window.removeEventListener('mousedown', onUserInteraction);
+      window.removeEventListener('keydown', onUserInteraction);
+      window.removeEventListener('wheel', onUserInteraction);
+      window.removeEventListener('touchstart', onUserInteraction);
+    };
+
+    window.addEventListener('mousemove', onUserInteraction, { passive: true });
+    window.addEventListener('mousedown', onUserInteraction, { passive: true });
+    window.addEventListener('keydown', onUserInteraction, { passive: true });
+    window.addEventListener('wheel', onUserInteraction, { passive: true });
+    window.addEventListener('touchstart', onUserInteraction, { passive: true });
+  }
+
+  stopTodayBlinking() {
+    if (this.todayInteractionCleanup) {
+      this.todayInteractionCleanup();
+      this.todayInteractionCleanup = null;
+    }
+    if (this.activeTodayCell) {
+      this.activeTodayCell.classList.remove('today-blinking');
+      this.activeTodayCell.classList.add('is-today');
+      this.activeTodayCell = null;
     }
   }
 
