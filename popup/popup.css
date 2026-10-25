@@ -291,11 +291,6 @@ body.theme-obsidian .crt-overlay {
   font-size: 13px;
 }
 
-.popover-cursor {
-  font-size: 13px;
-  margin-right: 4px;
-}
-
 @keyframes crt-cursor-blink {
   0%, 100% {
     opacity: 1;

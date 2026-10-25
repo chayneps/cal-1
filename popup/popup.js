@@ -27,6 +27,7 @@ class DarkCalApp {
     this.todayInteractionCleanup = null;
     this.activeTodayCell = null;
     this.isMouseOverPopover = false;
+    this.isUserEditingCommand = false;
 
     this.cacheDom();
     this.bindEvents();
@@ -120,11 +121,22 @@ class DarkCalApp {
         } else if (e.key === 'Escape') {
           e.preventDefault();
           this.updateMonthHeading();
-          this.calCommandLine.blur();
+          this.focusCommandLine();
+        } else if (e.key === 'ArrowLeft' && !this.isUserEditingCommand) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.navigateMonth(-1);
+        } else if (e.key === 'ArrowRight' && !this.isUserEditingCommand) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.navigateMonth(1);
+        } else if (e.key === 'Backspace') {
+          this.isUserEditingCommand = true;
         }
       });
 
       this.calCommandLine.addEventListener('input', () => {
+        this.isUserEditingCommand = true;
         this.syncCommandInputWidth();
       });
 
@@ -241,17 +253,74 @@ class DarkCalApp {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (!this.settingsModal.classList.contains('hidden')) {
+      // Don't intercept when settings modal is open (except Escape)
+      if (this.settingsModal && !this.settingsModal.classList.contains('hidden')) {
+        if (e.key === 'Escape') {
           this.closeSettings();
-        } else if (!this.dayDetailPopover.classList.contains('hidden')) {
+        }
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        if (!this.dayDetailPopover.classList.contains('hidden')) {
           this.hidePopover();
+        } else if (this.isUserEditingCommand) {
+          this.updateMonthHeading();
+          this.focusCommandLine();
+        }
+        return;
+      }
+
+      const activeTag = document.activeElement?.tagName;
+      const isInputFocused = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+
+      // Left and Right arrows for month navigation when not focused on an input
+      if (e.key === 'ArrowLeft') {
+        if (!isInputFocused) {
+          e.preventDefault();
+          this.navigateMonth(-1);
+        }
+      } else if (e.key === 'ArrowRight') {
+        if (!isInputFocused) {
+          e.preventDefault();
+          this.navigateMonth(1);
+        }
+      } else if (e.key === 'Backspace') {
+        // If not already typing in an input, focus the command line and backspace
+        if (document.activeElement !== this.calCommandLine && !isInputFocused) {
+          e.preventDefault();
+          if (this.calCommandLine) {
+            this.focusCommandLine();
+            this.isUserEditingCommand = true;
+            const val = this.calCommandLine.value;
+            if (val.length > 0) {
+              this.calCommandLine.value = val.slice(0, -1);
+              const len = this.calCommandLine.value.length;
+              this.calCommandLine.setSelectionRange(len, len);
+              this.syncCommandInputWidth();
+            }
+          }
         }
       } else if ((e.key === '/' || e.key === ':') && !e.metaKey && !e.ctrlKey) {
-        if (this.calCommandLine && document.activeElement !== this.calCommandLine && document.activeElement?.tagName !== 'INPUT') {
+        if (this.calCommandLine && document.activeElement !== this.calCommandLine && !isInputFocused) {
           e.preventDefault();
           this.calCommandLine.focus();
           this.calCommandLine.select();
+          this.isUserEditingCommand = true;
+        }
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // If user starts typing alphanumeric characters while not focused on input, redirect to calCommandLine
+        if (!isInputFocused && this.calCommandLine) {
+          this.focusCommandLine();
+          this.isUserEditingCommand = true;
+          const val = this.calCommandLine.value;
+          const start = this.calCommandLine.selectionStart ?? val.length;
+          const end = this.calCommandLine.selectionEnd ?? val.length;
+          this.calCommandLine.value = val.slice(0, start) + e.key + val.slice(end);
+          const newPos = start + 1;
+          this.calCommandLine.setSelectionRange(newPos, newPos);
+          this.syncCommandInputWidth();
+          e.preventDefault();
         }
       }
     });
@@ -352,6 +421,9 @@ class DarkCalApp {
     } else {
       this.loadCalendarData();
     }
+
+    this.focusCommandLine();
+    requestAnimationFrame(() => this.focusCommandLine());
   }
 
   setCrtEffects(enabled) {
@@ -555,11 +627,22 @@ class DarkCalApp {
     const monthStr = monthNames[this.viewMonth];
     if (this.calCommandLine) {
       this.calCommandLine.value = `cal ${monthStr} ${this.viewYear}`;
+      this.isUserEditingCommand = false;
       this.syncCommandInputWidth();
+      const len = this.calCommandLine.value.length;
+      this.calCommandLine.setSelectionRange(len, len);
     }
     if (this.currentMonthYear) {
       this.currentMonthYear.textContent = `${monthStr} ${this.viewYear}`;
     }
+  }
+
+  focusCommandLine() {
+    if (!this.calCommandLine) return;
+    this.calCommandLine.focus();
+    const len = this.calCommandLine.value.length;
+    this.calCommandLine.setSelectionRange(len, len);
+    this.syncCommandInputWidth();
   }
 
   syncCommandInputWidth() {
@@ -1379,6 +1462,7 @@ class DarkCalApp {
 
   closeSettings() {
     this.settingsModal.classList.add('hidden');
+    this.focusCommandLine();
   }
 }
 
