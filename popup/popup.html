@@ -111,11 +111,10 @@
       </div>
     </section>
 
-    <!-- Quick Status Toast -->
-    <div id="statusToast" class="status-toast hidden"></div>
-
     <!-- Calendar Month View Container -->
     <main class="calendar-viewport">
+      <!-- Quick Status Toast (Overlays over Mon Tue line without layout shift) -->
+      <div id="statusToast" class="status-toast hidden" aria-live="polite"></div>
       <div id="weekdayHeader" class="weekday-header"></div>
       <div id="monthGrid" class="month-grid" role="grid" aria-label="Monthly Calendar"></div>
     </main>

@@ -28,6 +28,7 @@ class DarkCalApp {
     this.activeTodayCell = null;
     this.isMouseOverPopover = false;
     this.isUserEditingCommand = false;
+    this.toastTimeout = null;
 
     this.cacheDom();
     this.bindEvents();
@@ -120,8 +121,8 @@ class DarkCalApp {
           this.handleCalCommandSubmit();
         } else if (e.key === 'Escape') {
           e.preventDefault();
-          this.updateMonthHeading();
-          this.focusCommandLine();
+          e.stopPropagation();
+          this.jumpToToday();
         } else if (e.key === 'ArrowLeft' && !this.isUserEditingCommand) {
           e.preventDefault();
           e.stopPropagation();
@@ -253,21 +254,18 @@ class DarkCalApp {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-      // Don't intercept when settings modal is open (except Escape)
-      if (this.settingsModal && !this.settingsModal.classList.contains('hidden')) {
-        if (e.key === 'Escape') {
+      // ESC key: Reload and reset to today
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (this.settingsModal && !this.settingsModal.classList.contains('hidden')) {
           this.closeSettings();
         }
+        this.jumpToToday();
         return;
       }
 
-      if (e.key === 'Escape') {
-        if (!this.dayDetailPopover.classList.contains('hidden')) {
-          this.hidePopover();
-        } else if (this.isUserEditingCommand) {
-          this.updateMonthHeading();
-          this.focusCommandLine();
-        }
+      // Don't intercept other shortcuts when settings modal is open
+      if (this.settingsModal && !this.settingsModal.classList.contains('hidden')) {
         return;
       }
 
@@ -882,11 +880,16 @@ class DarkCalApp {
     this.today = new Date();
     this.viewYear = this.today.getFullYear();
     this.viewMonth = this.today.getMonth();
+    this.isUserEditingCommand = false;
     this.updateMonthHeading();
+    this.focusCommandLine();
     if (this.useDemoData || !this.icalUrl) {
       this.loadDemoEvents();
     } else {
       this.renderMonthGrid();
+      if (this.icalUrl) {
+        this.handleIcalSync(false);
+      }
     }
   }
 
@@ -1448,10 +1451,15 @@ class DarkCalApp {
   }
 
   showToast(msg, duration = 3000) {
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+      this.toastTimeout = null;
+    }
     this.statusToast.textContent = msg;
     this.statusToast.classList.remove('hidden');
-    setTimeout(() => {
+    this.toastTimeout = setTimeout(() => {
       this.statusToast.classList.add('hidden');
+      this.toastTimeout = null;
     }, duration);
   }
 
