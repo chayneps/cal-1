@@ -132,6 +132,14 @@ class DarkCalApp {
           e.preventDefault();
           e.stopPropagation();
           this.navigateMonth(1);
+        } else if (e.key === 'ArrowUp' && !this.isUserEditingCommand) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.navigateYear(-1);
+        } else if (e.key === 'ArrowDown' && !this.isUserEditingCommand) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.navigateYear(1);
         } else if (e.key === 'Backspace') {
           this.isUserEditingCommand = true;
         }
@@ -273,7 +281,7 @@ class DarkCalApp {
       const activeTag = document.activeElement?.tagName;
       const isInputFocused = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
 
-      // Left and Right arrows for month navigation when not focused on an input
+      // Arrow keys for month and year navigation when not focused on an input
       if (e.key === 'ArrowLeft') {
         if (!isInputFocused) {
           e.preventDefault();
@@ -283,6 +291,16 @@ class DarkCalApp {
         if (!isInputFocused) {
           e.preventDefault();
           this.navigateMonth(1);
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (!isInputFocused) {
+          e.preventDefault();
+          this.navigateYear(-1);
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (!isInputFocused) {
+          e.preventDefault();
+          this.navigateYear(1);
         }
       } else if (e.key === 'Backspace') {
         // If not already typing in an input, focus the command line and backspace
@@ -870,6 +888,17 @@ class DarkCalApp {
       this.viewMonth = 0;
       this.viewYear += 1;
     }
+    this.updateMonthHeading();
+    if (this.useDemoData || !this.icalUrl) {
+      this.loadDemoEvents();
+    } else {
+      this.renderMonthGrid();
+    }
+  }
+
+  navigateYear(delta) {
+    this.hidePopover();
+    this.viewYear += delta;
     this.updateMonthHeading();
     if (this.useDemoData || !this.icalUrl) {
       this.loadDemoEvents();

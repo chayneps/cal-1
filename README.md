@@ -16,7 +16,12 @@ Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any mo
 * `cal @work` / `cal @personal` / `cal @all` &rarr; Switch active calendar feed
 * `cal -c <name>` &rarr; Set or switch active calendar
 * `cal --help` &rarr; Show command usage tips
-* **Keyboard Shortcut**: Press `/` or `:` anywhere to jump focus to the command input!
+* **Keyboard Shortcuts**:
+  * `←` / `→` (Left / Right Arrow): Navigate 1 month backward / forward
+  * `↑` / `↓` (Up / Down Arrow): Navigate 1 year backward / forward (e.g. Oct 2026 &rarr; Oct 2027)
+  * `ESC`: Reload and reset to today
+  * `Backspace`: Edit the command prompt directly
+  * `/` or `:`: Focus and select the command line prompt
 * **Spaceship Calendar Segment**: Click `on ⎇ <calendar>` in the header to cycle through available calendar feeds or view active calendar details!
 
 ---
