@@ -53,6 +53,15 @@ Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any mo
   - Pitch black background (`#000000`) with phosphor terminal green text (`#00ff00`), ANSI accents (cyan, yellow, red, magenta), and CRT subtle glow.
   - Switchable in Settings to **Obsidian Dark** if preferred.
 - 🔤 **Hack Monospace Font**: Bundled official Hack typeface (`woff2`) for clean code and schedule alignment.
+- 🎨 **Thai Daily Colors of the Week (สีประจำวัน)**:
+  - **Sunday (วันอาทิตย์)**: Red (`#ef4444`)
+  - **Monday (วันจันทร์)**: Yellow (`#eab308`)
+  - **Tuesday (วันอังคาร)**: Pink (`#ec4899`)
+  - **Wednesday (วันพุธ)**: Green (`#22c55e`)
+  - **Thursday (วันพฤหัสบดี)**: Orange (`#f97316`)
+  - **Friday (วันศุกร์)**: Light Blue (`#38bdf8`)
+  - **Saturday (วันเสาร์)**: Purple (`#a855f7`)
+  - Each day of the week and weekday header is dynamically rendered in its traditional Thai daily color, supporting both Sunday-first and Monday-first views.
 - 📅 **Month Grid View**: 7-day grid with weekday headers, current day glowing highlight, and event count pills.
 - 🔍 **Top-to-Bottom Hover Day Schedule**:
   - Hover over any day cell to inspect the entire day's schedule chronologically from top to bottom (00:00 to 23:59).

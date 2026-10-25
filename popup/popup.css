@@ -56,41 +56,55 @@
   --accent-white: #e5e5e5;       /* Ansi 15 Bright White */
   --accent-dim-grey: #666666;    /* Ansi 8 Grey */
 
-  /* ANSI 41m-47m Column Matrix Palette (Homebrew colortest) */
-  --ansi-41m-bg: #980000;
-  --ansi-41m-border: #b90000;
-  --ansi-41m-bright: #e50000;
-  --ansi-41m-text: #ff9999;
+  /* Thai Daily Colors of the Week (สีประจำวัน) */
+  /* Sunday (วันอาทิตย์) - Red */
+  --thai-sun-bg: rgba(220, 38, 38, 0.22);
+  --thai-sun-bg-hover: rgba(220, 38, 38, 0.45);
+  --thai-sun-border: rgba(239, 68, 68, 0.55);
+  --thai-sun-bright: #ef4444;
+  --thai-sun-text: #fca5a5;
 
-  --ansi-42m-bg: #00a600;
-  --ansi-42m-border: #00d900;
-  --ansi-42m-bright: #00ff00;
-  --ansi-42m-text: #88ff88;
+  /* Monday (วันจันทร์) - Yellow */
+  --thai-mon-bg: rgba(202, 138, 4, 0.22);
+  --thai-mon-bg-hover: rgba(202, 138, 4, 0.45);
+  --thai-mon-border: rgba(234, 179, 8, 0.55);
+  --thai-mon-bright: #eab308;
+  --thai-mon-text: #fef08a;
 
-  --ansi-43m-bg: #989800;
-  --ansi-43m-border: #e5e500;
-  --ansi-43m-bright: #ffff44;
-  --ansi-43m-text: #ffff88;
+  /* Tuesday (วันอังคาร) - Pink */
+  --thai-tue-bg: rgba(219, 39, 119, 0.22);
+  --thai-tue-bg-hover: rgba(219, 39, 119, 0.45);
+  --thai-tue-border: rgba(236, 72, 153, 0.55);
+  --thai-tue-bright: #ec4899;
+  --thai-tue-text: #fbcfe8;
 
-  --ansi-44m-bg: #0c0cbe;
-  --ansi-44m-border: #3b82f6;
-  --ansi-44m-bright: #60a5fa;
-  --ansi-44m-text: #93c5fd;
+  /* Wednesday (วันพุธ) - Green */
+  --thai-wed-bg: rgba(22, 163, 74, 0.22);
+  --thai-wed-bg-hover: rgba(22, 163, 74, 0.45);
+  --thai-wed-border: rgba(34, 197, 94, 0.55);
+  --thai-wed-bright: #22c55e;
+  --thai-wed-text: #86efac;
 
-  --ansi-45m-bg: #b200b2;
-  --ansi-45m-border: #e500e5;
-  --ansi-45m-bright: #ff66ff;
-  --ansi-45m-text: #ff99ff;
+  /* Thursday (วันพฤหัสบดี) - Orange */
+  --thai-thu-bg: rgba(234, 88, 12, 0.22);
+  --thai-thu-bg-hover: rgba(234, 88, 12, 0.45);
+  --thai-thu-border: rgba(249, 115, 22, 0.55);
+  --thai-thu-bright: #f97316;
+  --thai-thu-text: #fed7aa;
 
-  --ansi-46m-bg: #00a6b2;
-  --ansi-46m-border: #00e5e5;
-  --ansi-46m-bright: #22d3ee;
-  --ansi-46m-text: #a5f3fc;
+  /* Friday (วันศุกร์) - Light Blue (Sky Blue) */
+  --thai-fri-bg: rgba(6, 182, 212, 0.22);
+  --thai-fri-bg-hover: rgba(6, 182, 212, 0.45);
+  --thai-fri-border: rgba(56, 189, 248, 0.55);
+  --thai-fri-bright: #38bdf8;
+  --thai-fri-text: #bae6fd;
 
-  --ansi-47m-bg: #bebebe;
-  --ansi-47m-border: #e5e5e5;
-  --ansi-47m-bright: #ffffff;
-  --ansi-47m-text: #ffffff;
+  /* Saturday (วันเสาร์) - Purple */
+  --thai-sat-bg: rgba(147, 51, 234, 0.22);
+  --thai-sat-bg-hover: rgba(147, 51, 234, 0.45);
+  --thai-sat-border: rgba(168, 85, 247, 0.55);
+  --thai-sat-bright: #a855f7;
+  --thai-sat-text: #e9d5ff;
 
   /* Phosphor & ANSI Glows */
   --glow-green: 0 0 5px rgba(0, 255, 0, 0.55);
@@ -646,24 +660,15 @@ body.theme-homebrew textarea {
 .weekday-col {
   text-align: center;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3px 1px;
+  padding: 5px 2px;
   border-radius: var(--radius-sm);
   font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   transition: all var(--transition-fast);
-}
-
-.weekday-ansi {
-  font-size: 8px;
-  font-weight: 700;
-  opacity: 0.85;
-  letter-spacing: 0.5px;
-  line-height: 1;
-  margin-bottom: 2px;
 }
 
 .weekday-name {
@@ -672,53 +677,47 @@ body.theme-homebrew textarea {
   line-height: 1;
 }
 
-/* Weekday Column 1: ANSI 41m (Red) */
-.weekday-col.col-1 {
-  background: rgba(152, 0, 0, 0.40);
-  border: 1px solid rgba(229, 0, 0, 0.65);
-  color: var(--ansi-41m-bright);
+/* Thai Daily Colors Header Badges */
+.weekday-col.day-sun {
+  background: rgba(239, 68, 68, 0.35);
+  border: 1px solid var(--thai-sun-border);
+  color: var(--thai-sun-bright);
 }
 
-/* Weekday Column 2: ANSI 42m (Green) */
-.weekday-col.col-2 {
-  background: rgba(0, 166, 0, 0.35);
-  border: 1px solid rgba(0, 217, 0, 0.65);
-  color: var(--ansi-42m-bright);
+.weekday-col.day-mon {
+  background: rgba(234, 179, 8, 0.32);
+  border: 1px solid var(--thai-mon-border);
+  color: var(--thai-mon-bright);
 }
 
-/* Weekday Column 3: ANSI 43m (Yellow) */
-.weekday-col.col-3 {
-  background: rgba(152, 152, 0, 0.38);
-  border: 1px solid rgba(229, 229, 0, 0.65);
-  color: var(--ansi-43m-bright);
+.weekday-col.day-tue {
+  background: rgba(236, 72, 153, 0.35);
+  border: 1px solid var(--thai-tue-border);
+  color: var(--thai-tue-bright);
 }
 
-/* Weekday Column 4: ANSI 44m (Blue) */
-.weekday-col.col-4 {
-  background: rgba(12, 12, 190, 0.45);
-  border: 1px solid rgba(59, 130, 246, 0.65);
-  color: var(--ansi-44m-bright);
+.weekday-col.day-wed {
+  background: rgba(34, 197, 94, 0.32);
+  border: 1px solid var(--thai-wed-border);
+  color: var(--thai-wed-bright);
 }
 
-/* Weekday Column 5: ANSI 45m (Magenta) */
-.weekday-col.col-5 {
-  background: rgba(178, 0, 178, 0.40);
-  border: 1px solid rgba(229, 0, 229, 0.65);
-  color: var(--ansi-45m-bright);
+.weekday-col.day-thu {
+  background: rgba(249, 115, 22, 0.35);
+  border: 1px solid var(--thai-thu-border);
+  color: var(--thai-thu-bright);
 }
 
-/* Weekday Column 6: ANSI 46m (Cyan) */
-.weekday-col.col-6 {
-  background: rgba(0, 166, 178, 0.38);
-  border: 1px solid rgba(0, 229, 229, 0.65);
-  color: var(--ansi-46m-bright);
+.weekday-col.day-fri {
+  background: rgba(56, 189, 248, 0.32);
+  border: 1px solid var(--thai-fri-border);
+  color: var(--thai-fri-bright);
 }
 
-/* Weekday Column 7: ANSI 47m (Silver/White) */
-.weekday-col.col-7 {
-  background: rgba(190, 190, 190, 0.32);
-  border: 1px solid rgba(229, 229, 229, 0.65);
-  color: var(--ansi-47m-bright);
+.weekday-col.day-sat {
+  background: rgba(168, 85, 247, 0.35);
+  border: 1px solid var(--thai-sat-border);
+  color: var(--thai-sat-bright);
 }
 
 .month-grid {
@@ -745,130 +744,116 @@ body.theme-homebrew textarea {
   overflow: hidden;
 }
 
-/* 7-Column ANSI Color Matrix (41m - 47m) */
-.day-cell.col-1,
-.month-grid > .day-cell:nth-child(7n + 1) {
-  background-color: rgba(152, 0, 0, 0.30);
-  border: 1px solid rgba(185, 0, 0, 0.55);
+/* Thai Daily Colors Day Cells */
+/* Sunday (วันอาทิตย์) - Red */
+.day-cell.day-sun {
+  background-color: var(--thai-sun-bg);
+  border: 1px solid var(--thai-sun-border);
 }
-.day-cell.col-1:hover,
-.month-grid > .day-cell:nth-child(7n + 1):hover {
-  background-color: rgba(152, 0, 0, 0.55);
-  border-color: var(--ansi-41m-bright);
-  box-shadow: 0 0 10px rgba(229, 0, 0, 0.45);
+.day-cell.day-sun:hover {
+  background-color: var(--thai-sun-bg-hover);
+  border-color: var(--thai-sun-bright);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
 }
-.day-cell.col-1 .day-number,
-.month-grid > .day-cell:nth-child(7n + 1) .day-number {
-  color: var(--ansi-41m-text);
+.day-cell.day-sun .day-number {
+  color: var(--thai-sun-text);
 }
 
-.day-cell.col-2,
-.month-grid > .day-cell:nth-child(7n + 2) {
-  background-color: rgba(0, 166, 0, 0.25);
-  border: 1px solid rgba(0, 217, 0, 0.48);
+/* Monday (วันจันทร์) - Yellow */
+.day-cell.day-mon {
+  background-color: var(--thai-mon-bg);
+  border: 1px solid var(--thai-mon-border);
 }
-.day-cell.col-2:hover,
-.month-grid > .day-cell:nth-child(7n + 2):hover {
-  background-color: rgba(0, 166, 0, 0.48);
-  border-color: var(--ansi-42m-bright);
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.45);
+.day-cell.day-mon:hover {
+  background-color: var(--thai-mon-bg-hover);
+  border-color: var(--thai-mon-bright);
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.45);
 }
-.day-cell.col-2 .day-number,
-.month-grid > .day-cell:nth-child(7n + 2) .day-number {
-  color: var(--ansi-42m-text);
+.day-cell.day-mon .day-number {
+  color: var(--thai-mon-text);
 }
 
-.day-cell.col-3,
-.month-grid > .day-cell:nth-child(7n + 3) {
-  background-color: rgba(152, 152, 0, 0.28);
-  border: 1px solid rgba(229, 229, 0, 0.48);
+/* Tuesday (วันอังคาร) - Pink */
+.day-cell.day-tue {
+  background-color: var(--thai-tue-bg);
+  border: 1px solid var(--thai-tue-border);
 }
-.day-cell.col-3:hover,
-.month-grid > .day-cell:nth-child(7n + 3):hover {
-  background-color: rgba(152, 152, 0, 0.50);
-  border-color: var(--ansi-43m-bright);
-  box-shadow: 0 0 10px rgba(229, 229, 0, 0.45);
+.day-cell.day-tue:hover {
+  background-color: var(--thai-tue-bg-hover);
+  border-color: var(--thai-tue-bright);
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.45);
 }
-.day-cell.col-3 .day-number,
-.month-grid > .day-cell:nth-child(7n + 3) .day-number {
-  color: var(--ansi-43m-text);
+.day-cell.day-tue .day-number {
+  color: var(--thai-tue-text);
 }
 
-.day-cell.col-4,
-.month-grid > .day-cell:nth-child(7n + 4) {
-  background-color: rgba(12, 12, 190, 0.32);
-  border: 1px solid rgba(59, 130, 246, 0.48);
+/* Wednesday (วันพุธ) - Green */
+.day-cell.day-wed {
+  background-color: var(--thai-wed-bg);
+  border: 1px solid var(--thai-wed-border);
 }
-.day-cell.col-4:hover,
-.month-grid > .day-cell:nth-child(7n + 4):hover {
-  background-color: rgba(12, 12, 190, 0.55);
-  border-color: var(--ansi-44m-bright);
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.45);
+.day-cell.day-wed:hover {
+  background-color: var(--thai-wed-bg-hover);
+  border-color: var(--thai-wed-bright);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.45);
 }
-.day-cell.col-4 .day-number,
-.month-grid > .day-cell:nth-child(7n + 4) .day-number {
-  color: var(--ansi-44m-text);
+.day-cell.day-wed .day-number {
+  color: var(--thai-wed-text);
 }
 
-.day-cell.col-5,
-.month-grid > .day-cell:nth-child(7n + 5) {
-  background-color: rgba(178, 0, 178, 0.28);
-  border: 1px solid rgba(229, 0, 229, 0.48);
+/* Thursday (วันพฤหัสบดี) - Orange */
+.day-cell.day-thu {
+  background-color: var(--thai-thu-bg);
+  border: 1px solid var(--thai-thu-border);
 }
-.day-cell.col-5:hover,
-.month-grid > .day-cell:nth-child(7n + 5):hover {
-  background-color: rgba(178, 0, 178, 0.50);
-  border-color: var(--ansi-45m-bright);
-  box-shadow: 0 0 10px rgba(229, 0, 229, 0.45);
+.day-cell.day-thu:hover {
+  background-color: var(--thai-thu-bg-hover);
+  border-color: var(--thai-thu-bright);
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.45);
 }
-.day-cell.col-5 .day-number,
-.month-grid > .day-cell:nth-child(7n + 5) .day-number {
-  color: var(--ansi-45m-text);
+.day-cell.day-thu .day-number {
+  color: var(--thai-thu-text);
 }
 
-.day-cell.col-6,
-.month-grid > .day-cell:nth-child(7n + 6) {
-  background-color: rgba(0, 166, 178, 0.28);
-  border: 1px solid rgba(0, 229, 229, 0.48);
+/* Friday (วันศุกร์) - Light Blue */
+.day-cell.day-fri {
+  background-color: var(--thai-fri-bg);
+  border: 1px solid var(--thai-fri-border);
 }
-.day-cell.col-6:hover,
-.month-grid > .day-cell:nth-child(7n + 6):hover {
-  background-color: rgba(0, 166, 178, 0.50);
-  border-color: var(--ansi-46m-bright);
-  box-shadow: 0 0 10px rgba(0, 229, 229, 0.45);
+.day-cell.day-fri:hover {
+  background-color: var(--thai-fri-bg-hover);
+  border-color: var(--thai-fri-bright);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
 }
-.day-cell.col-6 .day-number,
-.month-grid > .day-cell:nth-child(7n + 6) .day-number {
-  color: var(--ansi-46m-text);
+.day-cell.day-fri .day-number {
+  color: var(--thai-fri-text);
 }
 
-.day-cell.col-7,
-.month-grid > .day-cell:nth-child(7n + 7) {
-  background-color: rgba(190, 190, 190, 0.24);
-  border: 1px solid rgba(229, 229, 229, 0.42);
+/* Saturday (วันเสาร์) - Purple */
+.day-cell.day-sat {
+  background-color: var(--thai-sat-bg);
+  border: 1px solid var(--thai-sat-border);
 }
-.day-cell.col-7:hover,
-.month-grid > .day-cell:nth-child(7n + 7):hover {
-  background-color: rgba(190, 190, 190, 0.45);
-  border-color: var(--ansi-47m-bright);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+.day-cell.day-sat:hover {
+  background-color: var(--thai-sat-bg-hover);
+  border-color: var(--thai-sat-bright);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.45);
 }
-.day-cell.col-7 .day-number,
-.month-grid > .day-cell:nth-child(7n + 7) .day-number {
-  color: var(--ansi-47m-text);
+.day-cell.day-sat .day-number {
+  color: var(--thai-sat-text);
 }
 
 /* Other Month Cells: Dimmed */
 .day-cell.other-month {
-  opacity: 0.30;
-  filter: saturate(0.55);
+  opacity: 0.28;
+  filter: saturate(0.5);
 }
 .day-cell.other-month:hover {
   opacity: 0.80;
   filter: saturate(1);
 }
 
-/* Today Cell: Cur High-Contrast */
+/* Today Cell: Glowing Highlight */
 .day-cell.is-today {
   border-color: var(--accent-primary) !important;
   box-shadow: 0 0 0 2px var(--accent-primary), 0 0 14px rgba(0, 255, 0, 0.65) !important;
@@ -888,36 +873,11 @@ body.theme-homebrew textarea {
   box-shadow: 0 0 6px rgba(0, 255, 0, 0.7);
 }
 
-/* Pinned Cell: Sel High-Contrast */
+/* Pinned / Selected Cell */
 .day-cell.is-pinned {
   border-color: #ffffff !important;
   box-shadow: 0 0 0 2px #ffffff, 0 0 14px rgba(255, 255, 255, 0.65) !important;
   z-index: 5;
-}
-
-/* Badges for Cur and Sel */
-.ansi-cur-badge {
-  font-size: 8px;
-  font-weight: 700;
-  padding: 0 3px;
-  border-radius: 2px;
-  background-color: var(--accent-primary);
-  color: #000000;
-  line-height: 14px;
-  letter-spacing: 0.5px;
-  box-shadow: 0 0 4px rgba(0, 255, 0, 0.7);
-}
-
-.ansi-sel-badge {
-  font-size: 8px;
-  font-weight: 700;
-  padding: 0 3px;
-  border-radius: 2px;
-  background-color: #ffffff;
-  color: #000000;
-  line-height: 14px;
-  letter-spacing: 0.5px;
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.7);
 }
 
 .day-cell-top {
