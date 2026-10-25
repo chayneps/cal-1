@@ -817,6 +817,8 @@ class DarkCalApp {
     const prevMonthLastDay = new Date(this.viewYear, this.viewMonth, 0).getDate();
     const todayDateStr = this.formatDateKey(this.today);
 
+    let cellIndex = 0;
+
     // Prev month days
     for (let i = firstDayIndex - 1; i >= 0; i--) {
       const dayNum = prevMonthLastDay - i;
@@ -830,7 +832,8 @@ class DarkCalApp {
         dayKey,
         isOtherMonth: true,
         isToday: dayKey === todayDateStr,
-        events: dayEvents
+        events: dayEvents,
+        cellIndex: cellIndex++
       });
       this.monthGrid.appendChild(cell);
     }
@@ -847,7 +850,8 @@ class DarkCalApp {
         dayKey,
         isOtherMonth: false,
         isToday: dayKey === todayDateStr,
-        events: dayEvents
+        events: dayEvents,
+        cellIndex: cellIndex++
       });
       this.monthGrid.appendChild(cell);
     }
@@ -868,15 +872,21 @@ class DarkCalApp {
         dayKey,
         isOtherMonth: true,
         isToday: dayKey === todayDateStr,
-        events: dayEvents
+        events: dayEvents,
+        cellIndex: cellIndex++
       });
       this.monthGrid.appendChild(cell);
     }
   }
 
-  createDayCell({ date, dayNum, dayKey, isOtherMonth, isToday, events }) {
+  createDayCell({ date, dayNum, dayKey, isOtherMonth, isToday, events, cellIndex = 0 }) {
     const cell = document.createElement('div');
-    cell.className = 'day-cell';
+    cell.className = 'day-cell tile-appear';
+    cell.style.animationDelay = `${cellIndex * 42}ms`;
+    cell.addEventListener('animationend', () => {
+      cell.classList.remove('tile-appear');
+      cell.style.animationDelay = '';
+    }, { once: true });
     const dayClasses = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
     cell.classList.add(dayClasses[date.getDay()]);
     cell.dataset.date = dayKey;

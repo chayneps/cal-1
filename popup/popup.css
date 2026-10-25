@@ -984,11 +984,66 @@ body.theme-homebrew textarea {
   z-index: 5;
 }
 
+/* Sequential Raster Scan-In Entrance Animation */
+@keyframes tileScanIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(6px);
+    filter: brightness(2) contrast(1.15);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02) translateY(-1px);
+    filter: brightness(1.3);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+  }
+}
+
+@keyframes tileScanInOtherMonth {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(6px);
+    filter: brightness(1.6);
+  }
+  60% {
+    opacity: 0.5;
+    transform: scale(1.02) translateY(-1px);
+    filter: brightness(1.2);
+  }
+  100% {
+    opacity: 0.35;
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+  }
+}
+
+.day-cell.tile-appear {
+  animation: tileScanIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.day-cell.other-month.tile-appear {
+  animation: tileScanInOtherMonth 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .day-cell.popover-active {
     animation: none !important;
     border-color: #ffffff !important;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.75) !important;
+  }
+  .day-cell.tile-appear {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .day-cell.other-month.tile-appear {
+    animation: none !important;
+    opacity: 0.35 !important;
+    transform: none !important;
   }
 }
 
