@@ -174,7 +174,9 @@ class DarkCalApp {
     // Month Navigation
     this.prevMonthBtn.addEventListener('click', () => this.navigateMonth(-1));
     this.nextMonthBtn.addEventListener('click', () => this.navigateMonth(1));
-    this.todayBtn.addEventListener('click', () => this.jumpToToday());
+    if (this.todayBtn) {
+      this.todayBtn.addEventListener('click', () => this.jumpToToday());
+    }
 
     // Sync Button
     this.syncBtn.addEventListener('click', () => this.refreshCalendar(true));
@@ -374,15 +376,20 @@ class DarkCalApp {
   }
 
   updateStatus(isDemo, count = 0) {
+    if (this.connectionBadge) {
+      if (isDemo) {
+        this.connectionBadge.textContent = '[DEMO]';
+        this.connectionBadge.className = 'badge badge-demo';
+      } else {
+        this.connectionBadge.textContent = '[ONLINE]';
+        this.connectionBadge.className = 'badge badge-live';
+      }
+    }
     if (isDemo) {
-      this.connectionBadge.textContent = '[DEMO]';
-      this.connectionBadge.className = 'badge badge-demo';
       const filterStr = (this.activeCalendarFilter && this.activeCalendarFilter !== 'all') ? ` [feed: ${this.activeCalendarFilter}]` : ' (4 sample feeds)';
       this.calendarSourceStatus.textContent = `SYS_MODE: DEMO${filterStr}`;
       this.lastSyncTimeText.textContent = '';
     } else {
-      this.connectionBadge.textContent = '[ONLINE]';
-      this.connectionBadge.className = 'badge badge-live';
       this.calendarSourceStatus.textContent = `SYS_LIVE: ${this.calendarName} (${count} events indexed)`;
       this.lastSyncTimeText.textContent = this.formatLastSync(this.lastSyncTimestamp);
     }
