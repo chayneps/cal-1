@@ -91,12 +91,17 @@ export async function performBackgroundSync() {
 
     if (parsedEvents.length > 0) {
       const now = Date.now();
+      const detectedName = parsedEvents.calendarName || 'main';
+      const { customCalendarName } = await chrome.storage.local.get(['customCalendarName']);
+      const finalName = customCalendarName || detectedName;
       await chrome.storage.local.set({
         savedIcalEvents: parsedEvents,
+        calendarName: finalName,
+        detectedCalendarName: detectedName,
         lastSyncTimestamp: now
       });
-      console.log(`[DarkCal] Auto-sync complete: ${parsedEvents.length} events updated at ${new Date(now).toLocaleTimeString()}`);
-      return { success: true, count: parsedEvents.length, timestamp: now };
+      console.log(`[DarkCal] Auto-sync complete: ${parsedEvents.length} events from "${finalName}" updated at ${new Date(now).toLocaleTimeString()}`);
+      return { success: true, count: parsedEvents.length, timestamp: now, calendarName: finalName };
     }
     return { success: false, reason: '0 events parsed' };
   } catch (err) {

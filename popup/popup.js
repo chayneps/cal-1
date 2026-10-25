@@ -17,6 +17,10 @@ class DarkCalApp {
     this.viewMonth = this.today.getMonth();
     this.calendars = [];
     this.events = [];
+    this.calendarName = 'main';
+    this.detectedCalendarName = '';
+    this.customCalendarName = '';
+    this.activeCalendarFilter = 'all';
     this.pinnedDayKey = null;
     this.hoverTimeout = null;
     this.isMouseOverPopover = false;
@@ -26,8 +30,10 @@ class DarkCalApp {
   }
 
   cacheDom() {
-    // Header & Badges
+    // Header, Spaceship Segments & Badges
     this.connectionBadge = document.getElementById('connectionBadge');
+    this.spCalendarBtn = document.getElementById('spCalendarBtn');
+    this.spCalendarName = document.getElementById('spCalendarName');
     this.syncBtn = document.getElementById('syncBtn');
     this.settingsBtn = document.getElementById('settingsBtn');
     this.newEventBtn = document.getElementById('newEventBtn');
@@ -63,6 +69,7 @@ class DarkCalApp {
     this.icalUrlInput = document.getElementById('icalUrlInput');
     this.syncIcalBtn = document.getElementById('syncIcalBtn');
     this.icalSyncStatus = document.getElementById('icalSyncStatus');
+    this.calendarNameInput = document.getElementById('calendarNameInput');
     this.firstDaySelect = document.getElementById('firstDaySelect');
     this.demoModeToggle = document.getElementById('demoModeToggle');
     this.autoSyncIntervalSelect = document.getElementById('autoSyncIntervalSelect');
@@ -111,6 +118,24 @@ class DarkCalApp {
       });
     }
 
+    // Spaceship Prompt: Calendar segment click (cycle demo calendars or show active status)
+    if (this.spCalendarBtn) {
+      this.spCalendarBtn.addEventListener('click', () => {
+        this.cycleOrSelectCalendar();
+      });
+    }
+
+    // Settings Modal: Custom Calendar Name input
+    if (this.calendarNameInput) {
+      this.calendarNameInput.addEventListener('input', async (e) => {
+        const val = e.target.value.trim();
+        this.customCalendarName = val;
+        this.calendarName = val || this.detectedCalendarName || (this.useDemoData ? 'demo' : 'main');
+        await Storage.set({ customCalendarName: val, calendarName: this.calendarName });
+        this.updateCalendarHeader();
+      });
+    }
+
     // Month Navigation
     this.prevMonthBtn.addEventListener('click', () => this.navigateMonth(-1));
     this.nextMonthBtn.addEventListener('click', () => this.navigateMonth(1));
@@ -140,6 +165,12 @@ class DarkCalApp {
     this.demoModeToggle.addEventListener('change', async (e) => {
       this.useDemoData = e.target.checked;
       await Storage.set({ useDemoData: this.useDemoData });
+      if (this.useDemoData) {
+        this.calendarName = this.customCalendarName || (this.activeCalendarFilter !== 'all' ? this.activeCalendarFilter : 'demo');
+      } else {
+        this.calendarName = this.customCalendarName || this.detectedCalendarName || 'main';
+      }
+      this.updateCalendarHeader();
       this.loadCalendarData();
     });
 
@@ -190,13 +221,19 @@ class DarkCalApp {
     // Listen for storage changes from background auto-sync worker
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener((changes, area) => {
-        if (area === 'local' && changes.savedIcalEvents) {
-          this.events = changes.savedIcalEvents.newValue || [];
-          if (changes.lastSyncTimestamp) {
-            this.lastSyncTimestamp = changes.lastSyncTimestamp.newValue;
+        if (area === 'local') {
+          if (changes.savedIcalEvents) {
+            this.events = changes.savedIcalEvents.newValue || [];
+            if (changes.lastSyncTimestamp) {
+              this.lastSyncTimestamp = changes.lastSyncTimestamp.newValue;
+            }
+            this.updateStatus(false, this.events.length);
+            this.renderMonthGrid();
           }
-          this.updateStatus(false, this.events.length);
-          this.renderMonthGrid();
+          if (changes.calendarName && !this.customCalendarName) {
+            this.calendarName = changes.calendarName.newValue || 'main';
+            this.updateCalendarHeader();
+          }
         }
       });
     }
@@ -211,7 +248,11 @@ class DarkCalApp {
       'autoSyncInterval',
       'icalUrl',
       'savedIcalEvents',
-      'lastSyncTimestamp'
+      'lastSyncTimestamp',
+      'calendarName',
+      'customCalendarName',
+      'detectedCalendarName',
+      'activeCalendarFilter'
     ]);
 
     this.theme = stored.theme || 'homebrew';
@@ -228,13 +269,33 @@ class DarkCalApp {
     this.icalUrl = stored.icalUrl || '';
     this.lastSyncTimestamp = stored.lastSyncTimestamp || null;
 
+    this.customCalendarName = stored.customCalendarName || '';
+    this.detectedCalendarName = stored.detectedCalendarName || '';
+    this.activeCalendarFilter = stored.activeCalendarFilter || 'all';
+
+    if (this.customCalendarName) {
+      this.calendarName = this.customCalendarName;
+    } else if (stored.calendarName) {
+      this.calendarName = stored.calendarName;
+    } else if (stored.savedIcalEvents && stored.savedIcalEvents[0]?.calendarName) {
+      this.calendarName = stored.savedIcalEvents[0].calendarName;
+    } else if (this.useDemoData) {
+      this.calendarName = this.activeCalendarFilter !== 'all' ? this.activeCalendarFilter : 'demo';
+    } else {
+      this.calendarName = 'main';
+    }
+
     this.firstDaySelect.value = String(this.firstDayOfWeek);
     this.autoSyncIntervalSelect.value = String(this.autoSyncInterval);
     this.demoModeToggle.checked = this.useDemoData;
     if (this.icalUrlInput) this.icalUrlInput.value = this.icalUrl;
+    if (this.calendarNameInput) {
+      this.calendarNameInput.value = this.customCalendarName || (this.calendarName !== 'demo' && this.calendarName !== 'main' ? this.calendarName : '');
+    }
 
     this.renderWeekdays();
     this.updateMonthHeading();
+    this.updateCalendarHeader();
 
     if (stored.savedIcalEvents && stored.savedIcalEvents.length > 0) {
       this.events = stored.savedIcalEvents;
@@ -283,13 +344,45 @@ class DarkCalApp {
     if (isDemo) {
       this.connectionBadge.textContent = '[DEMO]';
       this.connectionBadge.className = 'badge badge-demo';
-      this.calendarSourceStatus.textContent = 'SYS_MODE: DEMO (4 sample feeds)';
+      const filterStr = (this.activeCalendarFilter && this.activeCalendarFilter !== 'all') ? ` [feed: ${this.activeCalendarFilter}]` : ' (4 sample feeds)';
+      this.calendarSourceStatus.textContent = `SYS_MODE: DEMO${filterStr}`;
       this.lastSyncTimeText.textContent = '';
     } else {
       this.connectionBadge.textContent = '[ONLINE]';
       this.connectionBadge.className = 'badge badge-live';
-      this.calendarSourceStatus.textContent = `SYS_LIVE: iCal (${count} events indexed)`;
+      this.calendarSourceStatus.textContent = `SYS_LIVE: ${this.calendarName} (${count} events indexed)`;
       this.lastSyncTimeText.textContent = this.formatLastSync(this.lastSyncTimestamp);
+    }
+    this.updateCalendarHeader();
+  }
+
+  updateCalendarHeader() {
+    if (!this.spCalendarName) return;
+    const name = this.calendarName || (this.useDemoData ? 'demo' : 'main');
+    this.spCalendarName.textContent = name;
+    if (this.spCalendarBtn) {
+      const modeDesc = this.useDemoData ? 'click to cycle demo feeds' : 'active calendar';
+      this.spCalendarBtn.title = `Calendar: ${name} (${modeDesc})`;
+      this.spCalendarBtn.setAttribute('aria-label', `Calendar: ${name}`);
+    }
+  }
+
+  async cycleOrSelectCalendar() {
+    if (this.useDemoData) {
+      const demoOptions = ['all', 'work', 'personal', 'deadlines', 'team'];
+      const currentIdx = demoOptions.indexOf(this.activeCalendarFilter);
+      const nextIdx = (currentIdx + 1) % demoOptions.length;
+      const nextFilter = demoOptions[nextIdx];
+
+      this.activeCalendarFilter = nextFilter;
+      this.calendarName = nextFilter === 'all' ? 'demo' : nextFilter;
+      await Storage.set({ activeCalendarFilter: nextFilter, calendarName: this.calendarName });
+
+      this.updateCalendarHeader();
+      this.renderMonthGrid();
+      this.showToast(`Switched calendar filter to "${this.calendarName}"`);
+    } else {
+      this.showToast(`Active calendar: "${this.calendarName}" (${this.events.length} events loaded)`);
     }
   }
 
@@ -315,6 +408,10 @@ class DarkCalApp {
   loadDemoEvents() {
     this.calendars = getMockCalendars();
     this.events = generateMockEvents(this.viewYear, this.viewMonth);
+    if (!this.customCalendarName) {
+      this.calendarName = this.activeCalendarFilter !== 'all' ? this.activeCalendarFilter : 'demo';
+      this.updateCalendarHeader();
+    }
     this.updateStatus(true);
     this.renderMonthGrid();
   }
@@ -356,6 +453,10 @@ class DarkCalApp {
       }
 
       const now = Date.now();
+      const detectedName = parsedEvents.calendarName || 'main';
+      this.detectedCalendarName = detectedName;
+      const finalName = this.customCalendarName || detectedName;
+      this.calendarName = finalName;
       this.events = parsedEvents;
       this.icalUrl = url;
       this.useDemoData = false;
@@ -364,12 +465,19 @@ class DarkCalApp {
       await Storage.set({
         icalUrl: url,
         savedIcalEvents: parsedEvents,
+        calendarName: finalName,
+        detectedCalendarName: detectedName,
         useDemoData: false,
         lastSyncTimestamp: now
       });
 
+      if (this.calendarNameInput && !this.customCalendarName) {
+        this.calendarNameInput.value = finalName;
+      }
+
       this.demoModeToggle.checked = false;
       this.updateStatus(false, parsedEvents.length);
+      this.updateCalendarHeader();
       this.renderMonthGrid();
 
       if (this.icalSyncStatus) {
@@ -410,7 +518,7 @@ class DarkCalApp {
     }
   }
 
-  handleCalCommandSubmit() {
+  async handleCalCommandSubmit() {
     if (!this.calCommandLine) return;
     const inputVal = this.calCommandLine.value.trim();
     if (!inputVal) {
@@ -426,6 +534,33 @@ class DarkCalApp {
 
     if (result.isHelp) {
       this.showToast(result.msg);
+      this.updateMonthHeading();
+      return;
+    }
+
+    if (result.isCalendarSwitch) {
+      const target = result.calendarName.toLowerCase();
+      if (this.useDemoData) {
+        const valid = ['all', 'work', 'personal', 'deadlines', 'team'];
+        const matched = valid.find(v => v === target || v.startsWith(target));
+        if (matched) {
+          this.activeCalendarFilter = matched;
+          this.calendarName = matched === 'all' ? 'demo' : matched;
+          await Storage.set({ activeCalendarFilter: matched, calendarName: this.calendarName });
+          this.updateCalendarHeader();
+          this.renderMonthGrid();
+          this.showToast(`cal ➜ Switched calendar to "${this.calendarName}"`);
+        } else {
+          this.showToast(`Unknown calendar "${result.calendarName}". Try: @all, @work, @personal, @deadlines, @team`);
+        }
+      } else {
+        this.calendarName = result.calendarName;
+        this.customCalendarName = result.calendarName;
+        if (this.calendarNameInput) this.calendarNameInput.value = this.calendarName;
+        await Storage.set({ customCalendarName: this.calendarName, calendarName: this.calendarName });
+        this.updateCalendarHeader();
+        this.showToast(`cal ➜ Calendar set to "${this.calendarName}"`);
+      }
       this.updateMonthHeading();
       return;
     }
@@ -485,7 +620,15 @@ class DarkCalApp {
       return { month: m, year: y };
     }
     if (first === 'help' || first === '--help' || first === '-h' || first === 'man') {
-      return { isHelp: true, msg: 'Usage: cal [[month] year] | e.g. "cal 12 2026", "cal nov", "cal 2027"' };
+      return { isHelp: true, msg: 'Usage: cal [[month] year] | cal @[calendar] | e.g. "cal 12 2026", "cal @work"' };
+    }
+
+    // Calendar switch: cal @[name] or cal -c [name]
+    if (first.startsWith('@') && first.length > 1) {
+      return { isCalendarSwitch: true, calendarName: first.substring(1) };
+    }
+    if ((first === '-c' || first === '--cal' || first === '--calendar') && tokens[1]) {
+      return { isCalendarSwitch: true, calendarName: tokens[1] };
     }
 
     // Flag options: -m [month] [year] or -y [year]
@@ -1008,6 +1151,16 @@ class DarkCalApp {
   getEventsForDate(date) {
     const key = this.formatDateKey(date);
     return this.events.filter(evt => {
+      // If filtering by specific demo calendar feed
+      if (this.useDemoData && this.activeCalendarFilter && this.activeCalendarFilter !== 'all') {
+        const target = this.activeCalendarFilter.toLowerCase();
+        const calId = (evt.calendarId || '').toLowerCase();
+        const calName = (evt.calendarName || '').toLowerCase();
+        if (calId !== target && !calName.includes(target)) {
+          return false;
+        }
+      }
+
       if (evt.isAllDay) {
         const startDay = evt.start?.date;
         const endDay = evt.end?.date || evt.start?.date;

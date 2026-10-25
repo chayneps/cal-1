@@ -26,7 +26,15 @@
         <div class="spaceship-segments">
           <span class="sp-name">cal(1)</span>
           <span class="sp-dir" title="Working directory">~</span>
-          <span class="sp-git" title="Git branch"><span class="sp-git-icon">⎇</span> main</span>
+          <button id="spCalendarBtn" class="sp-git" type="button" title="Active calendar: main (click to cycle/filter)" aria-label="Active calendar">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="sp-git-icon" aria-hidden="true">
+              <line x1="6" y1="3" x2="6" y2="15"></line>
+              <circle cx="18" cy="6" r="3"></circle>
+              <circle cx="6" cy="18" r="3"></circle>
+              <path d="M18 9a9 9 0 0 1-9 9"></path>
+            </svg>
+            <span id="spCalendarName" class="sp-branch">main</span>
+          </button>
         </div>
         <span id="connectionBadge" class="badge badge-demo" title="Calendar source">[DEMO]</span>
       </div>
@@ -221,6 +229,14 @@
             </div>
 
             <div id="icalSyncStatus" class="ical-sync-status hidden"></div>
+
+            <label class="setting-field-row" style="margin-top: 10px;">
+              <div class="field-label-wrap">
+                <span class="setting-title">Calendar Name</span>
+                <span class="setting-desc">Name shown in Spaceship prompt ("on ⎇ &lt;name&gt;")</span>
+              </div>
+              <input type="text" id="calendarNameInput" class="text-input" placeholder="e.g. main, work, personal" style="max-width: 160px;">
+            </label>
           </div>
 
           <!-- Auto-Sync Configuration -->

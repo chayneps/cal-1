@@ -6,16 +6,18 @@
 
 ## Interactive cal(1) Command Line
 
-Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any month or year:
+Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any month or year, or switch calendars:
 
 * `cal 12 2026` or `cal dec 2026` &rarr; Jump to December 2026
 * `cal 2027` &rarr; Jump to January 2027
 * `cal 5` or `cal may` &rarr; Jump to May of the current year
 * `cal` or `cal today` &rarr; Jump back to the current month / today
 * `cal next` / `cal prev` &rarr; Advance or reverse 1 month
-* `cal -3` &rarr; 3-month reference view
+* `cal @work` / `cal @personal` / `cal @all` &rarr; Switch active calendar feed
+* `cal -c <name>` &rarr; Set or switch active calendar
 * `cal --help` &rarr; Show command usage tips
 * **Keyboard Shortcut**: Press `/` or `:` anywhere to jump focus to the command input!
+* **Spaceship Calendar Segment**: Click `on ⎇ <calendar>` in the header to cycle through available calendar feeds or view active calendar details!
 
 ---
 

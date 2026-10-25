@@ -318,7 +318,26 @@ body.theme-homebrew textarea {
 }
 
 .sp-git {
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--accent-magenta);
+  font-family: inherit;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.sp-git:hover,
+.sp-git:focus-visible {
+  background: rgba(229, 0, 229, 0.15);
+  border-color: rgba(229, 0, 229, 0.4);
+  color: #ff55ff;
+  outline: none;
 }
 .sp-git::before {
   content: "on ";
@@ -326,7 +345,20 @@ body.theme-homebrew textarea {
   font-weight: 400;
 }
 .sp-git-icon {
-  margin-right: 1px;
+  display: inline-block;
+  vertical-align: middle;
+  stroke: var(--accent-magenta);
+  flex-shrink: 0;
+}
+.sp-git:hover .sp-git-icon {
+  stroke: #ff55ff;
+}
+.sp-branch {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
 }
 
 .brand-icon {
