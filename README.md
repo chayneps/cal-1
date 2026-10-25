@@ -1,19 +1,34 @@
-# DarkCal - Dark Theme Google Calendar Chrome Extension
+# cal(1) - Unix Command-Line Google Calendar for Chrome
 
-**DarkCal** is a dark-themed dropdown calendar for Google Chrome that displays an interactive monthly calendar grid with automatic background synchronization and full-day schedules on hover.
+**cal(1)** is a terminal-inspired dropdown calendar for Google Chrome inspired by the Unix [cal(1)](https://en.wikipedia.org/wiki/Cal_(command)) manual page and styled with [Spaceship Prompt](https://github.com/spaceship-prompt/spaceship-prompt) aesthetics, Homebrew iTerm2 ANSI colors, and the Hack monospace font.
+
+---
+
+## Interactive cal(1) Command Line
+
+Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any month or year:
+
+* `cal 12 2026` or `cal dec 2026` &rarr; Jump to December 2026
+* `cal 2027` &rarr; Jump to January 2027
+* `cal 5` or `cal may` &rarr; Jump to May of the current year
+* `cal` or `cal today` &rarr; Jump back to the current month / today
+* `cal next` / `cal prev` &rarr; Advance or reverse 1 month
+* `cal -3` &rarr; 3-month reference view
+* `cal --help` &rarr; Show command usage tips
+* **Keyboard Shortcut**: Press `/` or `:` anywhere to jump focus to the command input!
 
 ---
 
 ## Auto-Sync Features
 
-**Yes, DarkCal automatically syncs your Google Calendar!**
+**Yes, cal(1) automatically syncs your Google Calendar!**
 
 1. **Background Periodic Auto-Sync**:
    - The background service worker uses `chrome.alarms` to automatically fetch and update your calendar events in the background (default: **every 15 minutes**).
-   - Even if the dropdown is closed, DarkCal stays up to date.
+   - Even if the dropdown is closed, cal(1) stays up to date.
 
 2. **Smart Stale-Cache Auto-Refresh**:
-   - When you click the extension icon, DarkCal renders your cached events instantly (0ms load time).
+   - When you click the extension icon, cal(1) renders your cached events instantly (0ms load time).
    - If your cache is older than the auto-sync threshold, it automatically triggers a silent background refresh and updates the calendar grid live.
 
 3. **Customizable Sync Frequency**:
@@ -55,12 +70,12 @@
 3. In the left sidebar, click the calendar you want to sync under *Settings for my calendars*.
 4. Scroll down to the **Integrate calendar** section.
 5. Copy the URL inside **Secret address in iCal format** (ends with `.ics`).
-6. Click the **DarkCal** icon in your Chrome toolbar &rarr; click the **Settings (gear)** icon &rarr; paste the link &rarr; click **Sync**!
+6. Click the **cal(1)** icon in your Chrome toolbar &rarr; click the **Settings (gear)** icon &rarr; paste the link &rarr; click **Sync**!
 
 ---
 
 ## How to Reload in Chrome
 
 1. Open Chrome and navigate to `chrome://extensions`.
-2. Find **DarkCal** and click the **Reload (circular arrow)** button.
-3. Click the **DarkCal** icon in your toolbar to use your auto-syncing calendar!
+2. Find **cal(1)** and click the **Reload (circular arrow)** button.
+3. Click the **cal(1)** icon in your toolbar to use your auto-syncing calendar!

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DarkCal - Google Calendar</title>
+  <title>cal(1) - Google Calendar</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body class="theme-homebrew crt-active">
@@ -14,17 +14,19 @@
   </div>
 
   <div class="calendar-app">
-    <!-- Top Header -->
+    <!-- Top Header with Spaceship Prompt Brand -->
     <header class="app-header">
-      <div class="brand">
-        <div class="brand-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <div class="brand spaceship-header">
+        <div class="brand-icon" title="cal(1) Unix manual section 1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="4 17 10 11 4 5"></polyline>
             <line x1="12" y1="19" x2="20" y2="19"></line>
           </svg>
         </div>
-        <div class="brand-text-wrap">
-          <span class="terminal-prefix">SYS:</span><span class="brand-title">darkcal</span>
+        <div class="spaceship-segments">
+          <span class="sp-name">cal(1)</span>
+          <span class="sp-dir" title="Working directory">~</span>
+          <span class="sp-git" title="Git branch"><span class="sp-git-icon">⎇</span> main</span>
         </div>
         <span id="connectionBadge" class="badge badge-demo" title="Calendar source">[DEMO]</span>
       </div>
@@ -64,23 +66,37 @@
       </div>
     </header>
 
-    <!-- Month Navigation Bar -->
+    <!-- Month Navigation Bar with Interactive cal(1) CLI Command Line -->
     <section class="month-navigator">
-      <div class="month-title-wrap">
-        <span class="terminal-cmd-prompt">$ cal </span>
-        <h2 id="currentMonthYear" class="month-heading">October 2026</h2>
-        <span class="terminal-cursor" aria-hidden="true">_</span>
-      </div>
+      <form id="calCommandForm" class="month-command-form" autocomplete="off">
+        <label for="calCommandLine" class="spaceship-prompt-symbol" title="Spaceship prompt (Enter any cal command, e.g. 'cal 12 2026', 'cal nov', 'cal 2027')">➜</label>
+        <div class="cmd-input-container">
+          <input
+            type="text"
+            id="calCommandLine"
+            class="cal-command-input"
+            value="cal October 2026"
+            placeholder="cal [[month] year]"
+            spellcheck="false"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            title="Type a cal command (e.g. 'cal 12 2026', 'cal nov', 'cal 2027') and press Enter"
+          >
+          <span id="calCursor" class="terminal-cursor" aria-hidden="true">_</span>
+        </div>
+        <button type="submit" id="calSubmitBtn" class="visually-hidden" aria-label="Run cal command">Run</button>
+      </form>
 
       <div class="nav-controls">
-        <button id="todayBtn" class="pill-btn today-btn" title="Jump to Today">[ TODAY ]</button>
+        <button id="todayBtn" type="button" class="pill-btn today-btn" title="Jump to Today">[ TODAY ]</button>
         <div class="arrow-group">
-          <button id="prevMonthBtn" class="icon-btn nav-arrow" title="Previous Month" aria-label="Previous Month">
+          <button id="prevMonthBtn" type="button" class="icon-btn nav-arrow" title="Previous Month" aria-label="Previous Month">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
           </button>
-          <button id="nextMonthBtn" class="icon-btn nav-arrow" title="Next Month" aria-label="Next Month">
+          <button id="nextMonthBtn" type="button" class="icon-btn nav-arrow" title="Next Month" aria-label="Next Month">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
@@ -149,7 +165,7 @@
       <div class="modal-card">
         <div class="modal-header">
           <div class="modal-title-wrap">
-            <h3 id="settingsModalTitle" class="modal-title">DarkCal Settings</h3>
+            <h3 id="settingsModalTitle" class="modal-title">cal(1) Settings</h3>
             <span class="modal-subtitle">Theme & Calendar Sync</span>
           </div>
           <button id="closeSettingsBtn" class="icon-btn" aria-label="Close settings">

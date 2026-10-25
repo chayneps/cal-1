@@ -33,7 +33,10 @@ class DarkCalApp {
     this.newEventBtn = document.getElementById('newEventBtn');
     this.openWebBtn = document.getElementById('openWebBtn');
 
-    // Month Navigation
+    // cal(1) Spaceship Command Line & Month Navigation
+    this.calCommandForm = document.getElementById('calCommandForm');
+    this.calCommandLine = document.getElementById('calCommandLine');
+    this.calCursor = document.getElementById('calCursor');
     this.currentMonthYear = document.getElementById('currentMonthYear');
     this.todayBtn = document.getElementById('todayBtn');
     this.prevMonthBtn = document.getElementById('prevMonthBtn');
@@ -86,6 +89,25 @@ class DarkCalApp {
         this.setCrtEffects(enabled);
         await Storage.set({ crtEffects: enabled });
         this.showToast(enabled ? 'CRT monitor effects enabled' : 'CRT monitor effects disabled');
+      });
+    }
+
+    // cal(1) Command Line Execution
+    if (this.calCommandForm) {
+      this.calCommandForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleCalCommandSubmit();
+      });
+    }
+
+    if (this.calCommandLine) {
+      this.calCommandLine.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          // IME composition safety check
+          if (e.isComposing || e.keyCode === 229) return;
+          this.handleCalCommandSubmit();
+        }
       });
     }
 
@@ -155,6 +177,12 @@ class DarkCalApp {
         } else if (this.pinnedDayKey || !this.dayDetailPopover.classList.contains('hidden')) {
           this.unpinDay();
           this.hidePopover();
+        }
+      } else if ((e.key === '/' || e.key === ':') && !e.metaKey && !e.ctrlKey) {
+        if (this.calCommandLine && document.activeElement !== this.calCommandLine && document.activeElement?.tagName !== 'INPUT') {
+          e.preventDefault();
+          this.calCommandLine.focus();
+          this.calCommandLine.select();
         }
       }
     });
@@ -373,7 +401,164 @@ class DarkCalApp {
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
-    this.currentMonthYear.textContent = `${monthNames[this.viewMonth]} ${this.viewYear}`;
+    const monthStr = monthNames[this.viewMonth];
+    if (this.calCommandLine) {
+      this.calCommandLine.value = `cal ${monthStr} ${this.viewYear}`;
+    }
+    if (this.currentMonthYear) {
+      this.currentMonthYear.textContent = `${monthStr} ${this.viewYear}`;
+    }
+  }
+
+  handleCalCommandSubmit() {
+    if (!this.calCommandLine) return;
+    const inputVal = this.calCommandLine.value.trim();
+    if (!inputVal) {
+      this.jumpToToday();
+      return;
+    }
+
+    const result = this.parseCalCommand(inputVal, this.viewYear, this.viewMonth);
+    if (result.error) {
+      this.showToast(result.msg || 'Invalid syntax. Try "cal 12 2026"');
+      return;
+    }
+
+    if (result.isHelp) {
+      this.showToast(result.msg);
+      this.updateMonthHeading();
+      return;
+    }
+
+    this.unpinDay();
+    this.hidePopover();
+    this.viewYear = result.year;
+    this.viewMonth = result.month;
+    this.updateMonthHeading();
+
+    if (this.useDemoData || !this.icalUrl) {
+      this.loadDemoEvents();
+    } else {
+      this.renderMonthGrid();
+    }
+
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    this.showToast(result.msg || `cal(1) ➜ ${monthNames[this.viewMonth]} ${this.viewYear}`);
+  }
+
+  parseCalCommand(cmdStr, currentYear, currentMonth) {
+    let text = cmdStr.trim();
+    // Strip leading $, ➜, ❯, > if typed or pasted
+    text = text.replace(/^[$➜❯>]\s*/, '').trim();
+
+    // If starts with 'cal', strip it
+    if (text.toLowerCase().startsWith('cal')) {
+      text = text.slice(3).trim();
+    }
+
+    const tokens = text.split(/\s+/).filter(Boolean);
+
+    // 'cal' with no args -> today!
+    if (tokens.length === 0) {
+      const today = new Date();
+      return { month: today.getMonth(), year: today.getFullYear(), msg: 'cal ➜ Current month' };
+    }
+
+    const first = tokens[0].toLowerCase();
+    if (first === 'today') {
+      const today = new Date();
+      return { month: today.getMonth(), year: today.getFullYear(), msg: 'cal ➜ Jumped to Today' };
+    }
+    if (first === 'next' || first === '+1') {
+      let m = currentMonth + 1;
+      let y = currentYear;
+      if (m > 11) { m = 0; y += 1; }
+      return { month: m, year: y };
+    }
+    if (first === 'prev' || first === '-1') {
+      let m = currentMonth - 1;
+      let y = currentYear;
+      if (m < 0) { m = 11; y -= 1; }
+      return { month: m, year: y };
+    }
+    if (first === 'help' || first === '--help' || first === '-h' || first === 'man') {
+      return { isHelp: true, msg: 'Usage: cal [[month] year] | e.g. "cal 12 2026", "cal nov", "cal 2027"' };
+    }
+
+    // Flag options: -m [month] [year] or -y [year]
+    if (first === '-m' && tokens[1]) {
+      const m = this.parseMonthToken(tokens[1]);
+      const y = tokens[2] ? this.parseYearToken(tokens[2]) : currentYear;
+      if (m !== null && y !== null) return { month: m, year: y };
+    }
+    if (first === '-y' && tokens[1]) {
+      const y = this.parseYearToken(tokens[1]);
+      if (y !== null) return { month: 0, year: y, msg: `cal ➜ Year ${y} (Jan)` };
+    }
+
+    // Standard POSIX cal: cal [month] [year] (e.g. '10 2026' or 'October 2026')
+    if (tokens.length >= 2) {
+      const m = this.parseMonthToken(tokens[0]);
+      const y = this.parseYearToken(tokens[1]);
+      if (m !== null && y !== null) {
+        return { month: m, year: y };
+      }
+      // Or reversed: '2026 10' or '2026 oct'
+      const yFirst = this.parseYearToken(tokens[0]);
+      const mSecond = this.parseMonthToken(tokens[1]);
+      if (yFirst !== null && mSecond !== null) {
+        return { month: mSecond, year: yFirst };
+      }
+    }
+
+    // Single token: could be month name/num or 4-digit year
+    if (tokens.length === 1) {
+      const num = parseInt(tokens[0], 10);
+      if (!isNaN(num) && num > 12) {
+        const y = this.parseYearToken(tokens[0]);
+        if (y !== null) return { month: 0, year: y, msg: `cal ➜ Year ${y} (Jan)` };
+      }
+      const m = this.parseMonthToken(tokens[0]);
+      if (m !== null) {
+        return { month: m, year: currentYear };
+      }
+    }
+
+    return { error: true, msg: `Unknown syntax "${cmdStr}". Try "cal 12 2026"` };
+  }
+
+  parseMonthToken(str) {
+    if (!str) return null;
+    const num = parseInt(str, 10);
+    if (!isNaN(num) && num >= 1 && num <= 12) {
+      return num - 1; // 0-indexed
+    }
+    const shortNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const fullNames = [
+      'january', 'february', 'march', 'april', 'may', 'june',
+      'july', 'august', 'september', 'october', 'november', 'december'
+    ];
+    const lower = str.toLowerCase();
+    for (let i = 0; i < 12; i++) {
+      if (shortNames[i] === lower || fullNames[i] === lower || fullNames[i].startsWith(lower)) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  parseYearToken(str) {
+    if (!str) return null;
+    let num = parseInt(str, 10);
+    if (isNaN(num)) return null;
+    if (num >= 0 && num < 100) {
+      num += 2000;
+    }
+    if (num >= 1 && num <= 9999) return num;
+    return null;
   }
 
   renderWeekdays() {

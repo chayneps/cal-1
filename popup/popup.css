@@ -284,38 +284,61 @@ body.theme-homebrew textarea {
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
-.brand-text-wrap {
+.spaceship-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spaceship-segments {
   display: inline-flex;
   align-items: baseline;
-  gap: 3px;
-}
-
-.terminal-prefix {
+  gap: 6px;
+  font-family: var(--font-family);
   font-size: 11px;
   font-weight: 700;
+}
+
+.sp-name {
+  color: var(--accent-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sp-dir {
   color: var(--accent-cyan);
+}
+.sp-dir::before {
+  content: "in ";
+  color: var(--accent-dim-grey);
+  font-weight: 400;
+}
+
+.sp-git {
+  color: var(--accent-magenta);
+}
+.sp-git::before {
+  content: "on ";
+  color: var(--accent-dim-grey);
+  font-weight: 400;
+}
+.sp-git-icon {
+  margin-right: 1px;
 }
 
 .brand-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-sm);
   background: var(--accent-selection);
   border: 1px solid var(--border-strong);
   color: var(--accent-primary);
-}
-
-.brand-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--accent-primary);
-  font-family: var(--font-family);
 }
 
 .badge {
@@ -405,24 +428,65 @@ body.theme-homebrew textarea {
   border-bottom: 1px dashed var(--border-subtle);
 }
 
-.month-title-wrap {
-  display: inline-flex;
-  align-items: baseline;
+.month-command-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
 }
 
-.terminal-cmd-prompt {
+.spaceship-prompt-symbol {
   font-size: 13px;
   font-weight: 700;
-  color: #00dd00;
+  color: var(--accent-primary);
   user-select: none;
-  white-space: pre;
+  cursor: text;
+  line-height: 1;
 }
 
-.month-heading {
-  font-size: 14px;
+.cmd-input-container {
+  display: inline-flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.cal-command-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-family);
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent-yellow);
-  font-family: var(--font-family);
+  caret-color: var(--accent-cursor);
+  width: 100%;
+  padding: 2px 0;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.cal-command-input::placeholder {
+  color: rgba(229, 229, 0, 0.35);
+  font-weight: 400;
+}
+
+.cal-command-input:focus ~ .terminal-cursor {
+  display: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 .nav-controls {
