@@ -56,6 +56,42 @@
   --accent-white: #e5e5e5;       /* Ansi 15 Bright White */
   --accent-dim-grey: #666666;    /* Ansi 8 Grey */
 
+  /* ANSI 41m-47m Column Matrix Palette (Homebrew colortest) */
+  --ansi-41m-bg: #980000;
+  --ansi-41m-border: #b90000;
+  --ansi-41m-bright: #e50000;
+  --ansi-41m-text: #ff9999;
+
+  --ansi-42m-bg: #00a600;
+  --ansi-42m-border: #00d900;
+  --ansi-42m-bright: #00ff00;
+  --ansi-42m-text: #88ff88;
+
+  --ansi-43m-bg: #989800;
+  --ansi-43m-border: #e5e500;
+  --ansi-43m-bright: #ffff44;
+  --ansi-43m-text: #ffff88;
+
+  --ansi-44m-bg: #0c0cbe;
+  --ansi-44m-border: #3b82f6;
+  --ansi-44m-bright: #60a5fa;
+  --ansi-44m-text: #93c5fd;
+
+  --ansi-45m-bg: #b200b2;
+  --ansi-45m-border: #e500e5;
+  --ansi-45m-bright: #ff66ff;
+  --ansi-45m-text: #ff99ff;
+
+  --ansi-46m-bg: #00a6b2;
+  --ansi-46m-border: #00e5e5;
+  --ansi-46m-bright: #22d3ee;
+  --ansi-46m-text: #a5f3fc;
+
+  --ansi-47m-bg: #bebebe;
+  --ansi-47m-border: #e5e5e5;
+  --ansi-47m-bright: #ffffff;
+  --ansi-47m-text: #ffffff;
+
   /* Phosphor & ANSI Glows */
   --glow-green: 0 0 5px rgba(0, 255, 0, 0.55);
   --glow-cyan: 0 0 5px rgba(0, 229, 229, 0.55);
@@ -604,17 +640,85 @@ body.theme-homebrew textarea {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
-  padding: 4px 0;
+  padding: 4px 0 6px 0;
 }
+
 .weekday-col {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 1px;
+  border-radius: var(--radius-sm);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--accent-cyan);
+  transition: all var(--transition-fast);
 }
-.weekday-col.weekend {
-  color: var(--accent-magenta);
+
+.weekday-ansi {
+  font-size: 8px;
+  font-weight: 700;
+  opacity: 0.85;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.weekday-name {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Weekday Column 1: ANSI 41m (Red) */
+.weekday-col.col-1 {
+  background: rgba(152, 0, 0, 0.40);
+  border: 1px solid rgba(229, 0, 0, 0.65);
+  color: var(--ansi-41m-bright);
+}
+
+/* Weekday Column 2: ANSI 42m (Green) */
+.weekday-col.col-2 {
+  background: rgba(0, 166, 0, 0.35);
+  border: 1px solid rgba(0, 217, 0, 0.65);
+  color: var(--ansi-42m-bright);
+}
+
+/* Weekday Column 3: ANSI 43m (Yellow) */
+.weekday-col.col-3 {
+  background: rgba(152, 152, 0, 0.38);
+  border: 1px solid rgba(229, 229, 0, 0.65);
+  color: var(--ansi-43m-bright);
+}
+
+/* Weekday Column 4: ANSI 44m (Blue) */
+.weekday-col.col-4 {
+  background: rgba(12, 12, 190, 0.45);
+  border: 1px solid rgba(59, 130, 246, 0.65);
+  color: var(--ansi-44m-bright);
+}
+
+/* Weekday Column 5: ANSI 45m (Magenta) */
+.weekday-col.col-5 {
+  background: rgba(178, 0, 178, 0.40);
+  border: 1px solid rgba(229, 0, 229, 0.65);
+  color: var(--ansi-45m-bright);
+}
+
+/* Weekday Column 6: ANSI 46m (Cyan) */
+.weekday-col.col-6 {
+  background: rgba(0, 166, 178, 0.38);
+  border: 1px solid rgba(0, 229, 229, 0.65);
+  color: var(--ansi-46m-bright);
+}
+
+/* Weekday Column 7: ANSI 47m (Silver/White) */
+.weekday-col.col-7 {
+  background: rgba(190, 190, 190, 0.32);
+  border: 1px solid rgba(229, 229, 229, 0.65);
+  color: var(--ansi-47m-bright);
 }
 
 .month-grid {
@@ -627,7 +731,7 @@ body.theme-homebrew textarea {
   padding-bottom: 4px;
 }
 
-/* Day Cell */
+/* Day Cell Base */
 .day-cell {
   position: relative;
   display: flex;
@@ -636,53 +740,184 @@ body.theme-homebrew textarea {
   justify-content: flex-start;
   padding: 3px 4px;
   border-radius: var(--radius-sm);
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-subtle);
   cursor: pointer;
   transition: all var(--transition-fast);
   overflow: hidden;
 }
 
-.day-cell:hover {
-  background-color: var(--bg-surface-hover);
-  border-color: var(--border-strong);
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.25);
-  transform: translateY(-1px);
-  z-index: 2;
+/* 7-Column ANSI Color Matrix (41m - 47m) */
+.day-cell.col-1,
+.month-grid > .day-cell:nth-child(7n + 1) {
+  background-color: rgba(152, 0, 0, 0.30);
+  border: 1px solid rgba(185, 0, 0, 0.55);
+}
+.day-cell.col-1:hover,
+.month-grid > .day-cell:nth-child(7n + 1):hover {
+  background-color: rgba(152, 0, 0, 0.55);
+  border-color: var(--ansi-41m-bright);
+  box-shadow: 0 0 10px rgba(229, 0, 0, 0.45);
+}
+.day-cell.col-1 .day-number,
+.month-grid > .day-cell:nth-child(7n + 1) .day-number {
+  color: var(--ansi-41m-text);
 }
 
-.day-cell.is-pinned {
-  border-color: var(--accent-primary);
-  background-color: var(--bg-surface-active);
-  box-shadow: 0 0 0 1px var(--accent-primary), var(--glow-sm);
-  z-index: 3;
+.day-cell.col-2,
+.month-grid > .day-cell:nth-child(7n + 2) {
+  background-color: rgba(0, 166, 0, 0.25);
+  border: 1px solid rgba(0, 217, 0, 0.48);
+}
+.day-cell.col-2:hover,
+.month-grid > .day-cell:nth-child(7n + 2):hover {
+  background-color: rgba(0, 166, 0, 0.48);
+  border-color: var(--ansi-42m-bright);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.45);
+}
+.day-cell.col-2 .day-number,
+.month-grid > .day-cell:nth-child(7n + 2) .day-number {
+  color: var(--ansi-42m-text);
 }
 
+.day-cell.col-3,
+.month-grid > .day-cell:nth-child(7n + 3) {
+  background-color: rgba(152, 152, 0, 0.28);
+  border: 1px solid rgba(229, 229, 0, 0.48);
+}
+.day-cell.col-3:hover,
+.month-grid > .day-cell:nth-child(7n + 3):hover {
+  background-color: rgba(152, 152, 0, 0.50);
+  border-color: var(--ansi-43m-bright);
+  box-shadow: 0 0 10px rgba(229, 229, 0, 0.45);
+}
+.day-cell.col-3 .day-number,
+.month-grid > .day-cell:nth-child(7n + 3) .day-number {
+  color: var(--ansi-43m-text);
+}
+
+.day-cell.col-4,
+.month-grid > .day-cell:nth-child(7n + 4) {
+  background-color: rgba(12, 12, 190, 0.32);
+  border: 1px solid rgba(59, 130, 246, 0.48);
+}
+.day-cell.col-4:hover,
+.month-grid > .day-cell:nth-child(7n + 4):hover {
+  background-color: rgba(12, 12, 190, 0.55);
+  border-color: var(--ansi-44m-bright);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.45);
+}
+.day-cell.col-4 .day-number,
+.month-grid > .day-cell:nth-child(7n + 4) .day-number {
+  color: var(--ansi-44m-text);
+}
+
+.day-cell.col-5,
+.month-grid > .day-cell:nth-child(7n + 5) {
+  background-color: rgba(178, 0, 178, 0.28);
+  border: 1px solid rgba(229, 0, 229, 0.48);
+}
+.day-cell.col-5:hover,
+.month-grid > .day-cell:nth-child(7n + 5):hover {
+  background-color: rgba(178, 0, 178, 0.50);
+  border-color: var(--ansi-45m-bright);
+  box-shadow: 0 0 10px rgba(229, 0, 229, 0.45);
+}
+.day-cell.col-5 .day-number,
+.month-grid > .day-cell:nth-child(7n + 5) .day-number {
+  color: var(--ansi-45m-text);
+}
+
+.day-cell.col-6,
+.month-grid > .day-cell:nth-child(7n + 6) {
+  background-color: rgba(0, 166, 178, 0.28);
+  border: 1px solid rgba(0, 229, 229, 0.48);
+}
+.day-cell.col-6:hover,
+.month-grid > .day-cell:nth-child(7n + 6):hover {
+  background-color: rgba(0, 166, 178, 0.50);
+  border-color: var(--ansi-46m-bright);
+  box-shadow: 0 0 10px rgba(0, 229, 229, 0.45);
+}
+.day-cell.col-6 .day-number,
+.month-grid > .day-cell:nth-child(7n + 6) .day-number {
+  color: var(--ansi-46m-text);
+}
+
+.day-cell.col-7,
+.month-grid > .day-cell:nth-child(7n + 7) {
+  background-color: rgba(190, 190, 190, 0.24);
+  border: 1px solid rgba(229, 229, 229, 0.42);
+}
+.day-cell.col-7:hover,
+.month-grid > .day-cell:nth-child(7n + 7):hover {
+  background-color: rgba(190, 190, 190, 0.45);
+  border-color: var(--ansi-47m-bright);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+}
+.day-cell.col-7 .day-number,
+.month-grid > .day-cell:nth-child(7n + 7) .day-number {
+  color: var(--ansi-47m-text);
+}
+
+/* Other Month Cells: Dimmed */
 .day-cell.other-month {
-  opacity: 0.28;
-  background-color: #000000;
+  opacity: 0.30;
+  filter: saturate(0.55);
 }
 .day-cell.other-month:hover {
-  opacity: 0.75;
+  opacity: 0.80;
+  filter: saturate(1);
 }
 
+/* Today Cell: Cur High-Contrast */
 .day-cell.is-today {
-  border-color: var(--accent-primary);
-  background-color: var(--accent-selection);
-  box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.25);
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px var(--accent-primary), 0 0 14px rgba(0, 255, 0, 0.65) !important;
+  z-index: 4;
 }
 .day-cell.is-today .day-number {
-  background-color: var(--accent-primary);
-  color: #000000;
+  background-color: var(--accent-primary) !important;
+  color: #000000 !important;
   border-radius: 2px;
-  min-width: 16px;
+  min-width: 18px;
   height: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 3px;
+  padding: 0 4px;
   font-weight: 700;
-  box-shadow: var(--glow-green);
+  box-shadow: 0 0 6px rgba(0, 255, 0, 0.7);
+}
+
+/* Pinned Cell: Sel High-Contrast */
+.day-cell.is-pinned {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 14px rgba(255, 255, 255, 0.65) !important;
+  z-index: 5;
+}
+
+/* Badges for Cur and Sel */
+.ansi-cur-badge {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 0 3px;
+  border-radius: 2px;
+  background-color: var(--accent-primary);
+  color: #000000;
+  line-height: 14px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 4px rgba(0, 255, 0, 0.7);
+}
+
+.ansi-sel-badge {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 0 3px;
+  border-radius: 2px;
+  background-color: #ffffff;
+  color: #000000;
+  line-height: 14px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.7);
 }
 
 .day-cell-top {

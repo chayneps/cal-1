@@ -706,13 +706,24 @@ class DarkCalApp {
 
   renderWeekdays() {
     const names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const ansiCodes = ['41m', '42m', '43m', '44m', '45m', '46m', '47m'];
     const ordered = [];
     for (let i = 0; i < 7; i++) {
       const idx = (this.firstDayOfWeek + i) % 7;
-      ordered.push({ name: names[idx], isWeekend: idx === 0 || idx === 6 });
+      ordered.push({
+        name: names[idx],
+        ansi: ansiCodes[i],
+        colIdx: i + 1,
+        isWeekend: idx === 0 || idx === 6
+      });
     }
     this.weekdayHeader.innerHTML = ordered
-      .map(d => `<div class="weekday-col ${d.isWeekend ? 'weekend' : ''}">${d.name}</div>`)
+      .map(d => `
+        <div class="weekday-col col-${d.colIdx} ${d.isWeekend ? 'weekend' : ''}" title="ANSI ${d.ansi} (${d.name})">
+          <span class="weekday-ansi">${d.ansi}</span>
+          <span class="weekday-name">${d.name}</span>
+        </div>
+      `)
       .join('');
   }
 
@@ -761,6 +772,7 @@ class DarkCalApp {
 
     const prevMonthLastDay = new Date(this.viewYear, this.viewMonth, 0).getDate();
     const todayDateStr = this.formatDateKey(this.today);
+    let cellIndex = 0;
 
     // Prev month days
     for (let i = firstDayIndex - 1; i >= 0; i--) {
@@ -768,11 +780,14 @@ class DarkCalApp {
       const prevDate = new Date(this.viewYear, this.viewMonth - 1, dayNum);
       const dayKey = this.formatDateKey(prevDate);
       const dayEvents = this.getEventsForDate(prevDate);
+      const colIdx = (cellIndex % 7) + 1;
+      cellIndex++;
       
       const cell = this.createDayCell({
         date: prevDate,
         dayNum,
         dayKey,
+        colIdx,
         isOtherMonth: true,
         isToday: dayKey === todayDateStr,
         events: dayEvents
@@ -785,11 +800,14 @@ class DarkCalApp {
       const curDate = new Date(this.viewYear, this.viewMonth, day);
       const dayKey = this.formatDateKey(curDate);
       const dayEvents = this.getEventsForDate(curDate);
+      const colIdx = (cellIndex % 7) + 1;
+      cellIndex++;
 
       const cell = this.createDayCell({
         date: curDate,
         dayNum: day,
         dayKey,
+        colIdx,
         isOtherMonth: false,
         isToday: dayKey === todayDateStr,
         events: dayEvents
@@ -806,11 +824,14 @@ class DarkCalApp {
       const nextDate = new Date(this.viewYear, this.viewMonth + 1, day);
       const dayKey = this.formatDateKey(nextDate);
       const dayEvents = this.getEventsForDate(nextDate);
+      const colIdx = (cellIndex % 7) + 1;
+      cellIndex++;
 
       const cell = this.createDayCell({
         date: nextDate,
         dayNum: day,
         dayKey,
+        colIdx,
         isOtherMonth: true,
         isToday: dayKey === todayDateStr,
         events: dayEvents
@@ -819,9 +840,10 @@ class DarkCalApp {
     }
   }
 
-  createDayCell({ date, dayNum, dayKey, isOtherMonth, isToday, events }) {
+  createDayCell({ date, dayNum, dayKey, colIdx, isOtherMonth, isToday, events }) {
     const cell = document.createElement('div');
     cell.className = 'day-cell';
+    if (colIdx) cell.classList.add(`col-${colIdx}`);
     cell.dataset.date = dayKey;
     cell.setAttribute('role', 'gridcell');
     cell.setAttribute('tabindex', '0');
@@ -838,7 +860,19 @@ class DarkCalApp {
     numSpan.textContent = dayNum;
     topRow.appendChild(numSpan);
 
-    if (events.length > 0) {
+    if (isToday) {
+      const curBadge = document.createElement('span');
+      curBadge.className = 'ansi-cur-badge';
+      curBadge.textContent = 'Cur';
+      curBadge.title = 'Current Day (Today)';
+      topRow.appendChild(curBadge);
+    } else if (this.pinnedDayKey === dayKey) {
+      const selBadge = document.createElement('span');
+      selBadge.className = 'ansi-sel-badge';
+      selBadge.textContent = 'Sel';
+      selBadge.title = 'Selected Day';
+      topRow.appendChild(selBadge);
+    } else if (events.length > 0) {
       const countBadge = document.createElement('span');
       countBadge.className = 'day-event-count';
       countBadge.textContent = events.length;
