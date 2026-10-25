@@ -23,6 +23,7 @@ class DarkCalApp {
     this.activeCalendarFilter = 'all';
     this.activeHoverCell = null;
     this.hoverTimeout = null;
+    this.todayBlinkTimeout = null;
     this.isMouseOverPopover = false;
 
     this.cacheDom();
@@ -806,6 +807,10 @@ class DarkCalApp {
 
   renderMonthGrid() {
     this.monthGrid.innerHTML = '';
+    if (this.todayBlinkTimeout) {
+      clearTimeout(this.todayBlinkTimeout);
+      this.todayBlinkTimeout = null;
+    }
 
     const firstDayOfMonth = new Date(this.viewYear, this.viewMonth, 1);
     const lastDayOfMonth = new Date(this.viewYear, this.viewMonth + 1, 0);
@@ -818,6 +823,7 @@ class DarkCalApp {
     const todayDateStr = this.formatDateKey(this.today);
 
     let cellIndex = 0;
+    let todayCell = null;
 
     // Prev month days
     for (let i = firstDayIndex - 1; i >= 0; i--) {
@@ -825,16 +831,18 @@ class DarkCalApp {
       const prevDate = new Date(this.viewYear, this.viewMonth - 1, dayNum);
       const dayKey = this.formatDateKey(prevDate);
       const dayEvents = this.getEventsForDate(prevDate);
+      const isToday = dayKey === todayDateStr;
       
       const cell = this.createDayCell({
         date: prevDate,
         dayNum,
         dayKey,
         isOtherMonth: true,
-        isToday: dayKey === todayDateStr,
+        isToday: false,
         events: dayEvents,
         cellIndex: cellIndex++
       });
+      if (isToday) todayCell = cell;
       this.monthGrid.appendChild(cell);
     }
 
@@ -843,16 +851,18 @@ class DarkCalApp {
       const curDate = new Date(this.viewYear, this.viewMonth, day);
       const dayKey = this.formatDateKey(curDate);
       const dayEvents = this.getEventsForDate(curDate);
+      const isToday = dayKey === todayDateStr;
 
       const cell = this.createDayCell({
         date: curDate,
         dayNum: day,
         dayKey,
         isOtherMonth: false,
-        isToday: dayKey === todayDateStr,
+        isToday: false,
         events: dayEvents,
         cellIndex: cellIndex++
       });
+      if (isToday) todayCell = cell;
       this.monthGrid.appendChild(cell);
     }
 
@@ -865,17 +875,32 @@ class DarkCalApp {
       const nextDate = new Date(this.viewYear, this.viewMonth + 1, day);
       const dayKey = this.formatDateKey(nextDate);
       const dayEvents = this.getEventsForDate(nextDate);
+      const isToday = dayKey === todayDateStr;
 
       const cell = this.createDayCell({
         date: nextDate,
         dayNum: day,
         dayKey,
         isOtherMonth: true,
-        isToday: dayKey === todayDateStr,
+        isToday: false,
         events: dayEvents,
         cellIndex: cellIndex++
       });
+      if (isToday) todayCell = cell;
       this.monthGrid.appendChild(cell);
+    }
+
+    // After all tiles finish scanning in, trigger 2 blinks on todayCell and lock on bright green
+    if (todayCell) {
+      const totalScanDuration = (totalCells - 1) * 42 + 220;
+      this.todayBlinkTimeout = setTimeout(() => {
+        todayCell.classList.add('is-today', 'today-blinking');
+        todayCell.addEventListener('animationend', (e) => {
+          if (e.animationName === 'todayTwoBlinks') {
+            todayCell.classList.remove('today-blinking');
+          }
+        }, { once: true });
+      }, totalScanDuration + 50);
     }
   }
 
