@@ -132,6 +132,8 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   letter-spacing: -0.2px;
 }
 
@@ -145,7 +147,7 @@ body {
 }
 
 /* -------------------------------------------------------------
-   2.1. Retro Green-Screen CRT Overlays (Scanlines & Curved Tube)
+   2.1. Retro Green-Screen CRT Overlays (Crisp & Subtle)
    ------------------------------------------------------------- */
 .crt-overlay {
   position: fixed;
@@ -158,7 +160,7 @@ body {
   overflow: hidden;
 }
 
-/* Horizontal Phosphor Scanlines */
+/* Subtle scanlines - Keeps typography crisp and 100% legible */
 .crt-scanlines {
   position: absolute;
   inset: 0;
@@ -167,46 +169,25 @@ body {
     to bottom,
     rgba(255, 255, 255, 0),
     rgba(255, 255, 255, 0) 50%,
-    rgba(0, 0, 0, 0.42) 50%,
-    rgba(0, 0, 0, 0.42)
+    rgba(0, 0, 0, 0.22) 50%,
+    rgba(0, 0, 0, 0.22)
   );
-  background-size: 100% 3px;
-  opacity: 0.92;
+  background-size: 100% 4px;
+  opacity: 0.15;
 }
 
-/* Phosphor Refresh / Ambient Scan Texture */
-.crt-scanlines::after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(
-    rgba(0, 255, 0, 0) 50%,
-    rgba(0, 255, 0, 0.035) 50%
-  );
-  background-size: 100% 6px;
-  pointer-events: none;
-}
-
-/* Curved CRT Screen Tube Vignette (Darkened edges & phosphor bezel bloom) */
+/* Curved CRT Screen Tube Vignette (Subtle bezel framing) */
 .crt-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: radial-gradient(
     ellipse at center,
-    transparent 60%,
-    rgba(0, 0, 0, 0.35) 82%,
-    rgba(0, 0, 0, 0.88) 100%
+    transparent 70%,
+    rgba(0, 0, 0, 0.45) 100%
   );
-  box-shadow:
-    inset 0 0 50px rgba(0, 0, 0, 0.95),
-    inset 0 0 100px rgba(0, 20, 0, 0.7),
-    inset 0 0 8px rgba(0, 255, 0, 0.25);
-  border: 1px solid rgba(0, 255, 0, 0.22);
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 255, 0, 0.15);
   border-radius: var(--radius-sm);
 }
 
@@ -227,7 +208,7 @@ body.theme-obsidian .crt-overlay {
   line-height: 1;
   margin-left: 2px;
   animation: crt-cursor-blink 1s steps(1, start) infinite;
-  text-shadow: 0 0 6px var(--accent-cursor), 0 0 12px var(--accent-primary);
+  text-shadow: none;
   user-select: none;
   vertical-align: baseline;
 }
@@ -316,7 +297,6 @@ body.theme-homebrew textarea {
   font-size: 11px;
   font-weight: 700;
   color: var(--accent-cyan);
-  text-shadow: var(--glow-cyan);
 }
 
 .brand-icon {
@@ -329,14 +309,12 @@ body.theme-homebrew textarea {
   background: var(--accent-selection);
   border: 1px solid var(--border-strong);
   color: var(--accent-primary);
-  box-shadow: var(--glow-green);
 }
 
 .brand-title {
   font-size: 13px;
   font-weight: 700;
   color: var(--accent-primary);
-  text-shadow: var(--glow-green);
   font-family: var(--font-family);
 }
 
@@ -352,13 +330,11 @@ body.theme-homebrew textarea {
   background-color: rgba(229, 229, 0, 0.15);
   color: var(--accent-yellow);
   border: 1px solid rgba(229, 229, 0, 0.45);
-  text-shadow: var(--glow-yellow);
 }
 .badge-live {
   background-color: rgba(0, 229, 229, 0.15);
   color: var(--accent-cyan);
   border: 1px solid rgba(0, 229, 229, 0.45);
-  text-shadow: var(--glow-cyan);
 }
 
 .header-actions {
@@ -446,7 +422,6 @@ body.theme-homebrew textarea {
   font-size: 14px;
   font-weight: 700;
   color: var(--accent-yellow);
-  text-shadow: var(--glow-yellow);
   font-family: var(--font-family);
 }
 
@@ -480,12 +455,10 @@ body.theme-homebrew textarea {
   color: var(--accent-yellow);
   border-color: rgba(229, 229, 0, 0.45);
   background-color: rgba(229, 229, 0, 0.12);
-  text-shadow: var(--glow-yellow);
 }
 .today-btn:hover {
   background-color: rgba(229, 229, 0, 0.24);
   border-color: var(--accent-yellow);
-  box-shadow: var(--glow-yellow);
 }
 
 .arrow-group {
@@ -505,7 +478,6 @@ body.theme-homebrew textarea {
 .nav-arrow:hover {
   color: var(--accent-white);
   background-color: var(--bg-surface-hover);
-  box-shadow: var(--glow-cyan);
 }
 
 .status-toast {
@@ -544,11 +516,9 @@ body.theme-homebrew textarea {
   font-weight: 700;
   text-transform: uppercase;
   color: var(--accent-cyan);
-  text-shadow: var(--glow-cyan);
 }
 .weekday-col.weekend {
   color: var(--accent-magenta);
-  text-shadow: var(--glow-magenta);
 }
 
 .month-grid {
@@ -634,7 +604,6 @@ body.theme-homebrew textarea {
 }
 .day-cell:hover .day-number {
   color: var(--accent-yellow);
-  text-shadow: var(--glow-yellow);
 }
 
 .day-event-count {
@@ -712,7 +681,6 @@ body.theme-homebrew textarea {
   flex-direction: column;
   z-index: 50;
   animation: popoverFadeIn 0.14s ease-out;
-  backdrop-filter: blur(8px);
   pointer-events: auto;
 }
 
@@ -752,7 +720,6 @@ body.theme-homebrew textarea {
   font-size: 13px;
   font-weight: 700;
   color: var(--accent-cyan);
-  text-shadow: var(--glow-cyan);
   user-select: none;
 }
 
@@ -770,7 +737,6 @@ body.theme-homebrew textarea {
   background-color: rgba(229, 0, 0, 0.2);
   border: 1px solid rgba(229, 0, 0, 0.5);
   color: var(--accent-red);
-  text-shadow: var(--glow-red);
 }
 
 .popover-close-btn {
@@ -807,7 +773,7 @@ body.theme-homebrew textarea {
 }
 .popover-add-link:hover {
   border-color: var(--accent-primary);
-  box-shadow: var(--glow-green);
+  background-color: rgba(0, 255, 0, 0.2);
 }
 
 .popover-schedule-list {
@@ -849,7 +815,6 @@ body.theme-homebrew textarea {
   font-size: 10px;
   font-weight: 700;
   color: var(--accent-cyan);
-  text-shadow: var(--glow-cyan);
 }
 
 .schedule-duration {
@@ -860,7 +825,6 @@ body.theme-homebrew textarea {
   background-color: rgba(229, 229, 0, 0.14);
   border: 1px solid rgba(229, 229, 0, 0.35);
   color: var(--accent-yellow);
-  text-shadow: var(--glow-yellow);
 }
 
 .schedule-title {
@@ -904,15 +868,10 @@ body.theme-homebrew textarea {
   width: fit-content;
   border: 1px solid rgba(0, 229, 229, 0.4);
   margin-top: 2px;
-  text-shadow: var(--glow-cyan);
 }
 .schedule-meet-btn:hover {
   background-color: rgba(0, 229, 229, 0.25);
   border-color: var(--accent-cyan);
-  box-shadow: var(--glow-cyan);
-}
-  background-color: var(--bg-surface-hover);
-  box-shadow: var(--glow-sm);
 }
 
 .schedule-description {
@@ -977,7 +936,6 @@ body.theme-homebrew textarea {
   font-size: 10px;
   color: var(--accent-cyan);
   font-weight: 700;
-  text-shadow: var(--glow-cyan);
 }
 
 .hint-text {
@@ -994,8 +952,7 @@ body.theme-homebrew textarea {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.88);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1036,7 +993,6 @@ body.theme-homebrew textarea {
   font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
-  text-shadow: var(--glow-sm);
 }
 .modal-subtitle {
   font-size: 10px;
