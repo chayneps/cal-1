@@ -6,7 +6,7 @@ const { spawn } = require('child_process');
 const ICONS_DIR = path.resolve(__dirname, '../icons');
 const TEMP_HTML = path.resolve(__dirname, 'temp_icon_builder.html');
 const CHROME_BIN = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const PORT = 9224;
+const PORT = 9225;
 
 const htmlContent = `<!DOCTYPE html>
 <html>
@@ -63,37 +63,31 @@ function renderIcon(size) {
 
   if (size === 16) {
     // -------------------------------------------------------------
-    // 16x16 Toolbar Icon (Pixel Optimized)
+    // 16x16 Toolbar Icon (Pixel Optimized, No Border)
     // -------------------------------------------------------------
-    ctx.clearRect(0, 0, 16, 16);
+    ctx.save();
+    drawRoundRect(ctx, 0, 0, 16, 16, 3);
+    ctx.clip();
     
-    // Fill pitch black terminal body
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(1, 1, 14, 14);
-    
-    // Top 7 Thai rainbow stripes (x=1..14, y=1..4)
+    // Pure Black terminal body
+    ctx.fillStyle = '#0a0d0a';
+    ctx.fillRect(0, 0, 16, 16);
+
+    // 7 Thai rainbow stripes across top 5px
+    const stripeW = 16 / 7;
     for (let i = 0; i < 7; i++) {
       ctx.fillStyle = thaiColors[i];
-      ctx.fillRect(1 + i * 2, 1, 2, 4);
+      ctx.fillRect(i * stripeW, 0, stripeW + 0.3, 5);
     }
-    // Separator at y=5
+    // Subtle separator line
     ctx.fillStyle = '#000000';
-    ctx.fillRect(1, 5, 14, 1);
-    
+    ctx.fillRect(0, 5, 16, 1);
+    ctx.restore();
+
     // 2 White binder rings
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(4, 0, 2, 2);
-    ctx.fillRect(10, 0, 2, 2);
-    
-    // Outer crisp phosphor green border
-    ctx.strokeStyle = '#00ff00';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(1.5, 1.5, 13, 13);
-    // Rounded corner transparent pixels
-    ctx.clearRect(0, 0, 1, 1);
-    ctx.clearRect(15, 0, 1, 1);
-    ctx.clearRect(0, 15, 1, 1);
-    ctx.clearRect(15, 15, 1, 1);
+    ctx.fillRect(4, 0, 2, 2.5);
+    ctx.fillRect(10, 0, 2, 2.5);
 
     // Pixel-perfect 'cal' in pure phosphor green
     ctx.fillStyle = '#00ff00';
@@ -118,21 +112,21 @@ function renderIcon(size) {
 
   if (size === 32) {
     // -------------------------------------------------------------
-    // 32x32 Retina Toolbar Icon (Displayed at 16x16 on Retina)
+    // 32x32 Retina Toolbar Icon (No Border)
     // -------------------------------------------------------------
-    const pad = 1;
-    const w = 30;
-    const h = 30;
-    const r = 4;
+    const pad = 0.5;
+    const w = size - pad * 2;
+    const h = size - pad * 2;
+    const r = 5;
 
     ctx.save();
     drawRoundRect(ctx, pad, pad, w, h, r);
     ctx.clip();
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#0a0d0a';
     ctx.fillRect(pad, pad, w, h);
 
     // 7 Thai rainbow stripes
-    const headerH = 10.5;
+    const headerH = 11;
     const stripeW = w / 7;
     for (let i = 0; i < 7; i++) {
       ctx.fillStyle = thaiColors[i];
@@ -153,43 +147,37 @@ function renderIcon(size) {
     drawRoundRect(ctx, pad + w * 0.72 - ringW / 2, ringY, ringW, ringH, 1);
     ctx.fill();
 
-    // Phosphor Green Border
-    ctx.strokeStyle = '#00ff00';
-    ctx.lineWidth = 1.5;
-    drawRoundRect(ctx, pad, pad, w, h, r);
-    ctx.stroke();
-
-    // Body: Spaceship arrow + 'cal'
+    // Body: Spaceship arrow + 'cal' (NO border)
     const bodyCenterY = pad + headerH + (h - headerH) * 0.52;
-    drawSpaceshipArrow(ctx, pad + 3, bodyCenterY - 3.5, 7, '#ec4899');
+    drawSpaceshipArrow(ctx, pad + 3, bodyCenterY - 3.5, 7.5, '#ec4899');
 
     // 'cal' in phosphor green
     ctx.fillStyle = '#00ff00';
     ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('cal', pad + 12.5, bodyCenterY);
+    ctx.fillText('cal', pad + 13, bodyCenterY);
 
     return canvas.toDataURL('image/png');
   }
 
   if (size === 48) {
     // -------------------------------------------------------------
-    // 48x48 Icon (Extensions Management / High DPI)
+    // 48x48 Icon (Extensions Management / High DPI, No Border)
     // -------------------------------------------------------------
-    const pad = 2;
+    const pad = 1;
     const w = size - pad * 2;
     const h = size - pad * 2;
-    const r = 6;
+    const r = 7;
 
     ctx.save();
     drawRoundRect(ctx, pad, pad, w, h, r);
     ctx.clip();
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#0a0d0a';
     ctx.fillRect(pad, pad, w, h);
 
     // 7 Thai rainbow stripes
-    const headerH = 15;
+    const headerH = 16;
     const stripeW = w / 7;
     for (let i = 0; i < 7; i++) {
       ctx.fillStyle = thaiColors[i];
@@ -205,12 +193,6 @@ function renderIcon(size) {
     ctx.fill();
     drawRoundRect(ctx, pad + w * 0.72 - 2, 0.5, 4, 6, 1.5);
     ctx.fill();
-
-    // Border
-    ctx.strokeStyle = '#00ff00';
-    ctx.lineWidth = 2;
-    drawRoundRect(ctx, pad, pad, w, h, r);
-    ctx.stroke();
 
     const bodyTop = pad + headerH;
     const bodyH = h - headerH;
@@ -239,21 +221,21 @@ function renderIcon(size) {
   }
 
   // -------------------------------------------------------------
-  // 128x128 Master Icon
+  // 128x128 Master Icon (No Border)
   // -------------------------------------------------------------
-  const pad = 5;
+  const pad = 2;
   const w = size - pad * 2;
   const h = size - pad * 2;
-  const r = 16;
+  const r = 18;
 
   ctx.save();
   drawRoundRect(ctx, pad, pad, w, h, r);
   ctx.clip();
-  ctx.fillStyle = '#000000';
+  ctx.fillStyle = '#0a0d0a';
   ctx.fillRect(pad, pad, w, h);
 
   // Top header: 7 Thai rainbow stripes with gradient shine
-  const headerH = 40;
+  const headerH = 42;
   const stripeW = w / 7;
   for (let i = 0; i < 7; i++) {
     const grad = ctx.createLinearGradient(0, pad, 0, pad + headerH);
@@ -280,12 +262,6 @@ function renderIcon(size) {
   ctx.fillStyle = 'rgba(0,0,0,0.25)';
   ctx.fillRect(pad + w * 0.28 - ringW / 2, ringY + ringH * 0.55, ringW, ringH * 0.45);
   ctx.fillRect(pad + w * 0.72 - ringW / 2, ringY + ringH * 0.55, ringW, ringH * 0.45);
-
-  // CRT Border
-  ctx.strokeStyle = '#00ff00';
-  ctx.lineWidth = 4;
-  drawRoundRect(ctx, pad, pad, w, h, r);
-  ctx.stroke();
 
   const bodyTop = pad + headerH;
   const bodyH = h - headerH;
