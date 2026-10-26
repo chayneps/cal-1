@@ -981,6 +981,17 @@ body.theme-homebrew textarea {
   animation: todayNumberBlink 0.75s ease-in-out infinite !important;
 }
 
+/* Today Weekday Header Badge (matches today tile rhythm & behavior) */
+.weekday-col.is-today {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 1.5px var(--accent-primary), 0 0 10px rgba(0, 255, 0, 0.55) !important;
+  z-index: 2;
+}
+.weekday-col.today-blinking {
+  animation: todayBlink 0.75s ease-in-out infinite !important;
+  z-index: 2;
+}
+
 /* Active Day Cell on Hover & Popover Shown (Slow CRT Phosphor Pulse) */
 @keyframes date-cell-slow-blink {
   0%, 100% {
@@ -1064,7 +1075,8 @@ body.theme-homebrew textarea {
     transform: none !important;
   }
   .day-cell.today-blinking,
-  .day-cell.today-blinking .day-number {
+  .day-cell.today-blinking .day-number,
+  .weekday-col.today-blinking {
     animation: none !important;
   }
 }

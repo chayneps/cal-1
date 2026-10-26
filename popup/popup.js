@@ -26,6 +26,7 @@ class DarkCalApp {
     this.todayBlinkTimeout = null;
     this.todayInteractionCleanup = null;
     this.activeTodayCell = null;
+    this.activeTodayHeaderCol = null;
     this.isMouseOverPopover = false;
     this.isUserEditingCommand = false;
     this.toastAnimationId = 0;
@@ -936,6 +937,13 @@ class DarkCalApp {
     }
     this.stopTodayBlinking();
 
+    // Reset any previous is-today / today-blinking classes on weekday headers
+    if (this.weekdayHeader) {
+      this.weekdayHeader.querySelectorAll('.weekday-col').forEach(col => {
+        col.classList.remove('is-today', 'today-blinking');
+      });
+    }
+
     const firstDayOfMonth = new Date(this.viewYear, this.viewMonth, 1);
     const lastDayOfMonth = new Date(this.viewYear, this.viewMonth + 1, 0);
     const numDaysInMonth = lastDayOfMonth.getDate();
@@ -1028,6 +1036,15 @@ class DarkCalApp {
     this.activeTodayCell = todayCell;
     todayCell.classList.add('is-today', 'today-blinking');
 
+    // Also blink today's weekday header column (SUN, MON, etc.) in matching rhythm
+    const dayClasses = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
+    const todayDayClass = dayClasses[this.today.getDay()];
+    const todayHeaderCol = this.weekdayHeader ? this.weekdayHeader.querySelector(`.weekday-col.${todayDayClass}`) : null;
+    if (todayHeaderCol) {
+      this.activeTodayHeaderCol = todayHeaderCol;
+      todayHeaderCol.classList.add('is-today', 'today-blinking');
+    }
+
     const onUserInteraction = (e) => {
       // Ignore phantom mousemoves with no actual displacement
       if (e.type === 'mousemove' && e.movementX === 0 && e.movementY === 0) {
@@ -1060,6 +1077,11 @@ class DarkCalApp {
       this.activeTodayCell.classList.remove('today-blinking');
       this.activeTodayCell.classList.add('is-today');
       this.activeTodayCell = null;
+    }
+    if (this.activeTodayHeaderCol) {
+      this.activeTodayHeaderCol.classList.remove('today-blinking');
+      this.activeTodayHeaderCol.classList.add('is-today');
+      this.activeTodayHeaderCol = null;
     }
   }
 
