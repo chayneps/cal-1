@@ -13,6 +13,8 @@ Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any mo
 * `cal 5` or `cal may` &rarr; Jump to May of the current year
 * `cal` or `cal today` &rarr; Jump back to the current month / today
 * `cal next` / `cal prev` &rarr; Advance or reverse 1 month
+* `cal 4` or `cal -4` &rarr; Toggle 4-Month 2×2 panoramic zoom view
+* `cal 1` &rarr; Return to standard 1-month view
 * `cal @work` / `cal @personal` / `cal @all` &rarr; Switch active calendar feed
 * `cal -c <name>` &rarr; Set or switch active calendar
 * `cal --help` &rarr; Show command usage tips

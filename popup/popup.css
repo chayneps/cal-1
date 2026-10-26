@@ -1896,3 +1896,199 @@ body.keyboard-nav .day-cell.other-month:hover {
   font-family: var(--font-family);
   letter-spacing: 0.5px;
 }
+
+/* -------------------------------------------------------------
+   4-Month 2x2 Zoom View (cal -4)
+   ------------------------------------------------------------- */
+#zoomViewBtn.active {
+  color: var(--accent-primary) !important;
+  background-color: var(--accent-selection) !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: var(--glow-green) !important;
+}
+
+body.view-quad {
+  --app-width: 650px;
+  --app-height: 520px;
+}
+
+body.view-quad .calendar-viewport {
+  padding: 6px 8px;
+  overflow: hidden;
+}
+
+body.view-quad #weekdayHeader,
+body.view-quad #monthGrid {
+  display: none !important;
+}
+
+body.view-quad #quadMonthContainer {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+}
+
+.mini-month-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 5px 7px 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.mini-month-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+  background-color: var(--bg-surface-hover);
+}
+
+/* Highlighted Current Month (Top-Right) */
+.mini-month-card.is-current-month {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 1px var(--accent-primary), 0 0 14px rgba(0, 255, 0, 0.35) !important;
+  background-color: rgba(0, 255, 0, 0.04) !important;
+}
+
+.mini-month-card.is-current-month:hover {
+  box-shadow: 0 0 0 1.5px var(--accent-primary), 0 0 18px rgba(0, 255, 0, 0.5) !important;
+  background-color: rgba(0, 255, 0, 0.07) !important;
+}
+
+/* Mini Header with separate cal command */
+.mini-month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
+  border-bottom: 1px dashed var(--border-subtle);
+  line-height: 1;
+}
+
+.mini-cmd-prompt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-family);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.mini-prompt-sym {
+  color: var(--accent-primary);
+}
+
+.mini-prompt-cmd {
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+}
+
+.mini-cmd-badge {
+  font-family: var(--font-family);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1.5px 4.5px;
+  border-radius: 2px;
+  letter-spacing: 0.4px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.mini-month-card.is-current-month .mini-cmd-badge {
+  background-color: var(--accent-primary);
+  color: #000000;
+  border-color: var(--accent-primary);
+  font-weight: 800;
+}
+
+/* Mini Weekday Row */
+.mini-weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 2px;
+  text-align: center;
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mini-weekday-col {
+  padding: 1.5px 0;
+  border-radius: 1px;
+}
+
+.mini-weekday-col.day-sun { color: var(--thai-sun-bright); }
+.mini-weekday-col.day-mon { color: var(--thai-mon-bright); }
+.mini-weekday-col.day-tue { color: var(--thai-tue-bright); }
+.mini-weekday-col.day-wed { color: var(--thai-wed-bright); }
+.mini-weekday-col.day-thu { color: var(--thai-thu-bright); }
+.mini-weekday-col.day-fri { color: var(--thai-fri-bright); }
+.mini-weekday-col.day-sat { color: var(--thai-sat-bright); }
+
+/* Mini Days Grid */
+.mini-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  flex: 1;
+}
+
+.mini-day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-light);
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.02);
+  min-height: 17px;
+  position: relative;
+  line-height: 1;
+}
+
+.mini-day-cell.other-month {
+  opacity: 0.22;
+  color: var(--text-dim);
+}
+
+.mini-day-cell.is-today {
+  background-color: var(--accent-primary) !important;
+  color: #000000 !important;
+  font-weight: 800;
+  box-shadow: 0 0 6px rgba(0, 255, 0, 0.7);
+}
+
+.mini-day-cell .mini-holiday-star {
+  color: var(--accent-red);
+  font-size: 9px;
+  font-weight: 800;
+  margin-left: 1px;
+}
+
+.mini-day-cell.is-today .mini-holiday-star {
+  color: #000000 !important;
+}
+
+.mini-day-cell .mini-event-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: var(--accent-cyan);
+  margin-top: 1px;
+}
+
+.mini-day-cell.is-today .mini-event-dot {
+  background-color: #000000;
+}

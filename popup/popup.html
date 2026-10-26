@@ -38,6 +38,16 @@
       </div>
 
       <div class="header-actions">
+        <!-- 4-Month 2x2 Zoom View Toggle -->
+        <button id="zoomViewBtn" class="icon-btn" title="Toggle 4-Month View (cal -4)" aria-label="Toggle 4-Month View">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+          </svg>
+        </button>
+
         <!-- New Event Quick Link -->
         <a id="newEventBtn" href="https://calendar.google.com/calendar/r/eventedit" target="_blank" class="icon-btn" title="Create New Event on Google Calendar" aria-label="Create New Event">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -114,6 +124,7 @@
     <main class="calendar-viewport">
       <div id="weekdayHeader" class="weekday-header"></div>
       <div id="monthGrid" class="month-grid" role="grid" aria-label="Monthly Calendar"></div>
+      <div id="quadMonthContainer" class="quad-month-container hidden"></div>
     </main>
 
     <!-- Bottom Bar with Auto-Sync & Last Sync indicator -->

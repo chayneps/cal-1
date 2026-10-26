@@ -36,6 +36,7 @@ class DarkCalApp {
     this.holidayCountry = '';
     this.holidaysMap = {};
     this.isUserEditingCommand = false;
+    this.isQuadView = false;
     this.toastAnimationId = 0;
     this.isToastAnimating = false;
 
@@ -48,6 +49,7 @@ class DarkCalApp {
     this.connectionBadge = document.getElementById('connectionBadge');
     this.spCalendarBtn = document.getElementById('spCalendarBtn');
     this.spCalendarName = document.getElementById('spCalendarName');
+    this.zoomViewBtn = document.getElementById('zoomViewBtn');
     this.syncBtn = document.getElementById('syncBtn');
     this.settingsBtn = document.getElementById('settingsBtn');
     this.newEventBtn = document.getElementById('newEventBtn');
@@ -63,6 +65,7 @@ class DarkCalApp {
     this.nextMonthBtn = document.getElementById('nextMonthBtn');
     this.weekdayHeader = document.getElementById('weekdayHeader');
     this.monthGrid = document.getElementById('monthGrid');
+    this.quadMonthContainer = document.getElementById('quadMonthContainer');
     this.statusToast = document.getElementById('statusToast');
     this.calendarSourceStatus = document.getElementById('calendarSourceStatus');
     this.lastSyncTimeText = document.getElementById('lastSyncTimeText');
@@ -97,6 +100,13 @@ class DarkCalApp {
   }
 
   bindEvents() {
+    // 4-Month 2x2 Zoom View Toggle
+    if (this.zoomViewBtn) {
+      this.zoomViewBtn.addEventListener('click', () => {
+        this.toggleQuadView();
+      });
+    }
+
     // Theme Switcher
     if (this.themeSelect) {
       this.themeSelect.addEventListener('change', async (e) => {
@@ -428,7 +438,8 @@ class DarkCalApp {
       'customCalendarName',
       'detectedCalendarName',
       'activeCalendarFilter',
-      'holidayCountry'
+      'holidayCountry',
+      'calendarView'
     ]);
 
     this.theme = stored.theme || 'homebrew';
@@ -476,6 +487,19 @@ class DarkCalApp {
     }
     await this.loadHolidays();
 
+    this.isQuadView = stored.calendarView === 'quad';
+    if (this.isQuadView) {
+      document.body.classList.add('view-quad');
+      if (this.zoomViewBtn) {
+        this.zoomViewBtn.classList.add('active');
+        this.zoomViewBtn.title = 'Switch to 1-Month View (cal 1)';
+        this.zoomViewBtn.setAttribute('aria-label', 'Switch to 1-Month View');
+      }
+      if (this.quadMonthContainer) {
+        this.quadMonthContainer.classList.remove('hidden');
+      }
+    }
+
     this.renderWeekdays();
     this.updateMonthHeading();
     this.updateCalendarHeader();
@@ -483,7 +507,11 @@ class DarkCalApp {
     if (stored.savedIcalEvents && stored.savedIcalEvents.length > 0) {
       this.events = stored.savedIcalEvents;
       this.updateStatus(false, this.events.length);
-      this.renderMonthGrid();
+      if (this.isQuadView) {
+        await this.renderQuadView();
+      } else {
+        this.renderMonthGrid();
+      }
 
       // Check if cache is stale (older than sync interval) -> perform silent background auto-sync!
       if (this.icalUrl && !this.useDemoData && this.autoSyncInterval > 0) {
@@ -630,7 +658,10 @@ class DarkCalApp {
       this.holidaysMap = {};
       return;
     }
-    this.holidaysMap = await getHolidaysForYear(this.holidayCountry, this.viewYear);
+    const currentYearHolidays = await getHolidaysForYear(this.holidayCountry, this.viewYear);
+    const nextH = await getHolidaysForYear(this.holidayCountry, this.viewYear + 1);
+    const prevH = await getHolidaysForYear(this.holidayCountry, this.viewYear - 1);
+    this.holidaysMap = { ...prevH, ...currentYearHolidays, ...nextH };
   }
 
   loadCalendarData() {
@@ -643,13 +674,28 @@ class DarkCalApp {
 
   loadDemoEvents() {
     this.calendars = getMockCalendars();
-    this.events = generateMockEvents(this.viewYear, this.viewMonth);
+    const currEvents = generateMockEvents(this.viewYear, this.viewMonth);
+    if (this.isQuadView) {
+      const p = this.getMonthOffset(this.viewYear, this.viewMonth, -1);
+      const n1 = this.getMonthOffset(this.viewYear, this.viewMonth, 1);
+      const n2 = this.getMonthOffset(this.viewYear, this.viewMonth, 2);
+      const pEvents = generateMockEvents(p.year, p.month);
+      const n1Events = generateMockEvents(n1.year, n1.month);
+      const n2Events = generateMockEvents(n2.year, n2.month);
+      this.events = [...pEvents, ...currEvents, ...n1Events, ...n2Events];
+    } else {
+      this.events = currEvents;
+    }
     if (!this.customCalendarName) {
       this.calendarName = this.activeCalendarFilter !== 'all' ? this.activeCalendarFilter : 'demo';
       this.updateCalendarHeader();
     }
     this.updateStatus(true);
-    this.renderMonthGrid();
+    if (this.isQuadView) {
+      this.renderQuadView();
+    } else {
+      this.renderMonthGrid();
+    }
   }
 
   async refreshCalendar(showToastMsg = false) {
@@ -751,7 +797,15 @@ class DarkCalApp {
   updateMonthHeading() {
     const monthStr = this.getMonthName();
     if (this.calCommandLine) {
-      this.calCommandLine.value = `cal ${monthStr} ${this.viewYear}`;
+      if (this.isQuadView) {
+        const p = this.getMonthOffset(this.viewYear, this.viewMonth, -1);
+        const pShort = new Date(p.year, p.month, 1).toLocaleDateString('en-US', { month: 'short' });
+        const n = this.getMonthOffset(this.viewYear, this.viewMonth, 2);
+        const nShort = new Date(n.year, n.month, 1).toLocaleDateString('en-US', { month: 'short' });
+        this.calCommandLine.value = `cal -4 ${pShort} - ${nShort} ${this.viewYear}`;
+      } else {
+        this.calCommandLine.value = `cal ${monthStr} ${this.viewYear}`;
+      }
       this.isUserEditingCommand = false;
       this.syncCommandInputWidth();
       const len = this.calCommandLine.value.length;
@@ -760,6 +814,217 @@ class DarkCalApp {
     if (this.currentMonthYear) {
       this.currentMonthYear.textContent = `${monthStr} ${this.viewYear}`;
     }
+  }
+
+  getMonthOffset(baseYear, baseMonth, delta) {
+    let y = baseYear;
+    let m = baseMonth + delta;
+    while (m < 0) {
+      m += 12;
+      y -= 1;
+    }
+    while (m > 11) {
+      m -= 12;
+      y += 1;
+    }
+    return { year: y, month: m };
+  }
+
+  setQuadView(enabled, save = true) {
+    this.isQuadView = enabled;
+    if (enabled) {
+      document.body.classList.add('view-quad');
+      if (this.zoomViewBtn) {
+        this.zoomViewBtn.classList.add('active');
+        this.zoomViewBtn.title = 'Switch to 1-Month View (cal 1)';
+        this.zoomViewBtn.setAttribute('aria-label', 'Switch to 1-Month View');
+      }
+      this.hidePopover();
+      if (this.quadMonthContainer) {
+        this.quadMonthContainer.classList.remove('hidden');
+      }
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        this.renderQuadView();
+      }
+    } else {
+      document.body.classList.remove('view-quad');
+      if (this.zoomViewBtn) {
+        this.zoomViewBtn.classList.remove('active');
+        this.zoomViewBtn.title = 'Toggle 4-Month View (cal 4)';
+        this.zoomViewBtn.setAttribute('aria-label', 'Toggle 4-Month View');
+      }
+      if (this.quadMonthContainer) {
+        this.quadMonthContainer.classList.add('hidden');
+      }
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        this.renderMonthGrid();
+      }
+    }
+
+    this.updateMonthHeading();
+    if (save) {
+      Storage.set({ calendarView: enabled ? 'quad' : 'single' });
+    }
+  }
+
+  toggleQuadView() {
+    this.setQuadView(!this.isQuadView, true);
+    this.showToast(this.isQuadView ? 'cal-1 ➜ 4-Month Zoom View (2×2)' : 'cal-1 ➜ 1-Month View');
+  }
+
+  async renderQuadView() {
+    if (!this.quadMonthContainer) return;
+    this.hidePopover();
+    this.quadMonthContainer.innerHTML = '';
+
+    // 4 Months:
+    // [0] Top-Left: -1 month
+    // [1] Top-Right: Current active view month (Highlighted)
+    // [2] Bottom-Left: +1 month
+    // [3] Bottom-Right: +2 months
+    const months = [
+      { ...this.getMonthOffset(this.viewYear, this.viewMonth, -1), isCurrent: false },
+      { year: this.viewYear, month: this.viewMonth, isCurrent: true },
+      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 1), isCurrent: false },
+      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 2), isCurrent: false }
+    ];
+
+    // Ensure holidays loaded for any involved years
+    if (this.holidayCountry) {
+      const distinctYears = [...new Set(months.map(m => m.year))];
+      for (const y of distinctYears) {
+        const yHolidays = await getHolidaysForYear(this.holidayCountry, y);
+        this.holidaysMap = { ...this.holidaysMap, ...yHolidays };
+      }
+    }
+
+    for (const info of months) {
+      const card = this.createMiniMonthCard(info);
+      this.quadMonthContainer.appendChild(card);
+    }
+  }
+
+  createMiniMonthCard({ year, month, isCurrent }) {
+    const card = document.createElement('div');
+    card.className = `mini-month-card ${isCurrent ? 'is-current-month' : ''}`;
+    card.setAttribute('role', 'region');
+    const monthName = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' });
+    const monthShort = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'short' });
+    card.setAttribute('aria-label', `${monthName} ${year}`);
+
+    // Clicking any mini month zooms in to that month in 1-month view!
+    card.addEventListener('click', () => {
+      this.viewYear = year;
+      this.viewMonth = month;
+      this.setQuadView(false);
+      this.showToast(`cal-1 ➜ ${monthName} ${year}`);
+    });
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'mini-month-header';
+    header.innerHTML = `
+      <div class="mini-cmd-prompt">
+        <span class="mini-prompt-sym">➜</span>
+        <span class="mini-prompt-cmd">cal ${monthShort} ${year}</span>
+      </div>
+      <span class="mini-cmd-badge">${isCurrent ? 'ACTIVE' : monthShort.toUpperCase()}</span>
+    `;
+    card.appendChild(header);
+
+    // Weekday row
+    const weekdayRow = document.createElement('div');
+    weekdayRow.className = 'mini-weekday-row';
+    const dayClasses = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
+    const weekdaysBase = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const order = this.firstDayOfWeek === 1
+      ? [1, 2, 3, 4, 5, 6, 0] // Mon first
+      : [0, 1, 2, 3, 4, 5, 6]; // Sun first
+
+    for (const d of order) {
+      const col = document.createElement('div');
+      col.className = `mini-weekday-col ${dayClasses[d]}`;
+      col.textContent = weekdaysBase[d];
+      weekdayRow.appendChild(col);
+    }
+    card.appendChild(weekdayRow);
+
+    // Days grid
+    const daysGrid = document.createElement('div');
+    daysGrid.className = 'mini-days-grid';
+
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const numDaysInMonth = lastDayOfMonth.getDate();
+    let firstDayIndex = firstDayOfMonth.getDay() - this.firstDayOfWeek;
+    if (firstDayIndex < 0) firstDayIndex += 7;
+
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    const todayDateStr = this.formatDateKey(this.today);
+
+    // Leading days
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const dayNum = prevMonthLastDay - i;
+      const prevDate = new Date(year, month - 1, dayNum);
+      const dayKey = this.formatDateKey(prevDate);
+      const cell = this.createMiniDayCell(prevDate, dayNum, dayKey, true, false);
+      daysGrid.appendChild(cell);
+    }
+
+    // Month days
+    for (let day = 1; day <= numDaysInMonth; day++) {
+      const curDate = new Date(year, month, day);
+      const dayKey = this.formatDateKey(curDate);
+      const isToday = dayKey === todayDateStr;
+      const cell = this.createMiniDayCell(curDate, day, dayKey, false, isToday);
+      daysGrid.appendChild(cell);
+    }
+
+    // Trailing days (pad to 35 or 42)
+    const totalFilled = firstDayIndex + numDaysInMonth;
+    const totalCells = totalFilled <= 35 ? 35 : 42;
+    const trailingDays = totalCells - totalFilled;
+    for (let day = 1; day <= trailingDays; day++) {
+      const nextDate = new Date(year, month + 1, day);
+      const dayKey = this.formatDateKey(nextDate);
+      const cell = this.createMiniDayCell(nextDate, day, dayKey, true, false);
+      daysGrid.appendChild(cell);
+    }
+
+    card.appendChild(daysGrid);
+    return card;
+  }
+
+  createMiniDayCell(date, dayNum, dayKey, isOtherMonth, isToday) {
+    const cell = document.createElement('div');
+    cell.className = `mini-day-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'is-today' : ''}`;
+    cell.dataset.date = dayKey;
+
+    const numSpan = document.createElement('span');
+    numSpan.className = 'mini-day-number';
+    numSpan.textContent = dayNum;
+
+    const holiday = this.holidaysMap[dayKey] || null;
+    if (holiday) {
+      const starSpan = document.createElement('span');
+      starSpan.className = 'mini-holiday-star';
+      starSpan.textContent = '*';
+      numSpan.appendChild(starSpan);
+    }
+    cell.appendChild(numSpan);
+
+    const dayEvents = this.getEventsForDate(date);
+    if (dayEvents.length > 0) {
+      const dot = document.createElement('span');
+      dot.className = 'mini-event-dot';
+      cell.appendChild(dot);
+    }
+
+    return cell;
   }
 
   focusCommandLine() {
@@ -790,6 +1055,12 @@ class DarkCalApp {
       return;
     }
 
+    if (result.isQuadSwitch) {
+      this.setQuadView(result.enableQuad);
+      this.showToast(result.msg);
+      return;
+    }
+
     if (result.isHelp) {
       this.showToast(result.msg);
       this.updateMonthHeading();
@@ -806,7 +1077,11 @@ class DarkCalApp {
           this.calendarName = matched === 'all' ? 'demo' : matched;
           await Storage.set({ activeCalendarFilter: matched, calendarName: this.calendarName });
           this.updateCalendarHeader();
-          this.renderMonthGrid();
+          if (this.isQuadView) {
+            this.renderQuadView();
+          } else {
+            this.renderMonthGrid();
+          }
           this.showToast(`cal ➜ Switched calendar to "${this.calendarName}"`);
         } else {
           this.showToast(`Unknown calendar "${result.calendarName}". Try: @all, @work, @personal, @deadlines, @team`);
@@ -817,6 +1092,11 @@ class DarkCalApp {
         if (this.calendarNameInput) this.calendarNameInput.value = this.calendarName;
         await Storage.set({ customCalendarName: this.calendarName, calendarName: this.calendarName });
         this.updateCalendarHeader();
+        if (this.isQuadView) {
+          this.renderQuadView();
+        } else {
+          this.renderMonthGrid();
+        }
         this.showToast(`cal ➜ Calendar set to "${this.calendarName}"`);
       }
       this.updateMonthHeading();
@@ -836,10 +1116,18 @@ class DarkCalApp {
     }
     this.updateMonthHeading();
 
-    if (this.useDemoData || !this.icalUrl) {
-      this.loadDemoEvents();
+    if (this.isQuadView) {
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        await this.renderQuadView();
+      }
     } else {
-      this.renderMonthGrid();
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        this.renderMonthGrid();
+      }
     }
 
     this.showToast(result.msg || `cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
@@ -880,8 +1168,15 @@ class DarkCalApp {
       if (m < 0) { m = 11; y -= 1; }
       return { month: m, year: y };
     }
+    if (first === '-4' || first === '4' || first === 'quad' || first === '--quad') {
+      return { isQuadSwitch: true, enableQuad: true, msg: 'cal-1 ➜ 4-Month Zoom View (2×2)' };
+    }
+    if (first === '1' || first === 'single' || first === '--single') {
+      return { isQuadSwitch: true, enableQuad: false, msg: 'cal-1 ➜ 1-Month View' };
+    }
+
     if (first === 'help' || first === '--help' || first === '-h' || first === 'man') {
-      return { isHelp: true, msg: 'Usage: cal [[month] year] | cal @[calendar] | e.g. "cal 12 2026", "cal @work"' };
+      return { isHelp: true, msg: 'Usage: cal [[month] year] | cal 4 (2×2 view) | cal 1 | cal @[calendar]' };
     }
 
     // Calendar switch: cal @[name] or cal -c [name]
@@ -1011,10 +1306,18 @@ class DarkCalApp {
       await this.loadHolidays();
     }
     this.updateMonthHeading();
-    if (this.useDemoData || !this.icalUrl) {
-      this.loadDemoEvents();
+    if (this.isQuadView) {
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        await this.renderQuadView();
+      }
     } else {
-      this.renderMonthGrid();
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        this.renderMonthGrid();
+      }
     }
     this.showToast(`cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
@@ -1026,10 +1329,18 @@ class DarkCalApp {
     this.viewYear += delta;
     await this.loadHolidays();
     this.updateMonthHeading();
-    if (this.useDemoData || !this.icalUrl) {
-      this.loadDemoEvents();
+    if (this.isQuadView) {
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        await this.renderQuadView();
+      }
     } else {
-      this.renderMonthGrid();
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        this.renderMonthGrid();
+      }
     }
     this.showToast(`cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
@@ -1050,12 +1361,20 @@ class DarkCalApp {
     }
     this.updateMonthHeading();
     this.focusCommandLine();
-    if (this.useDemoData || !this.icalUrl) {
-      this.loadDemoEvents();
+    if (this.isQuadView) {
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        await this.renderQuadView();
+      }
     } else {
-      this.renderMonthGrid();
-      if (this.icalUrl) {
-        this.handleIcalSync(false);
+      if (this.useDemoData || !this.icalUrl) {
+        this.loadDemoEvents();
+      } else {
+        this.renderMonthGrid();
+        if (this.icalUrl) {
+          this.handleIcalSync(false);
+        }
       }
     }
     this.showToast(`cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
@@ -1374,7 +1693,7 @@ class DarkCalApp {
   }
 
   showDaySchedulePopover(cellEl, date, events = []) {
-    if (this.isHoverSuppressed) return;
+    if (this.isQuadView || this.isHoverSuppressed) return;
     if (this.activeHoverCell && this.activeHoverCell !== cellEl) {
       this.activeHoverCell.classList.remove('popover-active');
     }
