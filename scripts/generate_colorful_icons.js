@@ -6,21 +6,22 @@ const { spawn } = require('child_process');
 const ICONS_DIR = path.resolve(__dirname, '../icons');
 const TEMP_HTML = path.resolve(__dirname, 'temp_icon_builder.html');
 const CHROME_BIN = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const PORT = 9225;
+const PORT = 9226;
 
 const htmlContent = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body>
 <script>
+// Toned-down colors matching the app's aesthetic
 const thaiColors = [
-  '#ef4444', // Sun: Red
-  '#eab308', // Mon: Yellow
-  '#ec4899', // Tue: Pink
-  '#22c55e', // Wed: Green
-  '#f97316', // Thu: Orange
-  '#38bdf8', // Fri: Sky Blue
-  '#a855f7'  // Sat: Purple
+  '#b84a4a', // Sun: soft crimson
+  '#b88d2a', // Mon: soft gold
+  '#ad4a7c', // Tue: soft rose
+  '#3a9459', // Wed: soft sage green
+  '#ba6b32', // Thu: soft terracotta orange
+  '#3d8ca8', // Fri: soft steel blue
+  '#8052ad'  // Sat: soft amethyst
 ];
 
 function drawRoundRect(ctx, x, y, w, h, r) {
@@ -63,7 +64,7 @@ function renderIcon(size) {
 
   if (size === 16) {
     // -------------------------------------------------------------
-    // 16x16 Toolbar Icon (Pixel Optimized, No Border)
+    // 16x16 Toolbar Icon (Pixel Optimized, Toned Down, No Border)
     // -------------------------------------------------------------
     ctx.save();
     drawRoundRect(ctx, 0, 0, 16, 16, 3);
@@ -73,24 +74,24 @@ function renderIcon(size) {
     ctx.fillStyle = '#0a0d0a';
     ctx.fillRect(0, 0, 16, 16);
 
-    // 7 Thai rainbow stripes across top 5px
+    // 7 Toned Thai stripes across top
     const stripeW = 16 / 7;
     for (let i = 0; i < 7; i++) {
       ctx.fillStyle = thaiColors[i];
-      ctx.fillRect(i * stripeW, 0, stripeW + 0.3, 5);
+      ctx.fillRect(i * stripeW, 0, stripeW + 0.3, 4.5);
     }
     // Subtle separator line
     ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 5, 16, 1);
+    ctx.fillRect(0, 4.5, 16, 1);
     ctx.restore();
 
-    // 2 White binder rings
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(4, 0, 2, 2.5);
-    ctx.fillRect(10, 0, 2, 2.5);
+    // Soft silver binder rings
+    ctx.fillStyle = '#d0d5dd';
+    ctx.fillRect(4, 0, 2, 2);
+    ctx.fillRect(10, 0, 2, 2);
 
-    // Pixel-perfect 'cal' in pure phosphor green
-    ctx.fillStyle = '#00ff00';
+    // Pixel-perfect 'cal' in app terminal green #00dd00
+    ctx.fillStyle = '#00dd00';
     // 'c' at x=3..5, y=8..12
     ctx.fillRect(4, 8, 2, 1);
     ctx.fillRect(3, 9, 1, 3);
@@ -112,7 +113,7 @@ function renderIcon(size) {
 
   if (size === 32) {
     // -------------------------------------------------------------
-    // 32x32 Retina Toolbar Icon (No Border)
+    // 32x32 Retina Toolbar Icon (Toned Down, No Border)
     // -------------------------------------------------------------
     const pad = 0.5;
     const w = size - pad * 2;
@@ -125,8 +126,8 @@ function renderIcon(size) {
     ctx.fillStyle = '#0a0d0a';
     ctx.fillRect(pad, pad, w, h);
 
-    // 7 Thai rainbow stripes
-    const headerH = 11;
+    // 7 Toned Thai stripes
+    const headerH = 10;
     const stripeW = w / 7;
     for (let i = 0; i < 7; i++) {
       ctx.fillStyle = thaiColors[i];
@@ -137,22 +138,22 @@ function renderIcon(size) {
     ctx.fillRect(pad, pad + headerH - 1, w, 1);
     ctx.restore();
 
-    // White binder rings
+    // Soft silver binder rings
     const ringW = 2.5;
-    const ringH = 4.5;
+    const ringH = 4;
     const ringY = 0;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#d0d5dd';
     drawRoundRect(ctx, pad + w * 0.28 - ringW / 2, ringY, ringW, ringH, 1);
     ctx.fill();
     drawRoundRect(ctx, pad + w * 0.72 - ringW / 2, ringY, ringW, ringH, 1);
     ctx.fill();
 
-    // Body: Spaceship arrow + 'cal' (NO border)
+    // Body: Spaceship arrow + 'cal'
     const bodyCenterY = pad + headerH + (h - headerH) * 0.52;
-    drawSpaceshipArrow(ctx, pad + 3, bodyCenterY - 3.5, 7.5, '#ec4899');
+    drawSpaceshipArrow(ctx, pad + 3, bodyCenterY - 3.5, 7.5, '#db2777');
 
-    // 'cal' in phosphor green
-    ctx.fillStyle = '#00ff00';
+    // 'cal' in app terminal green #00dd00
+    ctx.fillStyle = '#00dd00';
     ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -163,7 +164,7 @@ function renderIcon(size) {
 
   if (size === 48) {
     // -------------------------------------------------------------
-    // 48x48 Icon (Extensions Management / High DPI, No Border)
+    // 48x48 Icon (Extensions Management / High DPI, Toned Down)
     // -------------------------------------------------------------
     const pad = 1;
     const w = size - pad * 2;
@@ -176,8 +177,8 @@ function renderIcon(size) {
     ctx.fillStyle = '#0a0d0a';
     ctx.fillRect(pad, pad, w, h);
 
-    // 7 Thai rainbow stripes
-    const headerH = 16;
+    // 7 Toned Thai stripes
+    const headerH = 15;
     const stripeW = w / 7;
     for (let i = 0; i < 7; i++) {
       ctx.fillStyle = thaiColors[i];
@@ -188,10 +189,10 @@ function renderIcon(size) {
     ctx.restore();
 
     // Rings
-    ctx.fillStyle = '#ffffff';
-    drawRoundRect(ctx, pad + w * 0.28 - 2, 0.5, 4, 6, 1.5);
+    ctx.fillStyle = '#d0d5dd';
+    drawRoundRect(ctx, pad + w * 0.28 - 2, 0.5, 4, 5.5, 1.5);
     ctx.fill();
-    drawRoundRect(ctx, pad + w * 0.72 - 2, 0.5, 4, 6, 1.5);
+    drawRoundRect(ctx, pad + w * 0.72 - 2, 0.5, 4, 5.5, 1.5);
     ctx.fill();
 
     const bodyTop = pad + headerH;
@@ -199,15 +200,15 @@ function renderIcon(size) {
 
     // Vector spaceship arrow
     const arrowY = bodyTop + bodyH * 0.35;
-    drawSpaceshipArrow(ctx, pad + 5, arrowY - 5, 10, '#ec4899');
+    drawSpaceshipArrow(ctx, pad + 5, arrowY - 5, 10, '#db2777');
 
-    ctx.fillStyle = '#00ff00';
+    ctx.fillStyle = '#00dd00';
     ctx.font = 'bold 14px "Hack", Menlo, monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText('cal', pad + 19, arrowY);
 
-    // 7 Thai rainbow dots
+    // 7 Toned Thai dots
     const dotY = bodyTop + bodyH * 0.76;
     const step = (w - 12) / 6;
     for (let i = 0; i < 7; i++) {
@@ -221,7 +222,7 @@ function renderIcon(size) {
   }
 
   // -------------------------------------------------------------
-  // 128x128 Master Icon (No Border)
+  // 128x128 Master Icon (Toned Down)
   // -------------------------------------------------------------
   const pad = 2;
   const w = size - pad * 2;
@@ -234,8 +235,8 @@ function renderIcon(size) {
   ctx.fillStyle = '#0a0d0a';
   ctx.fillRect(pad, pad, w, h);
 
-  // Top header: 7 Thai rainbow stripes with gradient shine
-  const headerH = 42;
+  // Top header: 7 Toned stripes with subtle gradient
+  const headerH = 40;
   const stripeW = w / 7;
   for (let i = 0; i < 7; i++) {
     const grad = ctx.createLinearGradient(0, pad, 0, pad + headerH);
@@ -248,11 +249,11 @@ function renderIcon(size) {
   ctx.fillRect(pad, pad + headerH - 2, w, 2);
   ctx.restore();
 
-  // White binder rings
+  // Silver binder rings
   const ringW = 9;
   const ringH = 14;
   const ringY = 1;
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = '#d0d5dd';
   drawRoundRect(ctx, pad + w * 0.28 - ringW / 2, ringY, ringW, ringH, 3);
   ctx.fill();
   drawRoundRect(ctx, pad + w * 0.72 - ringW / 2, ringY, ringW, ringH, 3);
@@ -268,16 +269,16 @@ function renderIcon(size) {
   const promptY = bodyTop + bodyH * 0.35;
 
   // Vector spaceship arrow
-  drawSpaceshipArrow(ctx, pad + 14, promptY - 12, 24, '#ec4899');
+  drawSpaceshipArrow(ctx, pad + 14, promptY - 12, 24, '#db2777');
 
-  // 'cal' in phosphor green
-  ctx.fillStyle = '#00ff00';
+  // 'cal' in app terminal green #00dd00
+  ctx.fillStyle = '#00dd00';
   ctx.font = 'bold 32px "Hack", Menlo, monospace';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillText('cal', pad + 44, promptY);
 
-  // 7 Thai rainbow dots
+  // 7 Toned dots
   const dotY = bodyTop + bodyH * 0.75;
   const step = (w - 24) / 6;
   for (let i = 0; i < 7; i++) {
