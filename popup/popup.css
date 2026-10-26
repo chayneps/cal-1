@@ -749,42 +749,63 @@ body.theme-homebrew textarea {
 
 /* Thai Daily Colors Header Badges */
 .weekday-col.day-sun {
+  --day-color: var(--thai-sun-bright);
+  --day-glow: rgba(239, 68, 68, 0.85);
+  --day-dim: rgba(239, 68, 68, 0.25);
   background: rgba(239, 68, 68, 0.35);
   border: 1px solid var(--thai-sun-border);
   color: var(--thai-sun-bright);
 }
 
 .weekday-col.day-mon {
+  --day-color: var(--thai-mon-bright);
+  --day-glow: rgba(234, 179, 8, 0.85);
+  --day-dim: rgba(234, 179, 8, 0.25);
   background: rgba(234, 179, 8, 0.32);
   border: 1px solid var(--thai-mon-border);
   color: var(--thai-mon-bright);
 }
 
 .weekday-col.day-tue {
+  --day-color: var(--thai-tue-bright);
+  --day-glow: rgba(236, 72, 153, 0.85);
+  --day-dim: rgba(236, 72, 153, 0.25);
   background: rgba(236, 72, 153, 0.35);
   border: 1px solid var(--thai-tue-border);
   color: var(--thai-tue-bright);
 }
 
 .weekday-col.day-wed {
+  --day-color: var(--thai-wed-bright);
+  --day-glow: rgba(34, 197, 94, 0.85);
+  --day-dim: rgba(34, 197, 94, 0.25);
   background: rgba(34, 197, 94, 0.32);
   border: 1px solid var(--thai-wed-border);
   color: var(--thai-wed-bright);
 }
 
 .weekday-col.day-thu {
+  --day-color: var(--thai-thu-bright);
+  --day-glow: rgba(249, 115, 22, 0.85);
+  --day-dim: rgba(249, 115, 22, 0.25);
   background: rgba(249, 115, 22, 0.35);
   border: 1px solid var(--thai-thu-border);
   color: var(--thai-thu-bright);
 }
 
 .weekday-col.day-fri {
+  --day-color: var(--thai-fri-bright);
+  --day-glow: rgba(56, 189, 248, 0.85);
+  --day-dim: rgba(56, 189, 248, 0.25);
   background: rgba(56, 189, 248, 0.32);
   border: 1px solid var(--thai-fri-border);
   color: var(--thai-fri-bright);
 }
 
 .weekday-col.day-sat {
+  --day-color: var(--thai-sat-bright);
+  --day-glow: rgba(168, 85, 247, 0.85);
+  --day-dim: rgba(168, 85, 247, 0.25);
   background: rgba(168, 85, 247, 0.35);
   border: 1px solid var(--thai-sat-border);
   color: var(--thai-sat-bright);
@@ -981,14 +1002,27 @@ body.theme-homebrew textarea {
   animation: todayNumberBlink 0.75s ease-in-out infinite !important;
 }
 
-/* Today Weekday Header Badge (matches today tile rhythm & behavior) */
+/* Today Weekday Header Badge (matches today tile rhythm & behavior, in day's own color) */
+@keyframes weekdayTodayBlink {
+  0%, 100% {
+    border-color: var(--day-color) !important;
+    box-shadow: 0 0 0 1.5px var(--day-color), 0 0 14px var(--day-glow) !important;
+    filter: brightness(1.35);
+  }
+  50% {
+    border-color: var(--day-dim) !important;
+    box-shadow: 0 0 3px var(--day-dim) !important;
+    filter: brightness(0.7);
+  }
+}
+
 .weekday-col.is-today {
-  border-color: var(--accent-primary) !important;
-  box-shadow: 0 0 0 1.5px var(--accent-primary), 0 0 10px rgba(0, 255, 0, 0.55) !important;
+  border-color: var(--day-color) !important;
+  box-shadow: 0 0 0 1.5px var(--day-color), 0 0 10px var(--day-glow) !important;
   z-index: 2;
 }
 .weekday-col.today-blinking {
-  animation: todayBlink 0.75s ease-in-out infinite !important;
+  animation: weekdayTodayBlink 0.75s ease-in-out infinite !important;
   z-index: 2;
 }
 
