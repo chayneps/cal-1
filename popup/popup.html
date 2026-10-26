@@ -152,6 +152,14 @@
             <span>+ Add Event</span>
           </a>
         </div>
+
+        <div id="popoverHolidayBanner" class="popover-holiday-banner hidden">
+          <span class="popover-holiday-star">★</span>
+          <div class="popover-holiday-text">
+            <span id="popoverHolidayName" class="popover-holiday-name"></span>
+            <span id="popoverHolidayLocal" class="popover-holiday-local"></span>
+          </div>
+        </div>
       </header>
 
       <!-- Chronological Day Schedule (From Top to Bottom) -->
@@ -260,6 +268,16 @@
               <select id="firstDaySelect" class="styled-select">
                 <option value="0">Sunday</option>
                 <option value="1">Monday</option>
+              </select>
+            </label>
+
+            <label class="setting-field-row">
+              <div class="field-label-wrap">
+                <span class="setting-title">Public Holidays</span>
+                <span class="setting-desc">Mark country holidays with * and show in details</span>
+              </div>
+              <select id="holidayCountrySelect" class="styled-select">
+                <option value="">None (Disabled)</option>
               </select>
             </label>
 

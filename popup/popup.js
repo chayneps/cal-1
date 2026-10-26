@@ -2,6 +2,7 @@
 import { Storage } from '../lib/storage.js';
 import { getMockCalendars, generateMockEvents } from '../lib/mock-data.js';
 import { parseICal } from '../lib/ical-parser.js';
+import { getHolidaysForYear, TOP_COUNTRIES, OTHER_COUNTRIES, getCountryFlag } from '../lib/holidays.js';
 
 class DarkCalApp {
   constructor() {
@@ -32,6 +33,8 @@ class DarkCalApp {
     this.lastMouseCoords = null;
     this.navMouseOrigin = null;
     this.navDirection = 'forward';
+    this.holidayCountry = '';
+    this.holidaysMap = {};
     this.isUserEditingCommand = false;
     this.toastAnimationId = 0;
     this.isToastAnimating = false;
@@ -72,6 +75,9 @@ class DarkCalApp {
     this.popoverAddEventBtn = document.getElementById('popoverAddEventBtn');
     this.popoverCloseBtn = document.getElementById('popoverCloseBtn');
     this.popoverScheduleList = document.getElementById('popoverScheduleList');
+    this.popoverHolidayBanner = document.getElementById('popoverHolidayBanner');
+    this.popoverHolidayName = document.getElementById('popoverHolidayName');
+    this.popoverHolidayLocal = document.getElementById('popoverHolidayLocal');
 
     // Settings Modal
     this.settingsModal = document.getElementById('settingsModal');
@@ -82,6 +88,7 @@ class DarkCalApp {
     this.icalSyncStatus = document.getElementById('icalSyncStatus');
     this.calendarNameInput = document.getElementById('calendarNameInput');
     this.firstDaySelect = document.getElementById('firstDaySelect');
+    this.holidayCountrySelect = document.getElementById('holidayCountrySelect');
     this.demoModeToggle = document.getElementById('demoModeToggle');
     this.autoSyncIntervalSelect = document.getElementById('autoSyncIntervalSelect');
     this.themeSelect = document.getElementById('themeSelect');
@@ -228,6 +235,19 @@ class DarkCalApp {
       this.renderWeekdays();
       this.renderMonthGrid();
     });
+
+    if (this.holidayCountrySelect) {
+      this.holidayCountrySelect.addEventListener('change', async (e) => {
+        this.holidayCountry = e.target.value;
+        await Storage.set({ holidayCountry: this.holidayCountry });
+        await this.loadHolidays();
+        this.renderMonthGrid();
+        const msg = this.holidayCountry
+          ? `cal ➜ Holidays: ${this.getCountryDisplayName(this.holidayCountry)}`
+          : 'cal ➜ Holidays: Disabled';
+        this.showToast(msg);
+      });
+    }
 
     this.demoModeToggle.addEventListener('change', async (e) => {
       this.useDemoData = e.target.checked;
@@ -448,6 +468,13 @@ class DarkCalApp {
       this.calendarNameInput.value = this.customCalendarName || (this.calendarName !== 'demo' && this.calendarName !== 'main' ? this.calendarName : '');
     }
 
+    this.holidayCountry = stored.holidayCountry || '';
+    this.populateHolidayCountries();
+    if (this.holidayCountrySelect) {
+      this.holidayCountrySelect.value = this.holidayCountry;
+    }
+    await this.loadHolidays();
+
     this.renderWeekdays();
     this.updateMonthHeading();
     this.updateCalendarHeader();
@@ -560,6 +587,49 @@ class DarkCalApp {
     const diffHours = Math.floor(diffMin / 60);
     if (diffHours < 24) return `SYNC: ${diffHours}h ago`;
     return `SYNC: ${new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
+  }
+
+  populateHolidayCountries() {
+    if (!this.holidayCountrySelect) return;
+    this.holidayCountrySelect.innerHTML = '';
+
+    const noneOpt = document.createElement('option');
+    noneOpt.value = '';
+    noneOpt.textContent = 'None (Disabled)';
+    this.holidayCountrySelect.appendChild(noneOpt);
+
+    for (const c of TOP_COUNTRIES) {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${getCountryFlag(c.code)} ${c.name}`;
+      this.holidayCountrySelect.appendChild(opt);
+    }
+
+    const divider = document.createElement('option');
+    divider.disabled = true;
+    divider.textContent = '──────────';
+    this.holidayCountrySelect.appendChild(divider);
+
+    for (const c of OTHER_COUNTRIES) {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${getCountryFlag(c.code)} ${c.name}`;
+      this.holidayCountrySelect.appendChild(opt);
+    }
+  }
+
+  getCountryDisplayName(code) {
+    if (!code) return 'Disabled';
+    const found = [...TOP_COUNTRIES, ...OTHER_COUNTRIES].find(c => c.code === code);
+    return found ? `${getCountryFlag(found.code)} ${found.name}` : code;
+  }
+
+  async loadHolidays() {
+    if (!this.holidayCountry) {
+      this.holidaysMap = {};
+      return;
+    }
+    this.holidaysMap = await getHolidaysForYear(this.holidayCountry, this.viewYear);
   }
 
   loadCalendarData() {
@@ -757,8 +827,12 @@ class DarkCalApp {
     const targetVal = result.year * 12 + result.month;
     const currentVal = this.viewYear * 12 + this.viewMonth;
     this.navDirection = targetVal < currentVal ? 'backward' : 'forward';
+    const oldYear = this.viewYear;
     this.viewYear = result.year;
     this.viewMonth = result.month;
+    if (this.viewYear !== oldYear) {
+      await this.loadHolidays();
+    }
     this.updateMonthHeading();
 
     if (this.useDemoData || !this.icalUrl) {
@@ -919,10 +993,11 @@ class DarkCalApp {
     document.body.classList.add('keyboard-nav');
   }
 
-  navigateMonth(delta) {
+  async navigateMonth(delta) {
     this.hidePopover();
     this.suppressHoverUntilUserMoves();
     this.navDirection = delta < 0 ? 'backward' : 'forward';
+    const oldYear = this.viewYear;
     this.viewMonth += delta;
     if (this.viewMonth < 0) {
       this.viewMonth = 11;
@@ -931,6 +1006,9 @@ class DarkCalApp {
       this.viewMonth = 0;
       this.viewYear += 1;
     }
+    if (this.viewYear !== oldYear) {
+      await this.loadHolidays();
+    }
     this.updateMonthHeading();
     if (this.useDemoData || !this.icalUrl) {
       this.loadDemoEvents();
@@ -940,11 +1018,12 @@ class DarkCalApp {
     this.showToast(`cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
-  navigateYear(delta) {
+  async navigateYear(delta) {
     this.hidePopover();
     this.suppressHoverUntilUserMoves();
     this.navDirection = delta < 0 ? 'backward' : 'forward';
     this.viewYear += delta;
+    await this.loadHolidays();
     this.updateMonthHeading();
     if (this.useDemoData || !this.icalUrl) {
       this.loadDemoEvents();
@@ -954,16 +1033,20 @@ class DarkCalApp {
     this.showToast(`cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
-  jumpToToday() {
+  async jumpToToday() {
     this.hidePopover();
     this.suppressHoverUntilUserMoves();
     const todayVal = this.today.getFullYear() * 12 + this.today.getMonth();
     const currentVal = this.viewYear * 12 + this.viewMonth;
     this.navDirection = todayVal < currentVal ? 'backward' : 'forward';
+    const oldYear = this.viewYear;
     this.today = new Date();
     this.viewYear = this.today.getFullYear();
     this.viewMonth = this.today.getMonth();
     this.isUserEditingCommand = false;
+    if (this.viewYear !== oldYear) {
+      await this.loadHolidays();
+    }
     this.updateMonthHeading();
     this.focusCommandLine();
     if (this.useDemoData || !this.icalUrl) {
@@ -1020,6 +1103,7 @@ class DarkCalApp {
       const isToday = dayKey === todayDateStr;
       const animIndex = isBackward ? (totalCells - 1 - pos) : pos;
       pos++;
+      const holiday = this.holidaysMap[dayKey] || null;
       
       const cell = this.createDayCell({
         date: prevDate,
@@ -1029,7 +1113,8 @@ class DarkCalApp {
         isToday: false,
         events: dayEvents,
         cellIndex: animIndex,
-        isBackward
+        isBackward,
+        holiday
       });
       if (isToday) todayCell = cell;
       this.monthGrid.appendChild(cell);
@@ -1043,6 +1128,7 @@ class DarkCalApp {
       const isToday = dayKey === todayDateStr;
       const animIndex = isBackward ? (totalCells - 1 - pos) : pos;
       pos++;
+      const holiday = this.holidaysMap[dayKey] || null;
 
       const cell = this.createDayCell({
         date: curDate,
@@ -1052,7 +1138,8 @@ class DarkCalApp {
         isToday: false,
         events: dayEvents,
         cellIndex: animIndex,
-        isBackward
+        isBackward,
+        holiday
       });
       if (isToday) todayCell = cell;
       this.monthGrid.appendChild(cell);
@@ -1066,6 +1153,7 @@ class DarkCalApp {
       const isToday = dayKey === todayDateStr;
       const animIndex = isBackward ? (totalCells - 1 - pos) : pos;
       pos++;
+      const holiday = this.holidaysMap[dayKey] || null;
 
       const cell = this.createDayCell({
         date: nextDate,
@@ -1075,7 +1163,8 @@ class DarkCalApp {
         isToday: false,
         events: dayEvents,
         cellIndex: animIndex,
-        isBackward
+        isBackward,
+        holiday
       });
       if (isToday) todayCell = cell;
       this.monthGrid.appendChild(cell);
@@ -1144,10 +1233,11 @@ class DarkCalApp {
     }
   }
 
-  createDayCell({ date, dayNum, dayKey, isOtherMonth, isToday, events, cellIndex = 0, isBackward = false }) {
+  createDayCell({ date, dayNum, dayKey, isOtherMonth, isToday, events, cellIndex = 0, isBackward = false, holiday = null }) {
     const cell = document.createElement('div');
     const animClass = isBackward ? 'tile-appear-reverse' : 'tile-appear';
     cell.className = `day-cell ${animClass}`;
+    if (holiday) cell.classList.add('is-holiday');
     cell.style.animationDelay = `${cellIndex * 28}ms`;
     cell.addEventListener('animationend', () => {
       cell.classList.remove('tile-appear', 'tile-appear-reverse');
@@ -1168,6 +1258,17 @@ class DarkCalApp {
     const numSpan = document.createElement('span');
     numSpan.className = 'day-number';
     numSpan.textContent = dayNum;
+
+    if (holiday) {
+      const starSpan = document.createElement('span');
+      starSpan.className = 'holiday-star';
+      starSpan.textContent = '*';
+      starSpan.title = holiday.localName && holiday.localName !== holiday.name
+        ? `${holiday.name} (${holiday.localName})`
+        : holiday.name;
+      numSpan.appendChild(starSpan);
+    }
+
     topRow.appendChild(numSpan);
 
     if (events.length > 0) {
@@ -1271,7 +1372,7 @@ class DarkCalApp {
     return cell;
   }
 
-  showDaySchedulePopover(cellEl, date, events) {
+  showDaySchedulePopover(cellEl, date, events = []) {
     if (this.isHoverSuppressed) return;
     if (this.activeHoverCell && this.activeHoverCell !== cellEl) {
       this.activeHoverCell.classList.remove('popover-active');
@@ -1317,6 +1418,24 @@ class DarkCalApp {
     const dateParam = `${year}${month}${day}`;
     this.popoverAddEventBtn.href = `https://calendar.google.com/calendar/r/eventedit?dates=${dateParam}/${dateParam}`;
 
+    const holiday = this.holidaysMap[dayKey] || null;
+    if (holiday && this.popoverHolidayBanner) {
+      this.popoverHolidayBanner.classList.remove('hidden');
+      if (this.popoverHolidayName) {
+        this.popoverHolidayName.textContent = holiday.name;
+      }
+      if (this.popoverHolidayLocal) {
+        if (holiday.localName && holiday.localName !== holiday.name) {
+          this.popoverHolidayLocal.textContent = holiday.localName;
+          this.popoverHolidayLocal.classList.remove('hidden');
+        } else {
+          this.popoverHolidayLocal.classList.add('hidden');
+        }
+      }
+    } else if (this.popoverHolidayBanner) {
+      this.popoverHolidayBanner.classList.add('hidden');
+    }
+
     this.renderPopoverSchedule(events, date);
     this.dayDetailPopover.classList.remove('hidden');
     this.positionPopover(cellEl);
@@ -1326,6 +1445,7 @@ class DarkCalApp {
     this.popoverScheduleList.innerHTML = '';
 
     if (!events || events.length === 0) {
+      const holiday = this.holidaysMap[this.formatDateKey(date)] || null;
       const emptyDiv = document.createElement('div');
       emptyDiv.className = 'schedule-empty';
       emptyDiv.innerHTML = `
@@ -1333,8 +1453,8 @@ class DarkCalApp {
           <circle cx="12" cy="12" r="10"></circle>
           <path d="m9 12 2 2 4-4"></path>
         </svg>
-        <div class="empty-title">Clear Day Ahead</div>
-        <div class="empty-desc">No events scheduled. Great day for deep focus or taking time off!</div>
+        <div class="empty-title">${holiday ? 'Public Holiday' : 'Clear Day Ahead'}</div>
+        <div class="empty-desc">${holiday ? `Official holiday: ${holiday.name}. Enjoy your day off!` : 'No events scheduled. Great day for deep focus or taking time off!'}</div>
       `;
       this.popoverScheduleList.appendChild(emptyDiv);
       return;
