@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tests/run-tests.js - DarkCal Master Regression Test Suite Runner
+// tests/run-tests.js - cal-1 Master Regression Test Suite Runner
 
 const { spawn } = require('child_process');
 const path = require('path');
@@ -14,7 +14,7 @@ const testSuites = [
 ];
 
 console.log('========================================================');
-console.log('         DARKCAL AUTOMATED REGRESSION TEST SUITE         ');
+console.log('           cal-1 REGRESSION TEST SUITE (v1)             ');
 console.log('========================================================\n');
 
 let totalPassed = 0;

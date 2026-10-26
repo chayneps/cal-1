@@ -1,10 +1,10 @@
-# cal(1) - Unix Command-Line Google Calendar for Chrome
+# cal-1 (v1) - Unix Command-Line Google Calendar for Chrome
 
-**cal(1)** is a terminal-inspired dropdown calendar for Google Chrome inspired by the Unix [cal(1)](https://en.wikipedia.org/wiki/Cal_(command)) manual page and styled with [Spaceship Prompt](https://github.com/spaceship-prompt/spaceship-prompt) aesthetics, Homebrew iTerm2 ANSI colors, and the Hack monospace font.
+**cal-1** is a terminal-inspired dropdown calendar for Google Chrome inspired by the Unix [cal(1)](https://en.wikipedia.org/wiki/Cal_(command)) manual page and styled with [Spaceship Prompt](https://github.com/spaceship-prompt/spaceship-prompt) aesthetics, Homebrew iTerm2 ANSI colors, and the Hack monospace font.
 
 ---
 
-## Interactive cal(1) Command Line
+## Interactive Command Line
 
 Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any month or year, or switch calendars:
 
@@ -28,14 +28,14 @@ Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any mo
 
 ## Auto-Sync Features
 
-**Yes, cal(1) automatically syncs your Google Calendar!**
+**Yes, cal-1 automatically syncs your Google Calendar!**
 
 1. **Background Periodic Auto-Sync**:
    - The background service worker uses `chrome.alarms` to automatically fetch and update your calendar events in the background (default: **every 15 minutes**).
-   - Even if the dropdown is closed, cal(1) stays up to date.
+   - Even if the dropdown is closed, cal-1 stays up to date.
 
 2. **Smart Stale-Cache Auto-Refresh**:
-   - When you click the extension icon, cal(1) renders your cached events instantly (0ms load time).
+   - When you click the extension icon, cal-1 renders your cached events instantly (0ms load time).
    - If your cache is older than the auto-sync threshold, it automatically triggers a silent background refresh and updates the calendar grid live.
 
 3. **Customizable Sync Frequency**:
@@ -86,12 +86,12 @@ Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any mo
 3. In the left sidebar, click the calendar you want to sync under *Settings for my calendars*.
 4. Scroll down to the **Integrate calendar** section.
 5. Copy the URL inside **Secret address in iCal format** (ends with `.ics`).
-6. Click the **cal(1)** icon in your Chrome toolbar &rarr; click the **Settings (gear)** icon &rarr; paste the link &rarr; click **Sync**!
+6. Click the **cal-1** icon in your Chrome toolbar &rarr; click the **Settings (gear)** icon &rarr; paste the link &rarr; click **Sync**!
 
 ---
 
 ## How to Reload in Chrome
 
 1. Open Chrome and navigate to `chrome://extensions`.
-2. Find **cal(1)** and click the **Reload (circular arrow)** button.
-3. Click the **cal(1)** icon in your toolbar to use your auto-syncing calendar!
+2. Find **cal-1** and click the **Reload (circular arrow)** button.
+3. Click the **cal-1** icon in your toolbar to use your auto-syncing calendar!

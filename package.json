@@ -1,7 +1,7 @@
 {
-  "name": "darkcal",
+  "name": "cal-1",
   "version": "1.0.0",
-  "description": "Terminal-style retro dark mode calendar Chrome extension",
+  "description": "cal-1 - Terminal-style retro dark mode calendar Chrome extension",
   "scripts": {
     "test": "node tests/run-tests.js",
     "test:unit": "node --test tests/unit/*.test.js",
@@ -11,7 +11,8 @@
     "chrome-extension",
     "calendar",
     "retro",
-    "terminal"
+    "terminal",
+    "cal-1"
   ],
   "author": "Chayne P.S.",
   "license": "MIT"

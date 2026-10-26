@@ -842,7 +842,7 @@ class DarkCalApp {
       this.renderMonthGrid();
     }
 
-    this.showToast(result.msg || `cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
+    this.showToast(result.msg || `cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
   parseCalCommand(cmdStr, currentYear, currentMonth) {
@@ -1016,7 +1016,7 @@ class DarkCalApp {
     } else {
       this.renderMonthGrid();
     }
-    this.showToast(`cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
+    this.showToast(`cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
   async navigateYear(delta) {
@@ -1031,7 +1031,7 @@ class DarkCalApp {
     } else {
       this.renderMonthGrid();
     }
-    this.showToast(`cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
+    this.showToast(`cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
   async jumpToToday() {
@@ -1058,7 +1058,7 @@ class DarkCalApp {
         this.handleIcalSync(false);
       }
     }
-    this.showToast(`cal(1) ➜ ${this.getMonthName()} ${this.viewYear}`);
+    this.showToast(`cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
   }
 
   renderMonthGrid() {
