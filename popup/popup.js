@@ -271,13 +271,23 @@ class DarkCalApp {
       if (this.isHoverSuppressed) {
         if (!this.navMouseOrigin) {
           this.isHoverSuppressed = false;
+          document.body.classList.remove('keyboard-nav');
         } else {
           const dist = Math.hypot(e.clientX - this.navMouseOrigin.x, e.clientY - this.navMouseOrigin.y);
           if (dist > 6) {
             this.isHoverSuppressed = false;
             this.navMouseOrigin = null;
+            document.body.classList.remove('keyboard-nav');
           }
         }
+      }
+    }, { capture: true, passive: true });
+
+    document.addEventListener('mousedown', () => {
+      if (this.isHoverSuppressed) {
+        this.isHoverSuppressed = false;
+        this.navMouseOrigin = null;
+        document.body.classList.remove('keyboard-nav');
       }
     }, { capture: true, passive: true });
 
@@ -902,6 +912,7 @@ class DarkCalApp {
   suppressHoverUntilUserMoves() {
     this.isHoverSuppressed = true;
     this.navMouseOrigin = this.lastMouseCoords ? { ...this.lastMouseCoords } : null;
+    document.body.classList.add('keyboard-nav');
   }
 
   navigateMonth(delta) {

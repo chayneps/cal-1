@@ -946,6 +946,49 @@ body.theme-homebrew textarea {
   filter: saturate(1);
 }
 
+/* Ignore mouse position & suppress tile hover/selection during keyboard navigation */
+body.keyboard-nav .day-cell {
+  pointer-events: none !important;
+}
+body.keyboard-nav .day-cell:hover {
+  box-shadow: none !important;
+}
+body.keyboard-nav .day-cell.day-sun:hover {
+  background-color: var(--thai-sun-bg) !important;
+  border-color: var(--thai-sun-border) !important;
+}
+body.keyboard-nav .day-cell.day-mon:hover {
+  background-color: var(--thai-mon-bg) !important;
+  border-color: var(--thai-mon-border) !important;
+}
+body.keyboard-nav .day-cell.day-tue:hover {
+  background-color: var(--thai-tue-bg) !important;
+  border-color: var(--thai-tue-border) !important;
+}
+body.keyboard-nav .day-cell.day-wed:hover {
+  background-color: var(--thai-wed-bg) !important;
+  border-color: var(--thai-wed-border) !important;
+}
+body.keyboard-nav .day-cell.day-thu:hover {
+  background-color: var(--thai-thu-bg) !important;
+  border-color: var(--thai-thu-border) !important;
+}
+body.keyboard-nav .day-cell.day-fri:hover {
+  background-color: var(--thai-fri-bg) !important;
+  border-color: var(--thai-fri-border) !important;
+}
+body.keyboard-nav .day-cell.day-sat:hover {
+  background-color: var(--thai-sat-bg) !important;
+  border-color: var(--thai-sat-border) !important;
+}
+body.keyboard-nav .day-cell:hover .day-number {
+  color: inherit !important;
+}
+body.keyboard-nav .day-cell.other-month:hover {
+  opacity: 0.28 !important;
+  filter: saturate(0.5) !important;
+}
+
 /* Today Cell: Glowing Highlight */
 .day-cell.is-today {
   border-color: var(--accent-primary) !important;
