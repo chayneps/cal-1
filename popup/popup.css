@@ -1452,7 +1452,7 @@ body.theme-homebrew textarea {
 }
 
 .footer-sync-time.status-active {
-  color: var(--accent-yellow);
+  color: var(--accent-cyan);
 }
 
 .hint-text {
