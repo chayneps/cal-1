@@ -427,7 +427,8 @@ class DarkCalApp {
       'calendarName',
       'customCalendarName',
       'detectedCalendarName',
-      'activeCalendarFilter'
+      'activeCalendarFilter',
+      'holidayCountry'
     ]);
 
     this.theme = stored.theme || 'homebrew';
