@@ -31,6 +31,7 @@ class DarkCalApp {
     this.isHoverSuppressed = false;
     this.lastMouseCoords = null;
     this.navMouseOrigin = null;
+    this.navDirection = 'forward';
     this.isUserEditingCommand = false;
     this.toastAnimationId = 0;
     this.isToastAnimating = false;
@@ -753,6 +754,9 @@ class DarkCalApp {
 
     this.hidePopover();
     this.suppressHoverUntilUserMoves();
+    const targetVal = result.year * 12 + result.month;
+    const currentVal = this.viewYear * 12 + this.viewMonth;
+    this.navDirection = targetVal < currentVal ? 'backward' : 'forward';
     this.viewYear = result.year;
     this.viewMonth = result.month;
     this.updateMonthHeading();
@@ -918,6 +922,7 @@ class DarkCalApp {
   navigateMonth(delta) {
     this.hidePopover();
     this.suppressHoverUntilUserMoves();
+    this.navDirection = delta < 0 ? 'backward' : 'forward';
     this.viewMonth += delta;
     if (this.viewMonth < 0) {
       this.viewMonth = 11;
@@ -938,6 +943,7 @@ class DarkCalApp {
   navigateYear(delta) {
     this.hidePopover();
     this.suppressHoverUntilUserMoves();
+    this.navDirection = delta < 0 ? 'backward' : 'forward';
     this.viewYear += delta;
     this.updateMonthHeading();
     if (this.useDemoData || !this.icalUrl) {
@@ -951,6 +957,9 @@ class DarkCalApp {
   jumpToToday() {
     this.hidePopover();
     this.suppressHoverUntilUserMoves();
+    const todayVal = this.today.getFullYear() * 12 + this.today.getMonth();
+    const currentVal = this.viewYear * 12 + this.viewMonth;
+    this.navDirection = todayVal < currentVal ? 'backward' : 'forward';
     this.today = new Date();
     this.viewYear = this.today.getFullYear();
     this.viewMonth = this.today.getMonth();
@@ -991,10 +1000,15 @@ class DarkCalApp {
     let firstDayIndex = firstDayOfMonth.getDay() - this.firstDayOfWeek;
     if (firstDayIndex < 0) firstDayIndex += 7;
 
+    const currentCellsCount = firstDayIndex + numDaysInMonth;
+    const totalCells = currentCellsCount > 35 ? 42 : 35;
+    const trailingDays = totalCells - currentCellsCount;
+
     const prevMonthLastDay = new Date(this.viewYear, this.viewMonth, 0).getDate();
     const todayDateStr = this.formatDateKey(this.today);
 
-    let cellIndex = 0;
+    const isBackward = this.navDirection === 'backward';
+    let pos = 0;
     let todayCell = null;
 
     // Prev month days
@@ -1004,6 +1018,8 @@ class DarkCalApp {
       const dayKey = this.formatDateKey(prevDate);
       const dayEvents = this.getEventsForDate(prevDate);
       const isToday = dayKey === todayDateStr;
+      const animIndex = isBackward ? (totalCells - 1 - pos) : pos;
+      pos++;
       
       const cell = this.createDayCell({
         date: prevDate,
@@ -1012,7 +1028,8 @@ class DarkCalApp {
         isOtherMonth: true,
         isToday: false,
         events: dayEvents,
-        cellIndex: cellIndex++
+        cellIndex: animIndex,
+        isBackward
       });
       if (isToday) todayCell = cell;
       this.monthGrid.appendChild(cell);
@@ -1024,6 +1041,8 @@ class DarkCalApp {
       const dayKey = this.formatDateKey(curDate);
       const dayEvents = this.getEventsForDate(curDate);
       const isToday = dayKey === todayDateStr;
+      const animIndex = isBackward ? (totalCells - 1 - pos) : pos;
+      pos++;
 
       const cell = this.createDayCell({
         date: curDate,
@@ -1032,22 +1051,21 @@ class DarkCalApp {
         isOtherMonth: false,
         isToday: false,
         events: dayEvents,
-        cellIndex: cellIndex++
+        cellIndex: animIndex,
+        isBackward
       });
       if (isToday) todayCell = cell;
       this.monthGrid.appendChild(cell);
     }
 
     // Trailing days
-    const currentCellsCount = firstDayIndex + numDaysInMonth;
-    const totalCells = currentCellsCount > 35 ? 42 : 35;
-    const trailingDays = totalCells - currentCellsCount;
-
     for (let day = 1; day <= trailingDays; day++) {
       const nextDate = new Date(this.viewYear, this.viewMonth + 1, day);
       const dayKey = this.formatDateKey(nextDate);
       const dayEvents = this.getEventsForDate(nextDate);
       const isToday = dayKey === todayDateStr;
+      const animIndex = isBackward ? (totalCells - 1 - pos) : pos;
+      pos++;
 
       const cell = this.createDayCell({
         date: nextDate,
@@ -1056,7 +1074,8 @@ class DarkCalApp {
         isOtherMonth: true,
         isToday: false,
         events: dayEvents,
-        cellIndex: cellIndex++
+        cellIndex: animIndex,
+        isBackward
       });
       if (isToday) todayCell = cell;
       this.monthGrid.appendChild(cell);
@@ -1125,12 +1144,13 @@ class DarkCalApp {
     }
   }
 
-  createDayCell({ date, dayNum, dayKey, isOtherMonth, isToday, events, cellIndex = 0 }) {
+  createDayCell({ date, dayNum, dayKey, isOtherMonth, isToday, events, cellIndex = 0, isBackward = false }) {
     const cell = document.createElement('div');
-    cell.className = 'day-cell tile-appear';
+    const animClass = isBackward ? 'tile-appear-reverse' : 'tile-appear';
+    cell.className = `day-cell ${animClass}`;
     cell.style.animationDelay = `${cellIndex * 28}ms`;
     cell.addEventListener('animationend', () => {
-      cell.classList.remove('tile-appear');
+      cell.classList.remove('tile-appear', 'tile-appear-reverse');
       cell.style.animationDelay = '';
     }, { once: true });
     const dayClasses = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
