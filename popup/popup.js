@@ -28,6 +28,9 @@ class DarkCalApp {
     this.activeTodayCell = null;
     this.activeTodayHeaderCol = null;
     this.isMouseOverPopover = false;
+    this.isHoverSuppressed = false;
+    this.lastMouseCoords = null;
+    this.navMouseOrigin = null;
     this.isUserEditingCommand = false;
     this.toastAnimationId = 0;
     this.isToastAnimating = false;
@@ -261,6 +264,22 @@ class DarkCalApp {
       this.isMouseOverPopover = false;
       this.hidePopover();
     });
+
+    // Track mouse coordinates & release hover suppression when mouse moves deliberately
+    document.addEventListener('mousemove', (e) => {
+      this.lastMouseCoords = { x: e.clientX, y: e.clientY };
+      if (this.isHoverSuppressed) {
+        if (!this.navMouseOrigin) {
+          this.isHoverSuppressed = false;
+        } else {
+          const dist = Math.hypot(e.clientX - this.navMouseOrigin.x, e.clientY - this.navMouseOrigin.y);
+          if (dist > 6) {
+            this.isHoverSuppressed = false;
+            this.navMouseOrigin = null;
+          }
+        }
+      }
+    }, { capture: true, passive: true });
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -723,6 +742,7 @@ class DarkCalApp {
     }
 
     this.hidePopover();
+    this.suppressHoverUntilUserMoves();
     this.viewYear = result.year;
     this.viewMonth = result.month;
     this.updateMonthHeading();
@@ -879,8 +899,14 @@ class DarkCalApp {
       .join('');
   }
 
+  suppressHoverUntilUserMoves() {
+    this.isHoverSuppressed = true;
+    this.navMouseOrigin = this.lastMouseCoords ? { ...this.lastMouseCoords } : null;
+  }
+
   navigateMonth(delta) {
     this.hidePopover();
+    this.suppressHoverUntilUserMoves();
     this.viewMonth += delta;
     if (this.viewMonth < 0) {
       this.viewMonth = 11;
@@ -900,6 +926,7 @@ class DarkCalApp {
 
   navigateYear(delta) {
     this.hidePopover();
+    this.suppressHoverUntilUserMoves();
     this.viewYear += delta;
     this.updateMonthHeading();
     if (this.useDemoData || !this.icalUrl) {
@@ -912,6 +939,7 @@ class DarkCalApp {
 
   jumpToToday() {
     this.hidePopover();
+    this.suppressHoverUntilUserMoves();
     this.today = new Date();
     this.viewYear = this.today.getFullYear();
     this.viewMonth = this.today.getMonth();
@@ -930,6 +958,7 @@ class DarkCalApp {
   }
 
   renderMonthGrid() {
+    this.hidePopover();
     this.monthGrid.innerHTML = '';
     if (this.todayBlinkTimeout) {
       clearTimeout(this.todayBlinkTimeout);
@@ -1183,8 +1212,18 @@ class DarkCalApp {
     }
 
     cell.addEventListener('mouseenter', () => {
+      if (this.isHoverSuppressed) return;
       if (this.hoverTimeout) clearTimeout(this.hoverTimeout);
       this.hoverTimeout = setTimeout(() => {
+        if (this.isHoverSuppressed) return;
+        this.showDaySchedulePopover(cell, date, events);
+      }, 350);
+    });
+
+    cell.addEventListener('mousemove', () => {
+      if (this.isHoverSuppressed || this.activeHoverCell === cell || this.hoverTimeout) return;
+      this.hoverTimeout = setTimeout(() => {
+        if (this.isHoverSuppressed) return;
         this.showDaySchedulePopover(cell, date, events);
       }, 350);
     });
@@ -1202,6 +1241,7 @@ class DarkCalApp {
   }
 
   showDaySchedulePopover(cellEl, date, events) {
+    if (this.isHoverSuppressed) return;
     if (this.activeHoverCell && this.activeHoverCell !== cellEl) {
       this.activeHoverCell.classList.remove('popover-active');
     }
@@ -1437,6 +1477,11 @@ class DarkCalApp {
   }
 
   hidePopover() {
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+      this.hoverTimeout = null;
+    }
+    this.isMouseOverPopover = false;
     this.dayDetailPopover.classList.add('hidden');
     this.dayDetailPopover.style.maxHeight = '';
     if (this.activeHoverCell) {
