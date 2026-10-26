@@ -1,6 +1,6 @@
 {
   "name": "cal-1",
-  "version": "1.0.0",
+  "version": "1",
   "description": "cal-1 - Terminal-style retro dark mode calendar Chrome extension",
   "scripts": {
     "test": "node tests/run-tests.js",
