@@ -66,6 +66,7 @@ class DarkCalApp {
     this.weekdayHeader = document.getElementById('weekdayHeader');
     this.monthGrid = document.getElementById('monthGrid');
     this.quadMonthContainer = document.getElementById('quadMonthContainer');
+    this.calendarViewport = document.querySelector('.calendar-viewport');
     this.statusToast = document.getElementById('statusToast');
     this.calendarSourceStatus = document.getElementById('calendarSourceStatus');
     this.lastSyncTimeText = document.getElementById('lastSyncTimeText');
@@ -840,8 +841,14 @@ class DarkCalApp {
         this.zoomViewBtn.setAttribute('aria-label', 'Switch to 1-Month View');
       }
       this.hidePopover();
+      if (this.calendarViewport) {
+        this.calendarViewport.classList.remove('anim-zoom-in');
+      }
       if (this.quadMonthContainer) {
         this.quadMonthContainer.classList.remove('hidden');
+        this.quadMonthContainer.classList.remove('anim-zoom-out');
+        void this.quadMonthContainer.offsetWidth; // Reflow to restart animation cleanly
+        this.quadMonthContainer.classList.add('anim-zoom-out');
       }
       if (this.useDemoData || !this.icalUrl) {
         this.loadDemoEvents();
@@ -856,7 +863,13 @@ class DarkCalApp {
         this.zoomViewBtn.setAttribute('aria-label', 'Toggle 4-Month View');
       }
       if (this.quadMonthContainer) {
+        this.quadMonthContainer.classList.remove('anim-zoom-out');
         this.quadMonthContainer.classList.add('hidden');
+      }
+      if (this.calendarViewport) {
+        this.calendarViewport.classList.remove('anim-zoom-in');
+        void this.calendarViewport.offsetWidth; // Reflow to restart animation cleanly
+        this.calendarViewport.classList.add('anim-zoom-in');
       }
       if (this.useDemoData || !this.icalUrl) {
         this.loadDemoEvents();
@@ -918,10 +931,14 @@ class DarkCalApp {
 
     // Clicking any mini month zooms in to that month in 1-month view!
     card.addEventListener('click', () => {
-      this.viewYear = year;
-      this.viewMonth = month;
-      this.setQuadView(false);
-      this.showToast(`cal-1 ➜ ${monthName} ${year}`);
+      card.style.transform = 'scale(0.97)';
+      setTimeout(() => {
+        card.style.transform = '';
+        this.viewYear = year;
+        this.viewMonth = month;
+        this.setQuadView(false);
+        this.showToast(`cal-1 ➜ ${monthName} ${year}`);
+      }, 70);
     });
 
     // Header
@@ -936,18 +953,21 @@ class DarkCalApp {
     `;
     card.appendChild(header);
 
-    // Weekday row
+    // Weekday row with full 3-letter badges and Thai colors
     const weekdayRow = document.createElement('div');
     weekdayRow.className = 'mini-weekday-row';
     const dayClasses = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
-    const weekdaysBase = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const weekdaysBase = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     const order = this.firstDayOfWeek === 1
       ? [1, 2, 3, 4, 5, 6, 0] // Mon first
       : [0, 1, 2, 3, 4, 5, 6]; // Sun first
 
+    const isThisCardCurrentMonth = isCurrent && year === this.today.getFullYear() && month === this.today.getMonth();
+    const todayDayOfWeek = this.today.getDay();
+
     for (const d of order) {
       const col = document.createElement('div');
-      col.className = `mini-weekday-col ${dayClasses[d]}`;
+      col.className = `mini-weekday-col ${dayClasses[d]} ${isThisCardCurrentMonth && d === todayDayOfWeek ? 'is-today' : ''}`;
       col.textContent = weekdaysBase[d];
       weekdayRow.appendChild(col);
     }
@@ -1000,9 +1020,16 @@ class DarkCalApp {
   }
 
   createMiniDayCell(date, dayNum, dayKey, isOtherMonth, isToday) {
+    const dayOfWeek = date.getDay();
+    const dayClasses = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
+    const dayClass = dayClasses[dayOfWeek];
+
     const cell = document.createElement('div');
-    cell.className = `mini-day-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'is-today' : ''}`;
+    cell.className = `mini-day-cell ${dayClass} ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'is-today' : ''}`;
     cell.dataset.date = dayKey;
+
+    const topRow = document.createElement('div');
+    topRow.className = 'mini-cell-top';
 
     const numSpan = document.createElement('span');
     numSpan.className = 'mini-day-number';
@@ -1013,15 +1040,26 @@ class DarkCalApp {
       const starSpan = document.createElement('span');
       starSpan.className = 'mini-holiday-star';
       starSpan.textContent = '*';
+      starSpan.title = holiday.name;
       numSpan.appendChild(starSpan);
     }
-    cell.appendChild(numSpan);
+    topRow.appendChild(numSpan);
 
     const dayEvents = this.getEventsForDate(date);
     if (dayEvents.length > 0) {
-      const dot = document.createElement('span');
-      dot.className = 'mini-event-dot';
-      cell.appendChild(dot);
+      const countBadge = document.createElement('span');
+      countBadge.className = 'mini-event-count';
+      countBadge.textContent = dayEvents.length;
+      countBadge.title = `${dayEvents.length} event${dayEvents.length > 1 ? 's' : ''}`;
+      topRow.appendChild(countBadge);
+    }
+
+    cell.appendChild(topRow);
+
+    if (dayEvents.length > 0) {
+      const bar = document.createElement('div');
+      bar.className = 'mini-event-bar';
+      cell.appendChild(bar);
     }
 
     return cell;

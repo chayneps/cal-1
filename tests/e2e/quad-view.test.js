@@ -152,4 +152,82 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
     `);
     assert.strictEqual(res1, false, 'cal 1 should return to single view');
   });
+
+  await t.test('Mini calendar cards match regular calendar styling with Thai daily colors and badges', async () => {
+    const res = await browser.eval(`
+      (async () => {
+        // Switch to quad view
+        window.app.setQuadView(true);
+        await new Promise(r => setTimeout(r, 100));
+
+        const cards = Array.from(document.querySelectorAll('.mini-month-card'));
+        const firstCard = cards[0];
+        const weekdayCols = Array.from(firstCard.querySelectorAll('.mini-weekday-col'));
+        const dayCells = Array.from(firstCard.querySelectorAll('.mini-day-cell'));
+
+        const weekdayTexts = weekdayCols.map(c => c.textContent.trim());
+        const weekdayClasses = weekdayCols.map(c => Array.from(c.classList));
+
+        const thaiDayClasses = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
+        const dayCellClasses = dayCells.slice(0, 7).map(c => Array.from(c.classList));
+
+        // Check cell top structure and event pills
+        const sampleCell = firstCard.querySelector('.mini-day-cell:not(.other-month)');
+        const hasCellTop = !!sampleCell?.querySelector('.mini-cell-top');
+        const hasDayNumber = !!sampleCell?.querySelector('.mini-day-number');
+
+        return {
+          weekdayTexts,
+          weekdayClasses,
+          dayCellClasses,
+          thaiDayClasses,
+          hasCellTop,
+          hasDayNumber
+        };
+      })()
+    `);
+
+    // Check weekday badges are 3-letter (SUN, MON, ...)
+    assert.deepStrictEqual(res.weekdayTexts, ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'], 'Mini weekday headers must use 3-letter badges');
+
+    // Check weekday columns have Thai day color classes
+    for (let i = 0; i < 7; i++) {
+      assert.ok(res.weekdayClasses[i].includes(res.thaiDayClasses[i]), `Weekday col ${i} must have class ${res.thaiDayClasses[i]}`);
+    }
+
+    // Check day cells have Thai daily color classes
+    for (let i = 0; i < 7; i++) {
+      assert.ok(res.dayCellClasses[i].includes(res.thaiDayClasses[i]), `Day cell ${i} must have class ${res.thaiDayClasses[i]}`);
+    }
+
+    assert.strictEqual(res.hasCellTop, true, 'Mini day cell should contain .mini-cell-top');
+    assert.strictEqual(res.hasDayNumber, true, 'Mini day cell should contain .mini-day-number');
+  });
+
+  await t.test('Zoom transition animation classes are triggered on zoom out and zoom in', async () => {
+    const res = await browser.eval(`
+      (async () => {
+        // Toggle to single view first
+        window.app.setQuadView(false);
+        const singleViewportHasZoomIn = document.querySelector('.calendar-viewport')?.classList.contains('anim-zoom-in');
+
+        // Toggle to quad view (zoom out)
+        window.app.setQuadView(true);
+        const quadContainerHasZoomOut = document.getElementById('quadMonthContainer')?.classList.contains('anim-zoom-out');
+
+        // Toggle back to single view (zoom in)
+        window.app.setQuadView(false);
+        const singleViewportZoomedInAgain = document.querySelector('.calendar-viewport')?.classList.contains('anim-zoom-in');
+
+        return {
+          singleViewportHasZoomIn,
+          quadContainerHasZoomOut,
+          singleViewportZoomedInAgain
+        };
+      })()
+    `);
+
+    assert.strictEqual(res.quadContainerHasZoomOut, true, 'quadMonthContainer should receive anim-zoom-out on zoom out');
+    assert.strictEqual(res.singleViewportZoomedInAgain, true, 'calendar-viewport should receive anim-zoom-in on zoom in');
+  });
 });
