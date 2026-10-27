@@ -932,10 +932,12 @@ body.theme-homebrew textarea {
 }
 
 /* Ignore mouse position & suppress tile hover/selection during keyboard navigation */
-body.keyboard-nav .day-cell {
+body.keyboard-nav .day-cell,
+body.keyboard-nav .mini-day-cell {
   pointer-events: none !important;
 }
-body.keyboard-nav .day-cell:hover {
+body.keyboard-nav .day-cell:hover,
+body.keyboard-nav .mini-day-cell:hover {
   box-shadow: none !important;
 }
 body.keyboard-nav .day-cell.day-sun:hover {
@@ -1070,7 +1072,8 @@ body.keyboard-nav .day-cell.other-month:hover {
   }
 }
 
-.day-cell.popover-active {
+.day-cell.popover-active,
+.mini-day-cell.popover-active {
   animation: date-cell-slow-blink 1.4s ease-in-out infinite !important;
   z-index: 5;
 }
@@ -1165,7 +1168,8 @@ body.keyboard-nav .day-cell.other-month:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .day-cell.popover-active {
+  .day-cell.popover-active,
+  .mini-day-cell.popover-active {
     animation: none !important;
     border-color: #ffffff !important;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.75) !important;

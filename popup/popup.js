@@ -833,6 +833,7 @@ class DarkCalApp {
 
   setQuadView(enabled, save = true) {
     this.isQuadView = enabled;
+    this.hidePopover();
     if (enabled) {
       document.body.classList.add('view-quad');
       if (this.zoomViewBtn) {
@@ -840,7 +841,6 @@ class DarkCalApp {
         this.zoomViewBtn.title = 'Switch to 1-Month View (cal 1)';
         this.zoomViewBtn.setAttribute('aria-label', 'Switch to 1-Month View');
       }
-      this.hidePopover();
       if (this.calendarViewport) {
         this.calendarViewport.classList.remove('anim-zoom-in');
       }
@@ -1061,6 +1061,44 @@ class DarkCalApp {
       bar.className = 'mini-event-bar';
       cell.appendChild(bar);
     }
+
+    // Hover popover schedule for each day in 4-month view
+    cell.addEventListener('mouseenter', () => {
+      if (this.isHoverSuppressed) return;
+      if (this.hoverTimeout) clearTimeout(this.hoverTimeout);
+      this.hoverTimeout = setTimeout(() => {
+        if (this.isHoverSuppressed) return;
+        this.showDaySchedulePopover(cell, date, dayEvents);
+      }, 350);
+    });
+
+    cell.addEventListener('mousemove', () => {
+      if (this.isHoverSuppressed || this.activeHoverCell === cell || this.hoverTimeout) return;
+      this.hoverTimeout = setTimeout(() => {
+        if (this.isHoverSuppressed) return;
+        this.showDaySchedulePopover(cell, date, dayEvents);
+      }, 350);
+    });
+
+    cell.addEventListener('mouseleave', () => {
+      if (this.hoverTimeout) clearTimeout(this.hoverTimeout);
+      this.hoverTimeout = setTimeout(() => {
+        if (!this.isMouseOverPopover) {
+          this.hidePopover();
+        }
+      }, 220);
+    });
+
+    // Clicking a day cell zooms into that month (or other month if leading/trailing)
+    cell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.hidePopover();
+      this.viewYear = date.getFullYear();
+      this.viewMonth = date.getMonth();
+      this.setQuadView(false);
+      const monthName = date.toLocaleDateString('en-US', { month: 'long' });
+      this.showToast(`cal-1 ➜ ${monthName} ${this.viewYear}`);
+    });
 
     return cell;
   }
@@ -1731,7 +1769,7 @@ class DarkCalApp {
   }
 
   showDaySchedulePopover(cellEl, date, events = []) {
-    if (this.isQuadView || this.isHoverSuppressed) return;
+    if (this.isHoverSuppressed) return;
     if (this.activeHoverCell && this.activeHoverCell !== cellEl) {
       this.activeHoverCell.classList.remove('popover-active');
     }

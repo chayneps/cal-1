@@ -96,19 +96,37 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
     assert.strictEqual(res[3].isCurrent, false);
   });
 
-  await t.test('No hover popover appears in quad view', async () => {
+  await t.test('Hover popover appears when hovering day cell in quad view', async () => {
     const res = await browser.eval(`
       (async () => {
+        window.app.setQuadView(true);
         const cell = document.querySelector('.mini-day-cell:not(.other-month)');
         window.app.showDaySchedulePopover(cell, new Date(2026, 9, 15));
         const popover = document.getElementById('dayDetailPopover');
+        const heading = document.getElementById('popoverDateHeading')?.textContent;
+        const isVisible = popover && !popover.classList.contains('hidden');
+        const cellHasActive = cell?.classList.contains('popover-active');
+
+        // Test hide
+        window.app.hidePopover();
+        const isHiddenAfter = popover?.classList.contains('hidden');
+        const cellClearedActive = !cell?.classList.contains('popover-active');
+
         return {
-          isHidden: popover?.classList.contains('hidden')
+          isVisible,
+          cellHasActive,
+          heading,
+          isHiddenAfter,
+          cellClearedActive
         };
       })()
     `);
 
-    assert.strictEqual(res.isHidden, true, 'Popover must remain hidden in quad view');
+    assert.strictEqual(res.isVisible, true, 'Popover should be visible when hovering day cell in quad view');
+    assert.strictEqual(res.cellHasActive, true, 'Hovered mini day cell should receive popover-active class');
+    assert.ok(res.heading.includes('Oct 15'), 'Popover heading should show correct date');
+    assert.strictEqual(res.isHiddenAfter, true, 'Popover should hide cleanly');
+    assert.strictEqual(res.cellClearedActive, true, 'popover-active class should be removed on hide');
   });
 
   await t.test('Clicking a mini month zooms in to that month in single view', async () => {
