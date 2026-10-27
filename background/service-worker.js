@@ -1,5 +1,6 @@
 // background/service-worker.js - Background Service Worker with Auto-Sync for DarkCal
 import { parseICal } from '../lib/ical-parser.js';
+import { GoogleCalendarApi } from '../lib/google-api.js';
 
 const ALARM_NAME = 'darkcal-auto-sync';
 
@@ -70,42 +71,78 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 /**
- * Fetches the user's Google Calendar iCal feed in the background,
- * parses the events, and updates storage.
+ * Fetches events in the background via Google Calendar REST API or iCal feed,
+ * and updates storage.
  */
 export async function performBackgroundSync() {
-  const { icalUrl, useDemoData } = await chrome.storage.local.get(['icalUrl', 'useDemoData']);
-  if (!icalUrl || useDemoData) {
-    return { success: false, reason: 'No iCal URL configured or in Demo Mode' };
+  const stored = await chrome.storage.local.get([
+    'googleAuthToken',
+    'googleCalendars',
+    'icalUrl',
+    'useDemoData',
+    'customCalendarName'
+  ]);
+
+  if (stored.useDemoData) {
+    return { success: false, reason: 'In Demo Mode' };
   }
 
-  try {
-    console.log('[DarkCal] Auto-syncing calendar feed in background...');
-    const res = await fetch(icalUrl);
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    }
-
-    const icsText = await res.text();
-    const parsedEvents = parseICal(icsText, 'Google Calendar', '#4285F4');
-
-    if (parsedEvents.length > 0) {
-      const now = Date.now();
-      const detectedName = parsedEvents.calendarName || 'main';
-      const { customCalendarName } = await chrome.storage.local.get(['customCalendarName']);
-      const finalName = customCalendarName || detectedName;
+  // Google Calendar REST API sync
+  if (stored.googleAuthToken) {
+    try {
+      console.log('[DarkCal] Auto-syncing Google Calendar REST API in background...');
+      const now = new Date();
+      const events = await GoogleCalendarApi.fetchMonthEvents(
+        stored.googleAuthToken,
+        stored.googleCalendars || [],
+        now.getFullYear(),
+        now.getMonth(),
+        true
+      );
+      const nowTimestamp = Date.now();
       await chrome.storage.local.set({
-        savedIcalEvents: parsedEvents,
-        calendarName: finalName,
-        detectedCalendarName: detectedName,
-        lastSyncTimestamp: now
+        savedGoogleEvents: events,
+        lastSyncTimestamp: nowTimestamp
       });
-      console.log(`[DarkCal] Auto-sync complete: ${parsedEvents.length} events from "${finalName}" updated at ${new Date(now).toLocaleTimeString()}`);
-      return { success: true, count: parsedEvents.length, timestamp: now, calendarName: finalName };
+      console.log(`[DarkCal] Google REST API auto-sync complete: ${events.length} events updated at ${new Date(nowTimestamp).toLocaleTimeString()}`);
+      return { success: true, count: events.length, timestamp: nowTimestamp, source: 'google-rest-api' };
+    } catch (err) {
+      console.warn('[DarkCal] Google REST API auto-sync background error:', err.message);
+      return { success: false, error: err.message };
     }
-    return { success: false, reason: '0 events parsed' };
-  } catch (err) {
-    console.warn('[DarkCal] Auto-sync background error:', err.message);
-    return { success: false, error: err.message };
   }
+
+  // Fallback: iCal feed sync
+  if (stored.icalUrl) {
+    try {
+      console.log('[DarkCal] Auto-syncing calendar feed in background...');
+      const res = await fetch(stored.icalUrl);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+
+      const icsText = await res.text();
+      const parsedEvents = parseICal(icsText, 'Google Calendar', '#4285F4');
+
+      if (parsedEvents.length > 0) {
+        const now = Date.now();
+        const detectedName = parsedEvents.calendarName || 'main';
+        const finalName = stored.customCalendarName || detectedName;
+        await chrome.storage.local.set({
+          savedIcalEvents: parsedEvents,
+          calendarName: finalName,
+          detectedCalendarName: detectedName,
+          lastSyncTimestamp: now
+        });
+        console.log(`[DarkCal] Auto-sync complete: ${parsedEvents.length} events from "${finalName}" updated at ${new Date(now).toLocaleTimeString()}`);
+        return { success: true, count: parsedEvents.length, timestamp: now, calendarName: finalName, source: 'ical' };
+      }
+      return { success: false, reason: '0 events parsed' };
+    } catch (err) {
+      console.warn('[DarkCal] Auto-sync background error:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  return { success: false, reason: 'No Google account or iCal URL configured' };
 }

@@ -8,10 +8,12 @@ const testSuites = [
   { name: 'Unit: Public Holidays & Offline Bundles', file: 'tests/unit/holidays.test.js' },
   { name: 'Unit: Local & Fallback Storage Engine', file: 'tests/unit/storage.test.js' },
   { name: 'Unit: iCalendar (.ics) Parser', file: 'tests/unit/ical-parser.test.js' },
+  { name: 'Unit: Google Calendar REST API Client', file: 'tests/unit/google-api.test.js' },
   { name: 'E2E: Public Holidays (UI, Flags, Persistence)', file: 'tests/e2e/holidays.test.js' },
   { name: 'E2E: Month Navigation, Popovers & Animation', file: 'tests/e2e/navigation.test.js' },
   { name: 'E2E: Appearance, Today Header Sync & Themes', file: 'tests/e2e/appearance.test.js' },
-  { name: 'E2E: 4-Month 2×2 Zoom View (cal 4)', file: 'tests/e2e/quad-view.test.js' }
+  { name: 'E2E: 4-Month 2×2 Zoom View (cal 4)', file: 'tests/e2e/quad-view.test.js' },
+  { name: 'E2E: Google Calendar REST API & Multi-Calendar UI', file: 'tests/e2e/google-oauth.test.js' }
 ];
 
 console.log('========================================================');

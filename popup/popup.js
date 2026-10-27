@@ -3,6 +3,7 @@ import { Storage } from '../lib/storage.js';
 import { getMockCalendars, generateMockEvents } from '../lib/mock-data.js';
 import { parseICal } from '../lib/ical-parser.js';
 import { getHolidaysForYear, TOP_COUNTRIES, OTHER_COUNTRIES, getCountryFlag } from '../lib/holidays.js';
+import { GoogleCalendarApi } from '../lib/google-api.js';
 
 class DarkCalApp {
   constructor() {
@@ -39,6 +40,13 @@ class DarkCalApp {
     this.isQuadView = true;
     this.toastAnimationId = 0;
     this.isToastAnimating = false;
+
+    // Google Calendar REST API State
+    this.googleAuthToken = '';
+    this.googleUserEmail = '';
+    this.googleUserName = '';
+    this.googleCalendars = [];
+    this.customClientId = '';
 
     this.cacheDom();
     this.bindEvents();
@@ -98,6 +106,22 @@ class DarkCalApp {
     this.themeSelect = document.getElementById('themeSelect');
     this.crtEffectToggle = document.getElementById('crtEffectToggle');
     this.crtOverlay = document.getElementById('crtOverlay');
+
+    // Google OAuth REST API Elements
+    this.googleAuthSection = document.getElementById('googleAuthSection');
+    this.googleDisconnectedCard = document.getElementById('googleDisconnectedCard');
+    this.googleConnectedCard = document.getElementById('googleConnectedCard');
+    this.googleSignInBtn = document.getElementById('googleSignInBtn');
+    this.googleDisconnectBtn = document.getElementById('googleDisconnectBtn');
+    this.syncGoogleBtn = document.getElementById('syncGoogleBtn');
+    this.googleAccountEmail = document.getElementById('googleAccountEmail');
+    this.googleCalendarsList = document.getElementById('googleCalendarsList');
+    this.googleAuthStatus = document.getElementById('googleAuthStatus');
+    this.googleClientDetails = document.getElementById('googleClientDetails');
+    this.googleClientIdInput = document.getElementById('googleClientIdInput');
+    this.saveClientIdBtn = document.getElementById('saveClientIdBtn');
+    this.googleRedirectUriText = document.getElementById('googleRedirectUriText');
+    this.copyRedirectUriBtn = document.getElementById('copyRedirectUriBtn');
   }
 
   bindEvents() {
@@ -241,7 +265,49 @@ class DarkCalApp {
     });
 
     // iCal Sync Button in Settings
-    this.syncIcalBtn.addEventListener('click', () => this.handleIcalSync());
+    if (this.syncIcalBtn) {
+      this.syncIcalBtn.addEventListener('click', () => this.handleIcalSync());
+    }
+
+    // Google OAuth Events
+    if (this.googleSignInBtn) {
+      this.googleSignInBtn.addEventListener('click', () => this.handleGoogleSignIn());
+    }
+    if (this.googleDisconnectBtn) {
+      this.googleDisconnectBtn.addEventListener('click', () => this.handleGoogleDisconnect());
+    }
+    if (this.syncGoogleBtn) {
+      this.syncGoogleBtn.addEventListener('click', () => this.syncGoogleEvents(true));
+    }
+    if (this.copyRedirectUriBtn) {
+      this.copyRedirectUriBtn.addEventListener('click', async () => {
+        const uri = this.googleRedirectUriText ? this.googleRedirectUriText.textContent : GoogleCalendarApi.getRedirectUri();
+        if (uri && navigator.clipboard) {
+          try {
+            await navigator.clipboard.writeText(uri);
+            this.copyRedirectUriBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              if (this.copyRedirectUriBtn) this.copyRedirectUriBtn.textContent = 'Copy';
+            }, 2000);
+            this.showToast('Copied Redirect URI to clipboard!');
+          } catch (e) {
+            this.showToast('Redirect URI: ' + uri);
+          }
+        }
+      });
+    }
+    if (this.saveClientIdBtn && this.googleClientIdInput) {
+      this.saveClientIdBtn.addEventListener('click', async () => {
+        const id = this.googleClientIdInput.value.trim();
+        this.customClientId = id;
+        await Storage.set({ customClientId: id });
+        this.saveClientIdBtn.textContent = 'Saved!';
+        setTimeout(() => {
+          if (this.saveClientIdBtn) this.saveClientIdBtn.textContent = 'Save';
+        }, 2000);
+        this.showToast('Google OAuth Client ID saved');
+      });
+    }
 
     this.firstDaySelect.addEventListener('change', async (e) => {
       this.firstDayOfWeek = parseInt(e.target.value, 10);
@@ -269,7 +335,7 @@ class DarkCalApp {
       if (this.useDemoData) {
         this.calendarName = this.customCalendarName || (this.activeCalendarFilter !== 'all' ? this.activeCalendarFilter : 'demo');
       } else {
-        this.calendarName = this.customCalendarName || this.detectedCalendarName || 'main';
+        this.calendarName = this.customCalendarName || (this.googleUserEmail ? this.googleUserEmail : (this.detectedCalendarName || 'main'));
       }
       this.updateCalendarHeader();
       this.loadCalendarData();
@@ -442,7 +508,13 @@ class DarkCalApp {
       'customCalendarName',
       'detectedCalendarName',
       'activeCalendarFilter',
-      'holidayCountry'
+      'holidayCountry',
+      'googleAuthToken',
+      'googleUserEmail',
+      'googleUserName',
+      'googleCalendars',
+      'customClientId',
+      'savedGoogleEvents'
     ]);
 
     this.theme = stored.theme || 'homebrew';
@@ -459,12 +531,35 @@ class DarkCalApp {
     this.icalUrl = stored.icalUrl || '';
     this.lastSyncTimestamp = stored.lastSyncTimestamp || null;
 
+    // Restore Google OAuth state
+    this.googleAuthToken = stored.googleAuthToken || '';
+    this.googleUserEmail = stored.googleUserEmail || '';
+    this.googleUserName = stored.googleUserName || '';
+    this.googleCalendars = stored.googleCalendars || [];
+    this.customClientId = stored.customClientId || '';
+
+    if (this.googleClientIdInput) {
+      this.googleClientIdInput.value = this.customClientId;
+    }
+    if (this.googleRedirectUriText) {
+      this.googleRedirectUriText.textContent = GoogleCalendarApi.getRedirectUri() || `https://${GoogleCalendarApi.getExtensionId()}.chromiumapp.org/`;
+    }
+
+    if (this.googleAuthToken) {
+      this.showGoogleConnectedState(true);
+      this.renderGoogleCalendarsList();
+    } else {
+      this.showGoogleConnectedState(false);
+    }
+
     this.customCalendarName = stored.customCalendarName || '';
     this.detectedCalendarName = stored.detectedCalendarName || '';
     this.activeCalendarFilter = stored.activeCalendarFilter || 'all';
 
     if (this.customCalendarName) {
       this.calendarName = this.customCalendarName;
+    } else if (this.googleUserEmail && !this.useDemoData) {
+      this.calendarName = this.googleUserEmail;
     } else if (stored.calendarName) {
       this.calendarName = stored.calendarName;
     } else if (stored.savedIcalEvents && stored.savedIcalEvents[0]?.calendarName) {
@@ -506,12 +601,31 @@ class DarkCalApp {
     this.updateMonthHeading();
     this.updateCalendarHeader();
 
-    if (stored.savedIcalEvents && stored.savedIcalEvents.length > 0) {
+    if (this.googleAuthToken && !this.useDemoData) {
+      if (stored.savedGoogleEvents && stored.savedGoogleEvents.length > 0) {
+        this.events = stored.savedGoogleEvents;
+        this.updateStatus(false, this.events.length);
+        this.renderMonthGrid();
+        if (this.isQuadView) {
+          await this.renderQuadView(false);
+        }
+      } else {
+        await this.syncGoogleEvents(false);
+      }
+
+      if (this.autoSyncInterval > 0) {
+        const staleThreshold = this.autoSyncInterval * 60 * 1000;
+        const isStale = !this.lastSyncTimestamp || (Date.now() - this.lastSyncTimestamp > staleThreshold);
+        if (isStale) {
+          this.syncGoogleEvents(false);
+        }
+      }
+    } else if (stored.savedIcalEvents && stored.savedIcalEvents.length > 0) {
       this.events = stored.savedIcalEvents;
       this.updateStatus(false, this.events.length);
       this.renderMonthGrid();
       if (this.isQuadView) {
-        await this.renderQuadView();
+        await this.renderQuadView(false);
       }
 
       // Check if cache is stale (older than sync interval) -> perform silent background auto-sync!
@@ -666,7 +780,9 @@ class DarkCalApp {
   }
 
   loadCalendarData() {
-    if (this.icalUrl && !this.useDemoData) {
+    if (this.googleAuthToken && !this.useDemoData) {
+      this.syncGoogleEvents(false);
+    } else if (this.icalUrl && !this.useDemoData) {
       this.handleIcalSync(false);
     } else {
       this.loadDemoEvents();
@@ -700,13 +816,305 @@ class DarkCalApp {
 
   async refreshCalendar(showToastMsg = false) {
     this.syncBtn.classList.add('syncing');
-    if (this.icalUrl) {
+    if (this.googleAuthToken && !this.useDemoData) {
+      await this.syncGoogleEvents(showToastMsg);
+    } else if (this.icalUrl) {
       await this.handleIcalSync(showToastMsg);
     } else {
       this.loadDemoEvents();
       if (showToastMsg) this.showToast('Demo calendar refreshed');
     }
     this.syncBtn.classList.remove('syncing');
+  }
+
+  // -------------------------------------------------------------
+  // Google Calendar REST API (OAuth 2.0 & Multi-Calendar)
+  // -------------------------------------------------------------
+  showGoogleConnectedState(isConnected) {
+    if (!this.googleDisconnectedCard || !this.googleConnectedCard) return;
+    if (isConnected) {
+      this.googleDisconnectedCard.classList.add('hidden');
+      this.googleConnectedCard.classList.remove('hidden');
+      if (this.googleAccountEmail) {
+        this.googleAccountEmail.textContent = this.googleUserEmail || 'Connected';
+      }
+      if (this.googleAuthStatus) {
+        this.googleAuthStatus.classList.add('hidden');
+      }
+    } else {
+      this.googleDisconnectedCard.classList.remove('hidden');
+      this.googleConnectedCard.classList.add('hidden');
+      if (this.googleCalendarsList) {
+        this.googleCalendarsList.innerHTML = '';
+      }
+    }
+  }
+
+  showGoogleStatus(message, type = 'error') {
+    if (!this.googleAuthStatus) return;
+    if (!message) {
+      this.googleAuthStatus.textContent = '';
+      this.googleAuthStatus.className = 'google-status-banner hidden';
+      return;
+    }
+    this.googleAuthStatus.textContent = message;
+    this.googleAuthStatus.className = `google-status-banner ${type}`;
+    this.googleAuthStatus.classList.remove('hidden');
+  }
+
+  renderGoogleCalendarsList() {
+    if (!this.googleCalendarsList) return;
+    this.googleCalendarsList.innerHTML = '';
+
+    if (!this.googleCalendars || this.googleCalendars.length === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.className = 'cal-empty-msg';
+      emptyMsg.style.fontSize = '10px';
+      emptyMsg.style.color = 'var(--text-muted)';
+      emptyMsg.textContent = 'No calendars found in this Google account.';
+      this.googleCalendarsList.appendChild(emptyMsg);
+      return;
+    }
+
+    this.googleCalendars.forEach((cal) => {
+      const item = document.createElement('label');
+      item.className = 'google-cal-item';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = cal.selected !== false;
+      checkbox.addEventListener('change', async (e) => {
+        cal.selected = e.target.checked;
+        await Storage.set({ googleCalendars: this.googleCalendars });
+        this.syncGoogleEvents(false);
+      });
+
+      const dot = document.createElement('span');
+      dot.className = 'cal-color-dot';
+      dot.style.backgroundColor = cal.backgroundColor || cal.color || '#4285F4';
+
+      const name = document.createElement('span');
+      name.className = 'cal-name';
+      name.textContent = cal.summary + (cal.primary ? ' (Primary)' : '');
+
+      item.appendChild(checkbox);
+      item.appendChild(dot);
+      item.appendChild(name);
+      this.googleCalendarsList.appendChild(item);
+    });
+  }
+
+  async handleGoogleSignIn() {
+    if (this.googleSignInBtn) {
+      this.googleSignInBtn.disabled = true;
+      this.googleSignInBtn.textContent = 'Signing in...';
+    }
+    this.showGoogleStatus('Authenticating with Google...', 'loading');
+
+    try {
+      const clientId = this.customClientId || (this.googleClientIdInput ? this.googleClientIdInput.value.trim() : '');
+      const token = await GoogleCalendarApi.authenticate({
+        clientId: clientId,
+        interactive: true
+      });
+
+      if (!token) {
+        throw new Error('Authentication did not return an access token.');
+      }
+
+      this.googleAuthToken = token;
+      this.showGoogleStatus('Fetching account profile & calendars...', 'loading');
+
+      // Fetch user profile info
+      let profile = { email: '', name: '' };
+      try {
+        profile = await GoogleCalendarApi.getUserProfile(token);
+      } catch (pErr) {
+        console.warn('Could not fetch user profile:', pErr);
+      }
+      this.googleUserEmail = profile.email || 'Google User';
+      this.googleUserName = profile.name || '';
+
+      // Fetch user calendars
+      let calendars = [];
+      try {
+        calendars = await GoogleCalendarApi.getCalendarList(token);
+      } catch (cErr) {
+        console.warn('Could not fetch calendars list:', cErr);
+      }
+      this.googleCalendars = calendars;
+
+      // Update state
+      this.useDemoData = false;
+      if (this.demoModeToggle) {
+        this.demoModeToggle.checked = false;
+      }
+      if (!this.customCalendarName && this.googleUserEmail) {
+        this.calendarName = this.googleUserEmail;
+      }
+
+      await Storage.set({
+        googleAuthToken: token,
+        googleUserEmail: this.googleUserEmail,
+        googleUserName: this.googleUserName,
+        googleCalendars: calendars,
+        useDemoData: false,
+        calendarName: this.calendarName
+      });
+
+      this.showGoogleConnectedState(true);
+      this.renderGoogleCalendarsList();
+      this.showGoogleStatus('');
+
+      // Fetch events
+      await this.syncGoogleEvents(true);
+      this.showToast(`Connected as ${this.googleUserEmail}!`);
+    } catch (err) {
+      console.error('Google Sign-In failed:', err);
+      if (err.code === 'CLIENT_ID_REQUIRED' || err.message?.includes('OAuth Client ID is required')) {
+        this.showGoogleStatus('OAuth Client ID is required. Expand the configuration section below to add your Client ID, or use the private iCal link.', 'error');
+        if (this.googleClientDetails) {
+          this.googleClientDetails.open = true;
+        }
+        if (this.googleClientIdInput) {
+          this.googleClientIdInput.focus();
+        }
+      } else {
+        this.showGoogleStatus(`Sign-In Error: ${err.message}`, 'error');
+      }
+      this.showToast(`Google Sign-In failed: ${err.message}`, 4000);
+    } finally {
+      if (this.googleSignInBtn) {
+        this.googleSignInBtn.disabled = false;
+        this.googleSignInBtn.innerHTML = `
+          <svg class="google-btn-icon" width="16" height="16" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          Sign in with Google
+        `;
+      }
+    }
+  }
+
+  async handleGoogleDisconnect() {
+    if (this.googleDisconnectBtn) {
+      this.googleDisconnectBtn.disabled = true;
+      this.googleDisconnectBtn.textContent = 'Signing out...';
+    }
+
+    try {
+      if (this.googleAuthToken) {
+        try {
+          await GoogleCalendarApi.revokeToken(this.googleAuthToken);
+        } catch (e) {
+          console.warn('Revoke token warning:', e);
+        }
+      }
+
+      this.googleAuthToken = '';
+      this.googleUserEmail = '';
+      this.googleUserName = '';
+      this.googleCalendars = [];
+      this.events = [];
+
+      // Fallback to demo mode if no iCal URL
+      if (!this.icalUrl) {
+        this.useDemoData = true;
+        if (this.demoModeToggle) {
+          this.demoModeToggle.checked = true;
+        }
+        this.calendarName = 'demo';
+      }
+
+      await Storage.set({
+        googleAuthToken: '',
+        googleUserEmail: '',
+        googleUserName: '',
+        googleCalendars: [],
+        savedGoogleEvents: [],
+        useDemoData: this.useDemoData,
+        calendarName: this.calendarName
+      });
+
+      this.showGoogleConnectedState(false);
+      this.loadCalendarData();
+      this.showToast('Signed out of Google Calendar');
+    } catch (err) {
+      console.error('Google disconnect error:', err);
+      this.showToast(`Sign out error: ${err.message}`);
+    } finally {
+      if (this.googleDisconnectBtn) {
+        this.googleDisconnectBtn.disabled = false;
+        this.googleDisconnectBtn.textContent = 'Sign Out';
+      }
+    }
+  }
+
+  async syncGoogleEvents(showFeedback = true) {
+    if (!this.googleAuthToken) return;
+
+    if (this.syncGoogleBtn) {
+      this.syncGoogleBtn.textContent = 'Syncing...';
+      this.syncGoogleBtn.disabled = true;
+    }
+    if (this.syncBtn) {
+      this.syncBtn.classList.add('syncing');
+    }
+
+    try {
+      const activeCals = (this.googleCalendars || []).filter(c => c.selected !== false);
+      const events = await GoogleCalendarApi.fetchMonthEvents(
+        this.googleAuthToken,
+        activeCals,
+        this.viewYear,
+        this.viewMonth,
+        this.isQuadView
+      );
+
+      const now = Date.now();
+      this.events = events;
+      this.lastSyncTimestamp = now;
+
+      await Storage.set({
+        savedGoogleEvents: events,
+        lastSyncTimestamp: now
+      });
+
+      this.updateStatus(false, events.length);
+      this.updateCalendarHeader();
+      this.renderMonthGrid();
+      if (this.isQuadView) {
+        await this.renderQuadView(false);
+      }
+
+      if (this.googleAuthStatus) {
+        this.googleAuthStatus.classList.add('hidden');
+      }
+
+      if (showFeedback) {
+        this.showToast(`Synced ${events.length} Google events (${activeCals.length} active calendar${activeCals.length === 1 ? '' : 's'})!`);
+      }
+    } catch (err) {
+      console.error('Google sync error:', err);
+      if (err.message && err.message.includes('401')) {
+        this.showGoogleStatus('Session expired. Please sign in with Google again.', 'error');
+        if (showFeedback) this.showToast('Google session expired. Please sign in again.', 4000);
+      } else {
+        this.showGoogleStatus(`Sync error: ${err.message}`, 'error');
+        if (showFeedback) this.showToast(`Google sync failed: ${err.message}`, 4000);
+      }
+    } finally {
+      if (this.syncGoogleBtn) {
+        this.syncGoogleBtn.textContent = 'Sync Now';
+        this.syncGoogleBtn.disabled = false;
+      }
+      if (this.syncBtn) {
+        this.syncBtn.classList.remove('syncing');
+      }
+    }
   }
 
   // -------------------------------------------------------------
@@ -1238,13 +1646,17 @@ class DarkCalApp {
     this.updateMonthHeading();
 
     if (this.isQuadView) {
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.googleAuthToken && !this.useDemoData) {
+        await this.syncGoogleEvents(false);
+      } else if (this.useDemoData || !this.icalUrl) {
         this.loadDemoEvents();
       } else {
-        await this.renderQuadView();
+        await this.renderQuadView(false);
       }
     } else {
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.googleAuthToken && !this.useDemoData) {
+        await this.syncGoogleEvents(false);
+      } else if (this.useDemoData || !this.icalUrl) {
         this.loadDemoEvents();
       } else {
         this.renderMonthGrid();
@@ -1428,13 +1840,17 @@ class DarkCalApp {
     }
     this.updateMonthHeading();
     if (this.isQuadView) {
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.googleAuthToken && !this.useDemoData) {
+        await this.syncGoogleEvents(false);
+      } else if (this.useDemoData || !this.icalUrl) {
         this.loadDemoEvents();
       } else {
-        await this.renderQuadView();
+        await this.renderQuadView(false);
       }
     } else {
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.googleAuthToken && !this.useDemoData) {
+        await this.syncGoogleEvents(false);
+      } else if (this.useDemoData || !this.icalUrl) {
         this.loadDemoEvents();
       } else {
         this.renderMonthGrid();
@@ -1451,13 +1867,17 @@ class DarkCalApp {
     await this.loadHolidays();
     this.updateMonthHeading();
     if (this.isQuadView) {
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.googleAuthToken && !this.useDemoData) {
+        await this.syncGoogleEvents(false);
+      } else if (this.useDemoData || !this.icalUrl) {
         this.loadDemoEvents();
       } else {
-        await this.renderQuadView();
+        await this.renderQuadView(false);
       }
     } else {
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.googleAuthToken && !this.useDemoData) {
+        await this.syncGoogleEvents(false);
+      } else if (this.useDemoData || !this.icalUrl) {
         this.loadDemoEvents();
       } else {
         this.renderMonthGrid();
@@ -2232,7 +2652,7 @@ class DarkCalApp {
   }
 
   getDefaultFooterText() {
-    if (this.useDemoData || !this.icalUrl) {
+    if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
       return '';
     }
     return this.formatLastSync(this.lastSyncTimestamp);
@@ -2240,6 +2660,9 @@ class DarkCalApp {
 
   openSettings() {
     this.hidePopover();
+    if (this.googleRedirectUriText) {
+      this.googleRedirectUriText.textContent = GoogleCalendarApi.getRedirectUri() || `https://${GoogleCalendarApi.getExtensionId()}.chromiumapp.org/`;
+    }
     this.settingsModal.classList.remove('hidden');
   }
 

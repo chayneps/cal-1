@@ -6,10 +6,13 @@
   "description": "cal-1 - Unix cal-inspired dropdown calendar with Spaceship prompt, month view, hover schedules, and Google Calendar sync.",
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "identity"
   ],
   "host_permissions": [
-    "https://calendar.google.com/*"
+    "https://calendar.google.com/*",
+    "https://www.googleapis.com/*",
+    "https://accounts.google.com/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js",
