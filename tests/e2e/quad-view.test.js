@@ -117,37 +117,117 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
     assert.strictEqual(res[3].hasBadge, false);
   });
 
-  await t.test('Hover popover appears when hovering day cell in quad view', async () => {
+  await t.test('Hover popover in quad view takes full opposite half with height equal to main height', async () => {
     const res = await browser.eval(`
       (async () => {
         window.app.setQuadView(true);
-        const cell = document.querySelector('.mini-day-cell:not(.other-month)');
-        window.app.showDaySchedulePopover(cell, new Date(2026, 9, 15));
-        const popover = document.getElementById('dayDetailPopover');
-        const heading = document.getElementById('popoverDateHeading')?.textContent;
-        const isVisible = popover && !popover.classList.contains('hidden');
-        const cellHasActive = cell?.classList.contains('popover-active');
+        await new Promise(r => setTimeout(r, 200));
 
-        // Test hide
+        const cards = Array.from(document.querySelectorAll('.mini-month-card'));
+        const main = document.querySelector('.calendar-viewport');
+        const quad = document.getElementById('quadMonthContainer');
+        const popover = document.getElementById('dayDetailPopover');
+
+        // 1. Hover on Left Half (Card 0, Sep 15) -> Popover takes right half
+        const cellLeft = cards[0].querySelector('.mini-day-cell:not(.other-month)');
+        window.app.showDaySchedulePopover(cellLeft, new Date(2026, 8, 15));
+        const leftHoverStyle = {
+          left: popover.style.left,
+          width: popover.style.width,
+          top: popover.style.top,
+          height: popover.style.height
+        };
+
+        // 2. Hover on Right Half (Card 1, Oct 24) -> Popover takes left half
+        const cellRight = cards[1].querySelector('.mini-day-cell:not(.other-month)');
+        window.app.showDaySchedulePopover(cellRight, new Date(2026, 9, 24));
+        const rightHoverStyle = {
+          left: popover.style.left,
+          width: popover.style.width,
+          top: popover.style.top,
+          height: popover.style.height
+        };
+
+        // Wait for fade-in animation to fully settle to verify bounding rect
+        await new Promise(r => setTimeout(r, 250));
+        const popRectSettled = popover.getBoundingClientRect();
+        const mainRect = main.getBoundingClientRect();
+
+        // 3. Test hide
         window.app.hidePopover();
         const isHiddenAfter = popover?.classList.contains('hidden');
-        const cellClearedActive = !cell?.classList.contains('popover-active');
 
         return {
-          isVisible,
-          cellHasActive,
-          heading,
-          isHiddenAfter,
-          cellClearedActive
+          mainTop: main.offsetTop + 'px',
+          mainHeight: main.offsetHeight + 'px',
+          quadLeft: quad.offsetLeft,
+          quadWidth: quad.offsetWidth,
+          leftHoverStyle,
+          rightHoverStyle,
+          popRectSettled: {
+            left: Math.round(popRectSettled.left),
+            width: Math.round(popRectSettled.width),
+            top: Math.round(popRectSettled.top),
+            height: Math.round(popRectSettled.height)
+          },
+          mainRect: {
+            top: Math.round(mainRect.top),
+            height: Math.round(mainRect.height)
+          },
+          isHiddenAfter
         };
       })()
     `);
 
-    assert.strictEqual(res.isVisible, true, 'Popover should be visible when hovering day cell in quad view');
-    assert.strictEqual(res.cellHasActive, true, 'Hovered mini day cell should receive popover-active class');
-    assert.ok(res.heading.includes('Oct 15'), 'Popover heading should show correct date');
+    // Verify hover on Left Half -> popover on Right Half with full main height
+    assert.strictEqual(res.leftHoverStyle.left, '329px', 'Hovering left cell must position popover at right column (329px)');
+    assert.strictEqual(res.leftHoverStyle.width, '313px', 'Popover width must match column width (313px)');
+    assert.strictEqual(res.leftHoverStyle.top, res.mainTop, 'Popover top must align with main top (62px)');
+    assert.strictEqual(res.leftHoverStyle.height, res.mainHeight, 'Popover height must equal main height (436px)');
+
+    // Verify hover on Right Half -> popover on Left Half with full main height
+    assert.strictEqual(res.rightHoverStyle.left, '8px', 'Hovering right cell must position popover at left column (8px)');
+    assert.strictEqual(res.rightHoverStyle.width, '313px', 'Popover width must match column width (313px)');
+    assert.strictEqual(res.rightHoverStyle.top, res.mainTop, 'Popover top must align with main top (62px)');
+    assert.strictEqual(res.rightHoverStyle.height, res.mainHeight, 'Popover height must equal main height (436px)');
+
+    // Verify settled bounding rect matches main height (allowing 1px subpixel tolerance)
+    assert.ok(Math.abs(res.popRectSettled.height - res.mainRect.height) <= 1, 'Settled popover height must match main viewport height');
+    assert.ok(Math.abs(res.popRectSettled.top - res.mainRect.top) <= 1, 'Settled popover top must match main viewport top');
+    assert.strictEqual(res.popRectSettled.left, 8, 'Settled popover left on left hover must match left column');
+
     assert.strictEqual(res.isHiddenAfter, true, 'Popover should hide cleanly');
-    assert.strictEqual(res.cellClearedActive, true, 'popover-active class should be removed on hide');
+  });
+
+  await t.test('Reopening / re-initializing app always goes back to default 4-month view', async () => {
+    const res = await browser.eval(`
+      (async () => {
+        // 1. User switches to 1-month view
+        window.app.setQuadView(false);
+        await new Promise(r => setTimeout(r, 100));
+        const wasSingle = !document.body.classList.contains('view-quad');
+
+        // 2. Simulate closing and opening the app again (fresh init())
+        await window.app.init();
+        await new Promise(r => setTimeout(r, 100));
+
+        const isQuadAfterReopen = document.body.classList.contains('view-quad');
+        const zoomBtnActive = document.getElementById('zoomViewBtn')?.classList.contains('active');
+        const quadContainerVisible = !document.getElementById('quadMonthContainer')?.classList.contains('hidden');
+
+        return {
+          wasSingle,
+          isQuadAfterReopen,
+          zoomBtnActive,
+          quadContainerVisible
+        };
+      })()
+    `);
+
+    assert.strictEqual(res.wasSingle, true, 'Should have switched to single view in session');
+    assert.strictEqual(res.isQuadAfterReopen, true, 'Reopening app must reset to default 4-month view');
+    assert.strictEqual(res.zoomBtnActive, true, 'Zoom button must be active in default 4-month view');
+    assert.strictEqual(res.quadContainerVisible, true, 'Quad container must be visible in default 4-month view');
   });
 
   await t.test('Clicking a mini month zooms in to that month in single view', async () => {

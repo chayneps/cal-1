@@ -439,8 +439,7 @@ class DarkCalApp {
       'customCalendarName',
       'detectedCalendarName',
       'activeCalendarFilter',
-      'holidayCountry',
-      'calendarView'
+      'holidayCountry'
     ]);
 
     this.theme = stored.theme || 'homebrew';
@@ -488,28 +487,16 @@ class DarkCalApp {
     }
     await this.loadHolidays();
 
-    // 4-Month view is default unless user explicitly chose single
-    this.isQuadView = stored.calendarView ? stored.calendarView === 'quad' : true;
-    if (this.isQuadView) {
-      document.body.classList.add('view-quad');
-      if (this.zoomViewBtn) {
-        this.zoomViewBtn.classList.add('active');
-        this.zoomViewBtn.title = 'Switch to 1-Month View (cal 1)';
-        this.zoomViewBtn.setAttribute('aria-label', 'Switch to 1-Month View');
-      }
-      if (this.quadMonthContainer) {
-        this.quadMonthContainer.classList.remove('hidden');
-      }
-    } else {
-      document.body.classList.remove('view-quad');
-      if (this.zoomViewBtn) {
-        this.zoomViewBtn.classList.remove('active');
-        this.zoomViewBtn.title = 'Toggle 4-Month View (cal 4)';
-        this.zoomViewBtn.setAttribute('aria-label', 'Toggle 4-Month View');
-      }
-      if (this.quadMonthContainer) {
-        this.quadMonthContainer.classList.add('hidden');
-      }
+    // 4-Month view is always default when app opens or reopens
+    this.isQuadView = true;
+    document.body.classList.add('view-quad');
+    if (this.zoomViewBtn) {
+      this.zoomViewBtn.classList.add('active');
+      this.zoomViewBtn.title = 'Switch to 1-Month View (cal 1)';
+      this.zoomViewBtn.setAttribute('aria-label', 'Switch to 1-Month View');
+    }
+    if (this.quadMonthContainer) {
+      this.quadMonthContainer.classList.remove('hidden');
     }
 
     this.renderWeekdays();
@@ -888,9 +875,7 @@ class DarkCalApp {
     }
 
     this.updateMonthHeading();
-    if (save) {
-      Storage.set({ calendarView: enabled ? 'quad' : 'single' });
-    }
+    // Default view is 4-month view on app launch; temporary view toggles are session-only
   }
 
   toggleQuadView() {
@@ -2029,6 +2014,35 @@ class DarkCalApp {
     const appMidX = appRect.width / 2;
     const appMidY = appRect.height / 2;
 
+    // 4-Month View: Popover takes the whole opposite half with height equal to main height
+    if (this.isQuadView && this.calendarViewport) {
+      const quad = this.quadMonthContainer;
+      const targetTop = this.calendarViewport.offsetTop;
+      const targetHeight = this.calendarViewport.offsetHeight;
+      const quadLeft = quad ? quad.offsetLeft : 8;
+      const quadWidth = quad ? quad.offsetWidth : (appRect.width - 16);
+      const halfWidth = Math.floor((quadWidth - 8) / 2);
+
+      let targetLeft;
+      if (relCellCenterX <= appMidX) {
+        // Hover on left half -> popover on right half
+        targetLeft = quadLeft + halfWidth + 8;
+      } else {
+        // Hover on right half -> popover on left half
+        targetLeft = quadLeft;
+      }
+
+      this.dayDetailPopover.style.width = `${halfWidth}px`;
+      this.dayDetailPopover.style.height = `${targetHeight}px`;
+      this.dayDetailPopover.style.maxHeight = `${targetHeight}px`;
+      this.dayDetailPopover.style.left = `${targetLeft}px`;
+      this.dayDetailPopover.style.top = `${targetTop}px`;
+      return;
+    }
+
+    // 1-Month View (Standard): Opposite quadrant with natural height
+    this.dayDetailPopover.style.height = '';
+
     // 1. Horizontal opposite side:
     // Cell on left half -> popover on right corner
     // Cell on right half -> popover on left corner
@@ -2088,6 +2102,8 @@ class DarkCalApp {
     this.isMouseOverPopover = false;
     this.dayDetailPopover.classList.add('hidden');
     this.dayDetailPopover.style.maxHeight = '';
+    this.dayDetailPopover.style.height = '';
+    this.dayDetailPopover.style.width = '';
     if (this.activeHoverCell) {
       this.activeHoverCell.classList.remove('popover-active');
       this.activeHoverCell = null;
