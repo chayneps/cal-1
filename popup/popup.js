@@ -889,7 +889,7 @@ class DarkCalApp {
     this.showToast(this.isQuadView ? 'cal-1 ➜ 4-Month Zoom View (2×2)' : 'cal-1 ➜ 1-Month View');
   }
 
-  async renderQuadView() {
+  async renderQuadView(animate = true) {
     if (!this.quadMonthContainer) return;
     this.hidePopover();
     this.quadMonthContainer.innerHTML = '';
@@ -900,10 +900,10 @@ class DarkCalApp {
     // [2] Bottom-Left: +1 month
     // [3] Bottom-Right: +2 months
     const months = [
-      { ...this.getMonthOffset(this.viewYear, this.viewMonth, -1), isCurrent: false },
-      { year: this.viewYear, month: this.viewMonth, isCurrent: true },
-      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 1), isCurrent: false },
-      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 2), isCurrent: false }
+      { ...this.getMonthOffset(this.viewYear, this.viewMonth, -1), isCurrent: false, monthIndex: 0 },
+      { year: this.viewYear, month: this.viewMonth, isCurrent: true, monthIndex: 1 },
+      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 1), isCurrent: false, monthIndex: 2 },
+      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 2), isCurrent: false, monthIndex: 3 }
     ];
 
     // Ensure holidays loaded for any involved years
@@ -916,21 +916,45 @@ class DarkCalApp {
     }
 
     for (const info of months) {
-      const card = this.createMiniMonthCard(info);
+      const card = this.createMiniMonthCard(info, animate);
       this.quadMonthContainer.appendChild(card);
+    }
+
+    // Clean up temporary scan animation classes after the 4-second sequence finishes
+    if (animate) {
+      if (this.quadAnimationTimer) clearTimeout(this.quadAnimationTimer);
+      this.quadAnimationTimer = setTimeout(() => {
+        if (!this.quadMonthContainer) return;
+        this.quadMonthContainer.querySelectorAll('.scan-appear, .scan-appear-other').forEach(el => {
+          el.classList.remove('scan-appear', 'scan-appear-other');
+          el.style.animationDelay = '';
+        });
+      }, 4150);
     }
   }
 
-  createMiniMonthCard({ year, month, isCurrent }) {
+  createMiniMonthCard({ year, month, isCurrent, monthIndex = 0 }, animate = true) {
     const card = document.createElement('div');
     card.className = `mini-month-card ${isCurrent ? 'is-current-month' : ''}`;
+    if (animate) {
+      card.classList.add('scan-appear');
+      card.style.animationDelay = `${monthIndex * 1000}ms`;
+      card.addEventListener('animationend', (e) => {
+        if (e.target === card) {
+          card.classList.remove('scan-appear');
+          card.style.animationDelay = '';
+        }
+      }, { once: true });
+    }
     card.setAttribute('role', 'region');
     const monthName = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long' });
     const monthShort = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'short' });
     card.setAttribute('aria-label', `${monthName} ${year}`);
 
     // Clicking any mini month zooms in to that month in 1-month view!
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      if (this.dayDetailPopover && this.dayDetailPopover.contains(e.target)) return;
+      this.hidePopover();
       card.style.transform = 'scale(0.97)';
       setTimeout(() => {
         card.style.transform = '';
@@ -965,10 +989,19 @@ class DarkCalApp {
     const isThisCardCurrentMonth = isCurrent && year === this.today.getFullYear() && month === this.today.getMonth();
     const todayDayOfWeek = this.today.getDay();
 
-    for (const d of order) {
+    for (let d = 0; d < order.length; d++) {
+      const dayIdx = order[d];
       const col = document.createElement('div');
-      col.className = `mini-weekday-col ${dayClasses[d]} ${isThisCardCurrentMonth && d === todayDayOfWeek ? 'is-today' : ''}`;
-      col.textContent = weekdaysBase[d];
+      col.className = `mini-weekday-col ${dayClasses[dayIdx]} ${isThisCardCurrentMonth && dayIdx === todayDayOfWeek ? 'is-today' : ''}`;
+      col.textContent = weekdaysBase[dayIdx];
+      if (animate) {
+        col.classList.add('scan-appear');
+        col.style.animationDelay = `${monthIndex * 1000 + 40 + d * 15}ms`;
+        col.addEventListener('animationend', () => {
+          col.classList.remove('scan-appear');
+          col.style.animationDelay = '';
+        }, { once: true });
+      }
       weekdayRow.appendChild(col);
     }
     card.appendChild(weekdayRow);
@@ -986,13 +1019,21 @@ class DarkCalApp {
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     const todayDateStr = this.formatDateKey(this.today);
 
+    // Pad to 35 or 42 cells
+    const totalFilled = firstDayIndex + numDaysInMonth;
+    const totalCells = totalFilled <= 35 ? 35 : 42;
+    const cellStep = 700 / (totalCells - 1);
+    let cellIndex = 0;
+
     // Leading days
     for (let i = firstDayIndex - 1; i >= 0; i--) {
       const dayNum = prevMonthLastDay - i;
       const prevDate = new Date(year, month - 1, dayNum);
       const dayKey = this.formatDateKey(prevDate);
-      const cell = this.createMiniDayCell(prevDate, dayNum, dayKey, true, false);
+      const delay = animate ? monthIndex * 1000 + 140 + Math.round(cellIndex * cellStep) : null;
+      const cell = this.createMiniDayCell(prevDate, dayNum, dayKey, true, false, delay);
       daysGrid.appendChild(cell);
+      cellIndex++;
     }
 
     // Month days
@@ -1000,26 +1041,28 @@ class DarkCalApp {
       const curDate = new Date(year, month, day);
       const dayKey = this.formatDateKey(curDate);
       const isToday = dayKey === todayDateStr;
-      const cell = this.createMiniDayCell(curDate, day, dayKey, false, isToday);
+      const delay = animate ? monthIndex * 1000 + 140 + Math.round(cellIndex * cellStep) : null;
+      const cell = this.createMiniDayCell(curDate, day, dayKey, false, isToday, delay);
       daysGrid.appendChild(cell);
+      cellIndex++;
     }
 
-    // Trailing days (pad to 35 or 42)
-    const totalFilled = firstDayIndex + numDaysInMonth;
-    const totalCells = totalFilled <= 35 ? 35 : 42;
+    // Trailing days
     const trailingDays = totalCells - totalFilled;
     for (let day = 1; day <= trailingDays; day++) {
       const nextDate = new Date(year, month + 1, day);
       const dayKey = this.formatDateKey(nextDate);
-      const cell = this.createMiniDayCell(nextDate, day, dayKey, true, false);
+      const delay = animate ? monthIndex * 1000 + 140 + Math.round(cellIndex * cellStep) : null;
+      const cell = this.createMiniDayCell(nextDate, day, dayKey, true, false, delay);
       daysGrid.appendChild(cell);
+      cellIndex++;
     }
 
     card.appendChild(daysGrid);
     return card;
   }
 
-  createMiniDayCell(date, dayNum, dayKey, isOtherMonth, isToday) {
+  createMiniDayCell(date, dayNum, dayKey, isOtherMonth, isToday, animDelay = null) {
     const dayOfWeek = date.getDay();
     const dayClasses = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
     const dayClass = dayClasses[dayOfWeek];
@@ -1027,6 +1070,15 @@ class DarkCalApp {
     const cell = document.createElement('div');
     cell.className = `mini-day-cell ${dayClass} ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'is-today' : ''}`;
     cell.dataset.date = dayKey;
+
+    if (animDelay !== null) {
+      cell.classList.add(isOtherMonth ? 'scan-appear-other' : 'scan-appear');
+      cell.style.animationDelay = `${animDelay}ms`;
+      cell.addEventListener('animationend', () => {
+        cell.classList.remove('scan-appear', 'scan-appear-other');
+        cell.style.animationDelay = '';
+      }, { once: true });
+    }
 
     const topRow = document.createElement('div');
     topRow.className = 'mini-cell-top';

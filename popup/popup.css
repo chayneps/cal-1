@@ -2299,11 +2299,12 @@ body.view-quad #quadMonthContainer {
 
 /* -------------------------------------------------------------
    Zoom In / Zoom Out Transition Animations
+   4-Month Scan: Top-Left to Lower-Right in 4 Seconds
    ------------------------------------------------------------- */
 @keyframes quadZoomOutEnter {
   0% {
     opacity: 0;
-    transform: scale(1.12);
+    transform: scale(1.08);
   }
   100% {
     opacity: 1;
@@ -2322,14 +2323,63 @@ body.view-quad #quadMonthContainer {
   }
 }
 
-@keyframes miniCardPop {
+@keyframes miniCardAppear {
   0% {
     opacity: 0;
-    transform: scale(0.94);
+    transform: scale(0.94) translateY(6px);
+    filter: brightness(1.3);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+  }
+}
+
+@keyframes miniWeekdayAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes miniTileScanIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) translateY(5px);
+    filter: brightness(2) contrast(1.2);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-1px);
+    filter: brightness(1.25);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+  }
+}
+
+@keyframes miniTileScanInOtherMonth {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) translateY(5px);
+    filter: brightness(1.5);
+  }
+  60% {
+    opacity: 0.45;
+    transform: scale(1.05) translateY(-1px);
+    filter: brightness(1.1);
+  }
+  100% {
+    opacity: 0.28;
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
   }
 }
 
@@ -2337,20 +2387,20 @@ body.view-quad #quadMonthContainer {
   animation: quadZoomOutEnter 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.quad-month-container.anim-zoom-out .mini-month-card:nth-child(1) {
-  animation: miniCardPop 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.02s both;
+.mini-month-card.scan-appear {
+  animation: miniCardAppear 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.quad-month-container.anim-zoom-out .mini-month-card:nth-child(2) {
-  animation: miniCardPop 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both;
+.mini-weekday-col.scan-appear {
+  animation: miniWeekdayAppear 0.16s ease-out both;
 }
 
-.quad-month-container.anim-zoom-out .mini-month-card:nth-child(3) {
-  animation: miniCardPop 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
+.mini-day-cell.scan-appear {
+  animation: miniTileScanIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.quad-month-container.anim-zoom-out .mini-month-card:nth-child(4) {
-  animation: miniCardPop 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+.mini-day-cell.scan-appear-other {
+  animation: miniTileScanInOtherMonth 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .calendar-viewport.anim-zoom-in #weekdayHeader,
@@ -2360,11 +2410,17 @@ body.view-quad #quadMonthContainer {
 
 @media (prefers-reduced-motion: reduce) {
   .quad-month-container.anim-zoom-out,
-  .quad-month-container.anim-zoom-out .mini-month-card,
+  .mini-month-card.scan-appear,
+  .mini-weekday-col.scan-appear,
+  .mini-day-cell.scan-appear,
+  .mini-day-cell.scan-appear-other,
   .calendar-viewport.anim-zoom-in #weekdayHeader,
   .calendar-viewport.anim-zoom-in #monthGrid {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;
+  }
+  .mini-day-cell.scan-appear-other {
+    opacity: 0.28 !important;
   }
 }
