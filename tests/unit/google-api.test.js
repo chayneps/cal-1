@@ -32,14 +32,34 @@ test('Google Calendar REST API Unit Tests', async (t) => {
   });
 
   await t.test('authenticate throws CLIENT_ID_REQUIRED if no clientId is provided', async () => {
+    // 1. Called with no arguments
     await assert.rejects(
       async () => {
         await GoogleCalendarApi.authenticate();
       },
-      (err) => {
-        return err.message === 'CLIENT_ID_REQUIRED';
-      }
+      (err) => err.message === 'CLIENT_ID_REQUIRED' && err.code === 'CLIENT_ID_REQUIRED'
     );
+
+    // 2. Called with object containing empty clientId
+    await assert.rejects(
+      async () => {
+        await GoogleCalendarApi.authenticate({ clientId: '   ', interactive: true });
+      },
+      (err) => err.message === 'CLIENT_ID_REQUIRED' && err.code === 'CLIENT_ID_REQUIRED'
+    );
+  });
+
+  await t.test('authenticate accepts object or string clientId without throwing TypeError', async () => {
+    // Should accept options object { clientId, interactive }
+    const res1 = await GoogleCalendarApi.authenticate({
+      clientId: 'test-app.apps.googleusercontent.com',
+      interactive: true
+    });
+    assert.strictEqual(res1.token, 'mock_test_token');
+
+    // Should accept string clientId
+    const res2 = await GoogleCalendarApi.authenticate('test-app.apps.googleusercontent.com', true);
+    assert.strictEqual(res2.token, 'mock_test_token');
   });
 
   await t.test('getUserProfile fetches and parses user profile', async () => {

@@ -42,6 +42,33 @@ test('E2E Regression: Google Calendar REST API & Multi-Calendar UI', async (t) =
     assert.strictEqual(res.hasIcalSection, true, 'iCal fallback section should exist');
   });
 
+  await t.test('Clicking Sign in with Google without Client ID expands details gracefully', async () => {
+    const res = await browser.eval(`
+      (async () => {
+        window.app.customClientId = '';
+        const input = document.getElementById('googleClientIdInput');
+        if (input) input.value = '';
+
+        const btn = document.getElementById('googleSignInBtn');
+        btn.click();
+        await new Promise(r => setTimeout(r, 150));
+
+        const statusEl = document.getElementById('googleAuthStatus');
+        const detailsEl = document.getElementById('googleClientDetails');
+
+        return {
+          detailsOpen: detailsEl.open,
+          statusVisible: !statusEl.classList.contains('hidden'),
+          statusText: statusEl.textContent.trim()
+        };
+      })()
+    `);
+
+    assert.strictEqual(res.detailsOpen, true, 'Details should be auto-expanded');
+    assert.strictEqual(res.statusVisible, true, 'Status banner should be visible');
+    assert.match(res.statusText, /OAuth Client ID is required/i);
+  });
+
   await t.test('Saving OAuth Client ID persists to app state', async () => {
     const res = await browser.eval(`
       (async () => {

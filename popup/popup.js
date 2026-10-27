@@ -913,10 +913,12 @@ class DarkCalApp {
 
     try {
       const clientId = this.customClientId || (this.googleClientIdInput ? this.googleClientIdInput.value.trim() : '');
-      const token = await GoogleCalendarApi.authenticate({
+      const authResult = await GoogleCalendarApi.authenticate({
         clientId: clientId,
         interactive: true
       });
+
+      const token = typeof authResult === 'string' ? authResult : authResult?.token;
 
       if (!token) {
         throw new Error('Authentication did not return an access token.');
@@ -925,15 +927,24 @@ class DarkCalApp {
       this.googleAuthToken = token;
       this.showGoogleStatus('Fetching account profile & calendars...', 'loading');
 
-      // Fetch user profile info
-      let profile = { email: '', name: '' };
-      try {
-        profile = await GoogleCalendarApi.getUserProfile(token);
-      } catch (pErr) {
-        console.warn('Could not fetch user profile:', pErr);
+      // Profile email & name
+      this.googleUserEmail = authResult?.userEmail || '';
+      this.googleUserName = authResult?.userName || '';
+
+      if (!this.googleUserEmail || this.googleUserEmail === 'Connected Google Account') {
+        try {
+          const profile = await GoogleCalendarApi.getUserProfile(token);
+          if (profile?.email) {
+            this.googleUserEmail = profile.email;
+            this.googleUserName = profile.name || '';
+          }
+        } catch (pErr) {
+          console.warn('Could not fetch user profile:', pErr);
+        }
       }
-      this.googleUserEmail = profile.email || 'Google User';
-      this.googleUserName = profile.name || '';
+      if (!this.googleUserEmail) {
+        this.googleUserEmail = 'Google User';
+      }
 
       // Fetch user calendars
       let calendars = [];
@@ -971,8 +982,8 @@ class DarkCalApp {
       this.showToast(`Connected as ${this.googleUserEmail}!`);
     } catch (err) {
       console.error('Google Sign-In failed:', err);
-      if (err.code === 'CLIENT_ID_REQUIRED' || err.message?.includes('OAuth Client ID is required')) {
-        this.showGoogleStatus('OAuth Client ID is required. Expand the configuration section below to add your Client ID, or use the private iCal link.', 'error');
+      if (err.code === 'CLIENT_ID_REQUIRED' || err.message?.includes('CLIENT_ID_REQUIRED') || err.message?.includes('OAuth Client ID is required')) {
+        this.showGoogleStatus('OAuth Client ID is required. Expand "OAuth 2.0 Client ID Configuration" below to paste your Client ID.', 'error');
         if (this.googleClientDetails) {
           this.googleClientDetails.open = true;
         }
@@ -982,7 +993,7 @@ class DarkCalApp {
       } else {
         this.showGoogleStatus(`Sign-In Error: ${err.message}`, 'error');
       }
-      this.showToast(`Google Sign-In failed: ${err.message}`, 4000);
+      this.showToast(`Google Sign-In: ${err.message}`, 4000);
     } finally {
       if (this.googleSignInBtn) {
         this.googleSignInBtn.disabled = false;
