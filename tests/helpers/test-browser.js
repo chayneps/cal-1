@@ -2,6 +2,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { spawn } = require('child_process');
 
 class TestBrowser {
@@ -35,17 +36,19 @@ class TestBrowser {
       this.server.listen(this.port, () => resolve());
     });
 
-    // 2. Launch headless Chrome
+    // 2. Launch headless Chrome with isolated user data directory
+    this.userDataDir = path.join(os.tmpdir(), `cal1-chrome-${this.debugPort}-${Date.now()}`);
     this.chromeProc = spawn(this.chromeBin, [
       '--headless=new',
       `--remote-debugging-port=${this.debugPort}`,
+      `--user-data-dir=${this.userDataDir}`,
       '--window-size=380,560',
       `http://127.0.0.1:${this.port}/popup/popup.html`
     ]);
 
     // 3. Wait for DevTools HTTP endpoint and find popup page tab
     let tabs = [];
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 35; i++) {
       await new Promise(r => setTimeout(r, 200));
       try {
         const resp = await fetch(`http://127.0.0.1:${this.debugPort}/json`);
@@ -120,6 +123,9 @@ class TestBrowser {
     }
     if (this.server) {
       try { this.server.close(); } catch {}
+    }
+    if (this.userDataDir) {
+      try { fs.rmSync(this.userDataDir, { recursive: true, force: true }); } catch {}
     }
   }
 }

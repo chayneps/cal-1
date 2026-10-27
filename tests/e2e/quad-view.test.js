@@ -249,7 +249,7 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
     assert.strictEqual(res.singleViewportZoomedInAgain, true, 'calendar-viewport should receive anim-zoom-in on zoom in');
   });
 
-  await t.test('4-Month entrance animation cascades from top-left to lower-right across 4 seconds', async () => {
+  await t.test('4-Month entrance animation: all 4 months appear together and each scans from top-left to bottom-right', async () => {
     const res = await browser.eval(`
       (async () => {
         // Trigger quad view entrance animation
@@ -258,37 +258,40 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
         const cards = Array.from(document.querySelectorAll('.mini-month-card'));
         const cardDelays = cards.map(c => c.style.animationDelay);
 
-        const card0Cells = Array.from(cards[0].querySelectorAll('.mini-day-cell'));
-        const card0FirstCellDelay = parseInt(card0Cells[0]?.style.animationDelay || '0', 10);
-        const card0LastCellDelay = parseInt(card0Cells[card0Cells.length - 1]?.style.animationDelay || '0', 10);
-
-        const card3Cells = Array.from(cards[3].querySelectorAll('.mini-day-cell'));
-        const card3FirstCellDelay = parseInt(card3Cells[0]?.style.animationDelay || '0', 10);
-        const card3LastCellDelay = parseInt(card3Cells[card3Cells.length - 1]?.style.animationDelay || '0', 10);
+        const cardDetails = cards.map(card => {
+          const cells = Array.from(card.querySelectorAll('.mini-day-cell'));
+          const firstDelay = parseInt(cells[0]?.style.animationDelay || '0', 10);
+          const lastDelay = parseInt(cells[cells.length - 1]?.style.animationDelay || '0', 10);
+          const isMonotonic = cells.every((c, i) => {
+            if (i === 0) return true;
+            const prev = parseInt(cells[i - 1]?.style.animationDelay || '0', 10);
+            const curr = parseInt(c?.style.animationDelay || '0', 10);
+            return curr >= prev;
+          });
+          return {
+            cellCount: cells.length,
+            firstDelay,
+            lastDelay,
+            isMonotonic
+          };
+        });
 
         return {
           cardDelays,
-          card0FirstCellDelay,
-          card0LastCellDelay,
-          card3FirstCellDelay,
-          card3LastCellDelay,
-          card0CellCount: card0Cells.length,
-          card3CellCount: card3Cells.length
+          cardDetails
         };
       })()
     `);
 
-    // Verify 4-month card delays sequence: Top-Left (0s) -> Top-Right (1s) -> Bottom-Left (2s) -> Bottom-Right (3s)
-    assert.deepStrictEqual(res.cardDelays, ['0ms', '1000ms', '2000ms', '3000ms'], 'Card delays must be 0ms, 1000ms, 2000ms, 3000ms');
+    // Verify all 4 cards appear together at 0ms
+    assert.deepStrictEqual(res.cardDelays, ['0ms', '0ms', '0ms', '0ms'], 'All 4 cards must appear together at 0ms');
 
-    // Month 0 (Top-Left): cells scan from ~140ms to ~840ms (finishing at ~1000ms / 1.0s)
-    assert.ok(res.card0FirstCellDelay >= 140, 'Month 0 first cell starts after card header');
-    assert.ok(res.card0LastCellDelay <= 850, 'Month 0 last cell finishes around 1000ms');
-    assert.ok(res.card0LastCellDelay > res.card0FirstCellDelay, 'Month 0 cells increase from top-left to lower-right');
-
-    // Month 3 (Bottom-Right): cells scan from ~3140ms to ~3840ms (finishing at ~4000ms / 4.0s)
-    assert.ok(res.card3FirstCellDelay >= 3140, 'Month 3 first cell starts at card 3 offset');
-    assert.ok(res.card3LastCellDelay >= 3800 && res.card3LastCellDelay <= 3900, 'Month 3 last cell finishes around 4000ms (4.0s)');
-    assert.ok(res.card3LastCellDelay > res.card3FirstCellDelay, 'Month 3 cells increase from top-left to lower-right');
+    // For every card, day cells must sweep from top-left to bottom-right corner
+    for (let i = 0; i < 4; i++) {
+      const details = res.cardDetails[i];
+      assert.strictEqual(details.firstDelay, 60, `Card ${i} first cell (top-left) should start at 60ms`);
+      assert.strictEqual(details.lastDelay, 1060, `Card ${i} last cell (bottom-right) should finish at 1060ms`);
+      assert.strictEqual(details.isMonotonic, true, `Card ${i} cells should strictly increase from top-left to bottom-right`);
+    }
   });
 });

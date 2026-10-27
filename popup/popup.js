@@ -920,7 +920,7 @@ class DarkCalApp {
       this.quadMonthContainer.appendChild(card);
     }
 
-    // Clean up temporary scan animation classes after the 4-second sequence finishes
+    // Clean up temporary scan animation classes after sequence finishes
     if (animate) {
       if (this.quadAnimationTimer) clearTimeout(this.quadAnimationTimer);
       this.quadAnimationTimer = setTimeout(() => {
@@ -929,16 +929,16 @@ class DarkCalApp {
           el.classList.remove('scan-appear', 'scan-appear-other');
           el.style.animationDelay = '';
         });
-      }, 4150);
+      }, 1300);
     }
   }
 
-  createMiniMonthCard({ year, month, isCurrent, monthIndex = 0 }, animate = true) {
+  createMiniMonthCard({ year, month, isCurrent }, animate = true) {
     const card = document.createElement('div');
     card.className = `mini-month-card ${isCurrent ? 'is-current-month' : ''}`;
     if (animate) {
       card.classList.add('scan-appear');
-      card.style.animationDelay = `${monthIndex * 1000}ms`;
+      card.style.animationDelay = '0ms';
       card.addEventListener('animationend', (e) => {
         if (e.target === card) {
           card.classList.remove('scan-appear');
@@ -996,7 +996,7 @@ class DarkCalApp {
       col.textContent = weekdaysBase[dayIdx];
       if (animate) {
         col.classList.add('scan-appear');
-        col.style.animationDelay = `${monthIndex * 1000 + 40 + d * 15}ms`;
+        col.style.animationDelay = `${15 + d * 10}ms`;
         col.addEventListener('animationend', () => {
           col.classList.remove('scan-appear');
           col.style.animationDelay = '';
@@ -1022,7 +1022,7 @@ class DarkCalApp {
     // Pad to 35 or 42 cells
     const totalFilled = firstDayIndex + numDaysInMonth;
     const totalCells = totalFilled <= 35 ? 35 : 42;
-    const cellStep = 700 / (totalCells - 1);
+    const cellStep = 1000 / (totalCells - 1);
     let cellIndex = 0;
 
     // Leading days
@@ -1030,7 +1030,7 @@ class DarkCalApp {
       const dayNum = prevMonthLastDay - i;
       const prevDate = new Date(year, month - 1, dayNum);
       const dayKey = this.formatDateKey(prevDate);
-      const delay = animate ? monthIndex * 1000 + 140 + Math.round(cellIndex * cellStep) : null;
+      const delay = animate ? 60 + Math.round(cellIndex * cellStep) : null;
       const cell = this.createMiniDayCell(prevDate, dayNum, dayKey, true, false, delay);
       daysGrid.appendChild(cell);
       cellIndex++;
@@ -1041,7 +1041,7 @@ class DarkCalApp {
       const curDate = new Date(year, month, day);
       const dayKey = this.formatDateKey(curDate);
       const isToday = dayKey === todayDateStr;
-      const delay = animate ? monthIndex * 1000 + 140 + Math.round(cellIndex * cellStep) : null;
+      const delay = animate ? 60 + Math.round(cellIndex * cellStep) : null;
       const cell = this.createMiniDayCell(curDate, day, dayKey, false, isToday, delay);
       daysGrid.appendChild(cell);
       cellIndex++;
@@ -1052,7 +1052,7 @@ class DarkCalApp {
     for (let day = 1; day <= trailingDays; day++) {
       const nextDate = new Date(year, month + 1, day);
       const dayKey = this.formatDateKey(nextDate);
-      const delay = animate ? monthIndex * 1000 + 140 + Math.round(cellIndex * cellStep) : null;
+      const delay = animate ? 60 + Math.round(cellIndex * cellStep) : null;
       const cell = this.createMiniDayCell(nextDate, day, dayKey, true, false, delay);
       daysGrid.appendChild(cell);
       cellIndex++;
