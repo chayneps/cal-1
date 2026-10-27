@@ -101,10 +101,13 @@ class DarkCalApp {
   }
 
   bindEvents() {
-    // 4-Month 2x2 Zoom View Toggle
+    // 4-Month 2x2 View (Push to enter 4-Month View from 1-Month View)
     if (this.zoomViewBtn) {
       this.zoomViewBtn.addEventListener('click', () => {
-        this.toggleQuadView();
+        if (!this.isQuadView) {
+          this.setQuadView(true);
+          this.showToast('cal-1 ➜ 4-Month Zoom View (2×2)');
+        }
       });
     }
 
@@ -492,8 +495,8 @@ class DarkCalApp {
     document.body.classList.add('view-quad');
     if (this.zoomViewBtn) {
       this.zoomViewBtn.classList.add('active');
-      this.zoomViewBtn.title = 'Switch to 1-Month View (cal 1)';
-      this.zoomViewBtn.setAttribute('aria-label', 'Switch to 1-Month View');
+      this.zoomViewBtn.title = '4-Month View (cal 4)';
+      this.zoomViewBtn.setAttribute('aria-label', '4-Month View');
     }
     if (this.quadMonthContainer) {
       this.quadMonthContainer.classList.remove('hidden');
@@ -834,8 +837,8 @@ class DarkCalApp {
       document.body.classList.add('view-quad');
       if (this.zoomViewBtn) {
         this.zoomViewBtn.classList.add('active');
-        this.zoomViewBtn.title = 'Switch to 1-Month View (cal 1)';
-        this.zoomViewBtn.setAttribute('aria-label', 'Switch to 1-Month View');
+        this.zoomViewBtn.title = '4-Month View (cal 4)';
+        this.zoomViewBtn.setAttribute('aria-label', '4-Month View');
       }
       if (this.calendarViewport) {
         this.calendarViewport.classList.remove('anim-zoom-in');
@@ -855,8 +858,8 @@ class DarkCalApp {
       document.body.classList.remove('view-quad');
       if (this.zoomViewBtn) {
         this.zoomViewBtn.classList.remove('active');
-        this.zoomViewBtn.title = 'Toggle 4-Month View (cal 4)';
-        this.zoomViewBtn.setAttribute('aria-label', 'Toggle 4-Month View');
+        this.zoomViewBtn.title = 'Switch to 4-Month View (cal 4)';
+        this.zoomViewBtn.setAttribute('aria-label', 'Switch to 4-Month View');
       }
       if (this.quadMonthContainer) {
         this.quadMonthContainer.classList.remove('anim-zoom-out');
@@ -890,14 +893,14 @@ class DarkCalApp {
 
     // 4 Months:
     // [0] Top-Left: -1 month
-    // [1] Top-Right: Current active view month (Highlighted)
+    // [1] Top-Right: Active view month
     // [2] Bottom-Left: +1 month
     // [3] Bottom-Right: +2 months
     const months = [
-      { ...this.getMonthOffset(this.viewYear, this.viewMonth, -1), isCurrent: false, monthIndex: 0 },
-      { year: this.viewYear, month: this.viewMonth, isCurrent: true, monthIndex: 1 },
-      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 1), isCurrent: false, monthIndex: 2 },
-      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 2), isCurrent: false, monthIndex: 3 }
+      { ...this.getMonthOffset(this.viewYear, this.viewMonth, -1), monthIndex: 0 },
+      { year: this.viewYear, month: this.viewMonth, monthIndex: 1 },
+      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 1), monthIndex: 2 },
+      { ...this.getMonthOffset(this.viewYear, this.viewMonth, 2), monthIndex: 3 }
     ];
 
     // Ensure holidays loaded for any involved years
@@ -927,9 +930,9 @@ class DarkCalApp {
     }
   }
 
-  createMiniMonthCard({ year, month, isCurrent }, animate = true) {
+  createMiniMonthCard({ year, month }, animate = true) {
     const card = document.createElement('div');
-    card.className = `mini-month-card ${isCurrent ? 'is-current-month' : ''}`;
+    card.className = 'mini-month-card';
     if (animate) {
       card.classList.add('scan-appear');
       card.style.animationDelay = '0ms';
@@ -976,7 +979,7 @@ class DarkCalApp {
       ? [1, 2, 3, 4, 5, 6, 0] // Mon first
       : [0, 1, 2, 3, 4, 5, 6]; // Sun first
 
-    const isThisCardCurrentMonth = isCurrent && year === this.today.getFullYear() && month === this.today.getMonth();
+    const isThisCardCurrentMonth = year === this.today.getFullYear() && month === this.today.getMonth();
     const todayDayOfWeek = this.today.getDay();
 
     for (let d = 0; d < order.length; d++) {

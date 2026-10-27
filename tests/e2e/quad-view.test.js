@@ -31,7 +31,7 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
     assert.strictEqual(res.isBeforePlus, true, 'zoomViewBtn should be placed before newEventBtn (+)');
   });
 
-  await t.test('4-Month view is enabled by default and zoom button toggles views', async () => {
+  await t.test('4-Month view is default; zoom button only pushes into 4-month view (not toggle); 1-month view entered by selecting month', async () => {
     const res = await browser.eval(`
       (async () => {
         // Reset to October 2026
@@ -47,23 +47,32 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
         const quadVisibleDefault = quadContainer && !quadContainer.classList.contains('hidden');
         const cardsCountDefault = document.querySelectorAll('.mini-month-card').length;
 
-        // Toggle to 1-month view
+        // Clicking zoom button while ALREADY in 4-month view must NOT toggle to 1-month view
         zoomBtn.click();
-        await new Promise(r => setTimeout(r, 150));
-        const isSingleAfterClick = !document.body.classList.contains('view-quad');
+        await new Promise(r => setTimeout(r, 100));
+        const isQuadStill = document.body.classList.contains('view-quad');
 
-        // Toggle back to 4-month view
+        // It can ONLY change to 1-month view by selecting a month
+        const cards = Array.from(document.querySelectorAll('.mini-month-card'));
+        cards[1].click(); // Select October 2026
+        await new Promise(r => setTimeout(r, 150));
+        const isSingleAfterSelectMonth = !document.body.classList.contains('view-quad');
+        const btnActiveInSingle = zoomBtn.classList.contains('active');
+
+        // When in 1-month view, pushing zoom button switches back to 4-month view
         zoomBtn.click();
         await new Promise(r => setTimeout(r, 150));
-        const isQuadAgain = document.body.classList.contains('view-quad');
+        const isQuadAfterPush = document.body.classList.contains('view-quad');
 
         return {
           isQuadDefault,
           btnActiveDefault,
           quadVisibleDefault,
           cardsCountDefault,
-          isSingleAfterClick,
-          isQuadAgain
+          isQuadStill,
+          isSingleAfterSelectMonth,
+          btnActiveInSingle,
+          isQuadAfterPush
         };
       })()
     `);
@@ -72,11 +81,13 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
     assert.strictEqual(res.btnActiveDefault, true, 'zoom button should be active by default');
     assert.strictEqual(res.quadVisibleDefault, true, 'quad container should be visible by default');
     assert.strictEqual(res.cardsCountDefault, 4, 'Should render 4 mini-month cards by default');
-    assert.strictEqual(res.isSingleAfterClick, true, 'Clicking zoom button should toggle to 1-month view');
-    assert.strictEqual(res.isQuadAgain, true, 'Clicking zoom button again should return to 4-month view');
+    assert.strictEqual(res.isQuadStill, true, 'Zoom button must NOT toggle when already in 4-month view');
+    assert.strictEqual(res.isSingleAfterSelectMonth, true, 'Selecting a month must change to 1-month view');
+    assert.strictEqual(res.btnActiveInSingle, false, 'Zoom button should not be active in 1-month view');
+    assert.strictEqual(res.isQuadAfterPush, true, 'Clicking zoom button from 1-month view pushes into 4-month view');
   });
 
-  await t.test('2x2 grid ordering: clean Month Year title, no redundant cal command or active badge, current month highlighted with border', async () => {
+  await t.test('2x2 grid ordering: clean Month Year title, active month border removed, cards are uniform', async () => {
     const res = await browser.eval(`
       (() => {
         const cards = Array.from(document.querySelectorAll('.mini-month-card'));
@@ -98,11 +109,11 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
     assert.strictEqual(res[0].hasCmd, false, 'Card should not contain redundant cal command line');
     assert.strictEqual(res[0].hasBadge, false, 'Card should not contain text badge');
 
-    // Card 1: Top-Right -> Current Month (October 2026) -> Green border highlight only!
+    // Card 1: Top-Right -> Month (October 2026) -> Active month border removed!
     assert.strictEqual(res[1].title, 'October 2026');
-    assert.strictEqual(res[1].isCurrent, true, 'Card 1 (Top-Right) must have is-current-month green border highlight');
+    assert.strictEqual(res[1].isCurrent, false, 'Card 1 must not have special is-current-month border (removed)');
     assert.strictEqual(res[1].hasCmd, false, 'Card 1 must not have cal command line');
-    assert.strictEqual(res[1].hasBadge, false, 'Card 1 must not have ACTIVE text badge (identified by green border)');
+    assert.strictEqual(res[1].hasBadge, false, 'Card 1 must not have ACTIVE text badge');
 
     // Card 2: Bottom-Left -> Month +1 (November 2026)
     assert.strictEqual(res[2].title, 'November 2026');
