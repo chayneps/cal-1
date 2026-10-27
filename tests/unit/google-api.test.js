@@ -31,22 +31,33 @@ test('Google Calendar REST API Unit Tests', async (t) => {
     assert.strictEqual(GoogleCalendarApi.getRedirectUri(), 'https://mock-extension-id.chromiumapp.org/');
   });
 
-  await t.test('authenticate throws CLIENT_ID_REQUIRED if no clientId is provided', async () => {
-    // 1. Called with no arguments
-    await assert.rejects(
-      async () => {
-        await GoogleCalendarApi.authenticate();
-      },
-      (err) => err.message === 'CLIENT_ID_REQUIRED' && err.code === 'CLIENT_ID_REQUIRED'
-    );
+  await t.test('authenticate throws CLIENT_ID_REQUIRED if no clientId is configured anywhere', async () => {
+    const originalDefault = GoogleCalendarApi.DEFAULT_CLIENT_ID;
+    GoogleCalendarApi.DEFAULT_CLIENT_ID = '';
+    try {
+      // 1. Called with no arguments and no default
+      await assert.rejects(
+        async () => {
+          await GoogleCalendarApi.authenticate();
+        },
+        (err) => err.message === 'CLIENT_ID_REQUIRED' && err.code === 'CLIENT_ID_REQUIRED'
+      );
 
-    // 2. Called with object containing empty clientId
-    await assert.rejects(
-      async () => {
-        await GoogleCalendarApi.authenticate({ clientId: '   ', interactive: true });
-      },
-      (err) => err.message === 'CLIENT_ID_REQUIRED' && err.code === 'CLIENT_ID_REQUIRED'
-    );
+      // 2. Called with object containing empty clientId and no default
+      await assert.rejects(
+        async () => {
+          await GoogleCalendarApi.authenticate({ clientId: '   ', interactive: true });
+        },
+        (err) => err.message === 'CLIENT_ID_REQUIRED' && err.code === 'CLIENT_ID_REQUIRED'
+      );
+    } finally {
+      GoogleCalendarApi.DEFAULT_CLIENT_ID = originalDefault;
+    }
+  });
+
+  await t.test('authenticate automatically uses DEFAULT_CLIENT_ID when no custom ID is provided', async () => {
+    const res = await GoogleCalendarApi.authenticate();
+    assert.ok(res.token, 'Should successfully authenticate with default client ID');
   });
 
   await t.test('authenticate accepts object or string clientId without throwing TypeError', async () => {

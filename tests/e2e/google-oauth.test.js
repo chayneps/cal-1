@@ -45,6 +45,10 @@ test('E2E Regression: Google Calendar REST API & Multi-Calendar UI', async (t) =
   await t.test('Clicking Sign in with Google without Client ID expands details gracefully', async () => {
     const res = await browser.eval(`
       (async () => {
+        const { GoogleCalendarApi } = await import('../../lib/google-api.js');
+        const origDefault = GoogleCalendarApi.DEFAULT_CLIENT_ID;
+        GoogleCalendarApi.DEFAULT_CLIENT_ID = '';
+
         window.app.customClientId = '';
         const input = document.getElementById('googleClientIdInput');
         if (input) input.value = '';
@@ -52,6 +56,8 @@ test('E2E Regression: Google Calendar REST API & Multi-Calendar UI', async (t) =
         const btn = document.getElementById('googleSignInBtn');
         btn.click();
         await new Promise(r => setTimeout(r, 150));
+
+        GoogleCalendarApi.DEFAULT_CLIENT_ID = origDefault;
 
         const statusEl = document.getElementById('googleAuthStatus');
         const detailsEl = document.getElementById('googleClientDetails');

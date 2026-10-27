@@ -539,7 +539,7 @@ class DarkCalApp {
     this.customClientId = stored.customClientId || '';
 
     if (this.googleClientIdInput) {
-      this.googleClientIdInput.value = this.customClientId;
+      this.googleClientIdInput.value = this.customClientId || GoogleCalendarApi.DEFAULT_CLIENT_ID || '';
     }
     if (this.googleRedirectUriText) {
       this.googleRedirectUriText.textContent = GoogleCalendarApi.getRedirectUri() || `https://${GoogleCalendarApi.getExtensionId()}.chromiumapp.org/`;
