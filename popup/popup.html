@@ -6,7 +6,7 @@
   <title>cal-1 - Google Calendar</title>
   <link rel="stylesheet" href="popup.css">
 </head>
-<body class="theme-homebrew crt-active">
+<body class="theme-homebrew crt-active view-quad">
   <!-- Retro CRT Scanline Overlay -->
   <div id="crtOverlay" class="crt-overlay" aria-hidden="true">
     <div class="crt-scanlines"></div>
@@ -38,8 +38,8 @@
       </div>
 
       <div class="header-actions">
-        <!-- 4-Month 2x2 Zoom View Toggle -->
-        <button id="zoomViewBtn" class="icon-btn" title="Toggle 4-Month View (cal -4)" aria-label="Toggle 4-Month View">
+        <!-- 4-Month 2x2 Zoom View Toggle (Default View) -->
+        <button id="zoomViewBtn" class="icon-btn active" title="Switch to 1-Month View (cal 1)" aria-label="Switch to 1-Month View">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7"></rect>
             <rect x="14" y="3" width="7" height="7"></rect>
@@ -124,7 +124,7 @@
     <main class="calendar-viewport">
       <div id="weekdayHeader" class="weekday-header"></div>
       <div id="monthGrid" class="month-grid" role="grid" aria-label="Monthly Calendar"></div>
-      <div id="quadMonthContainer" class="quad-month-container hidden"></div>
+      <div id="quadMonthContainer" class="quad-month-container"></div>
     </main>
 
     <!-- Bottom Bar with Auto-Sync & Last Sync indicator -->

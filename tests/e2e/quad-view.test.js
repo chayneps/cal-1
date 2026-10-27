@@ -31,7 +31,7 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
     assert.strictEqual(res.isBeforePlus, true, 'zoomViewBtn should be placed before newEventBtn (+)');
   });
 
-  await t.test('Clicking zoom button toggles 2x2 4-month view', async () => {
+  await t.test('4-Month view is enabled by default and zoom button toggles views', async () => {
     const res = await browser.eval(`
       (async () => {
         // Reset to October 2026
@@ -39,61 +39,82 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
         window.app.viewMonth = 9; // October
 
         const zoomBtn = document.getElementById('zoomViewBtn');
-        zoomBtn.click();
-        await new Promise(r => setTimeout(r, 200));
-
-        const isQuad = document.body.classList.contains('view-quad');
-        const btnActive = zoomBtn.classList.contains('active');
         const quadContainer = document.getElementById('quadMonthContainer');
-        const quadVisible = quadContainer && !quadContainer.classList.contains('hidden');
-        const cards = Array.from(document.querySelectorAll('.mini-month-card'));
+
+        // Check default state (should be 4-month view by default)
+        const isQuadDefault = document.body.classList.contains('view-quad');
+        const btnActiveDefault = zoomBtn.classList.contains('active');
+        const quadVisibleDefault = quadContainer && !quadContainer.classList.contains('hidden');
+        const cardsCountDefault = document.querySelectorAll('.mini-month-card').length;
+
+        // Toggle to 1-month view
+        zoomBtn.click();
+        await new Promise(r => setTimeout(r, 150));
+        const isSingleAfterClick = !document.body.classList.contains('view-quad');
+
+        // Toggle back to 4-month view
+        zoomBtn.click();
+        await new Promise(r => setTimeout(r, 150));
+        const isQuadAgain = document.body.classList.contains('view-quad');
 
         return {
-          isQuad,
-          btnActive,
-          quadVisible,
-          cardsCount: cards.length
+          isQuadDefault,
+          btnActiveDefault,
+          quadVisibleDefault,
+          cardsCountDefault,
+          isSingleAfterClick,
+          isQuadAgain
         };
       })()
     `);
 
-    assert.strictEqual(res.isQuad, true, 'body should have view-quad class');
-    assert.strictEqual(res.btnActive, true, 'zoom button should be active');
-    assert.strictEqual(res.quadVisible, true, 'quad container should be visible');
-    assert.strictEqual(res.cardsCount, 4, 'Should render exactly 4 mini-month cards');
+    assert.strictEqual(res.isQuadDefault, true, 'body should have view-quad class by default');
+    assert.strictEqual(res.btnActiveDefault, true, 'zoom button should be active by default');
+    assert.strictEqual(res.quadVisibleDefault, true, 'quad container should be visible by default');
+    assert.strictEqual(res.cardsCountDefault, 4, 'Should render 4 mini-month cards by default');
+    assert.strictEqual(res.isSingleAfterClick, true, 'Clicking zoom button should toggle to 1-month view');
+    assert.strictEqual(res.isQuadAgain, true, 'Clicking zoom button again should return to 4-month view');
   });
 
-  await t.test('2x2 grid ordering: current month is Top-Right corner and highlighted', async () => {
+  await t.test('2x2 grid ordering: clean Month Year title, no redundant cal command or active badge, current month highlighted with border', async () => {
     const res = await browser.eval(`
       (() => {
         const cards = Array.from(document.querySelectorAll('.mini-month-card'));
         return cards.map((card, idx) => {
-          const promptCmd = card.querySelector('.mini-prompt-cmd')?.textContent.trim();
-          const badge = card.querySelector('.mini-cmd-badge')?.textContent.trim();
+          const title = card.querySelector('.mini-month-title')?.textContent.trim();
+          const hasCmd = !!card.querySelector('.mini-cmd-prompt');
+          const hasBadge = !!card.querySelector('.mini-cmd-badge');
           const isCurrent = card.classList.contains('is-current-month');
-          return { idx, promptCmd, badge, isCurrent };
+          return { idx, title, hasCmd, hasBadge, isCurrent };
         });
       })()
     `);
 
     assert.strictEqual(res.length, 4);
 
-    // Card 0: Top-Left -> Month -1 (Sep 2026)
-    assert.strictEqual(res[0].promptCmd, 'cal Sep 2026');
+    // Card 0: Top-Left -> Month -1 (September 2026)
+    assert.strictEqual(res[0].title, 'September 2026');
     assert.strictEqual(res[0].isCurrent, false);
+    assert.strictEqual(res[0].hasCmd, false, 'Card should not contain redundant cal command line');
+    assert.strictEqual(res[0].hasBadge, false, 'Card should not contain text badge');
 
-    // Card 1: Top-Right -> Current Month (Oct 2026) -> Highlighted!
-    assert.strictEqual(res[1].promptCmd, 'cal Oct 2026');
-    assert.strictEqual(res[1].isCurrent, true, 'Card 1 (Top-Right) must have is-current-month highlight');
-    assert.strictEqual(res[1].badge, 'ACTIVE');
+    // Card 1: Top-Right -> Current Month (October 2026) -> Green border highlight only!
+    assert.strictEqual(res[1].title, 'October 2026');
+    assert.strictEqual(res[1].isCurrent, true, 'Card 1 (Top-Right) must have is-current-month green border highlight');
+    assert.strictEqual(res[1].hasCmd, false, 'Card 1 must not have cal command line');
+    assert.strictEqual(res[1].hasBadge, false, 'Card 1 must not have ACTIVE text badge (identified by green border)');
 
-    // Card 2: Bottom-Left -> Month +1 (Nov 2026)
-    assert.strictEqual(res[2].promptCmd, 'cal Nov 2026');
+    // Card 2: Bottom-Left -> Month +1 (November 2026)
+    assert.strictEqual(res[2].title, 'November 2026');
     assert.strictEqual(res[2].isCurrent, false);
+    assert.strictEqual(res[2].hasCmd, false);
+    assert.strictEqual(res[2].hasBadge, false);
 
-    // Card 3: Bottom-Right -> Month +2 (Dec 2026)
-    assert.strictEqual(res[3].promptCmd, 'cal Dec 2026');
+    // Card 3: Bottom-Right -> Month +2 (December 2026)
+    assert.strictEqual(res[3].title, 'December 2026');
     assert.strictEqual(res[3].isCurrent, false);
+    assert.strictEqual(res[3].hasCmd, false);
+    assert.strictEqual(res[3].hasBadge, false);
   });
 
   await t.test('Hover popover appears when hovering day cell in quad view', async () => {

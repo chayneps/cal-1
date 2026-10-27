@@ -36,7 +36,7 @@ class DarkCalApp {
     this.holidayCountry = '';
     this.holidaysMap = {};
     this.isUserEditingCommand = false;
-    this.isQuadView = false;
+    this.isQuadView = true;
     this.toastAnimationId = 0;
     this.isToastAnimating = false;
 
@@ -488,7 +488,8 @@ class DarkCalApp {
     }
     await this.loadHolidays();
 
-    this.isQuadView = stored.calendarView === 'quad';
+    // 4-Month view is default unless user explicitly chose single
+    this.isQuadView = stored.calendarView ? stored.calendarView === 'quad' : true;
     if (this.isQuadView) {
       document.body.classList.add('view-quad');
       if (this.zoomViewBtn) {
@@ -499,6 +500,16 @@ class DarkCalApp {
       if (this.quadMonthContainer) {
         this.quadMonthContainer.classList.remove('hidden');
       }
+    } else {
+      document.body.classList.remove('view-quad');
+      if (this.zoomViewBtn) {
+        this.zoomViewBtn.classList.remove('active');
+        this.zoomViewBtn.title = 'Toggle 4-Month View (cal 4)';
+        this.zoomViewBtn.setAttribute('aria-label', 'Toggle 4-Month View');
+      }
+      if (this.quadMonthContainer) {
+        this.quadMonthContainer.classList.add('hidden');
+      }
     }
 
     this.renderWeekdays();
@@ -508,10 +519,9 @@ class DarkCalApp {
     if (stored.savedIcalEvents && stored.savedIcalEvents.length > 0) {
       this.events = stored.savedIcalEvents;
       this.updateStatus(false, this.events.length);
+      this.renderMonthGrid();
       if (this.isQuadView) {
         await this.renderQuadView();
-      } else {
-        this.renderMonthGrid();
       }
 
       // Check if cache is stale (older than sync interval) -> perform silent background auto-sync!
@@ -692,10 +702,9 @@ class DarkCalApp {
       this.updateCalendarHeader();
     }
     this.updateStatus(true);
+    this.renderMonthGrid();
     if (this.isQuadView) {
       this.renderQuadView();
-    } else {
-      this.renderMonthGrid();
     }
   }
 
@@ -969,11 +978,7 @@ class DarkCalApp {
     const header = document.createElement('div');
     header.className = 'mini-month-header';
     header.innerHTML = `
-      <div class="mini-cmd-prompt">
-        <span class="mini-prompt-sym">➜</span>
-        <span class="mini-prompt-cmd">cal ${monthShort} ${year}</span>
-      </div>
-      <span class="mini-cmd-badge">${isCurrent ? 'ACTIVE' : monthShort.toUpperCase()}</span>
+      <span class="mini-month-title">${monthName} ${year}</span>
     `;
     card.appendChild(header);
 

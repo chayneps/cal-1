@@ -1967,51 +1967,28 @@ body.view-quad #quadMonthContainer {
   background-color: rgba(0, 255, 0, 0.07) !important;
 }
 
-/* Mini Header with separate cal command */
+/* Mini Month Header */
 .mini-month-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: 4px;
   padding-bottom: 3px;
   border-bottom: 1px dashed var(--border-subtle);
   line-height: 1;
 }
 
-.mini-cmd-prompt {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.mini-month-title {
   font-family: var(--font-family);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-}
-
-.mini-prompt-sym {
-  color: var(--accent-primary);
-}
-
-.mini-prompt-cmd {
   color: var(--text-primary);
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
 }
 
-.mini-cmd-badge {
-  font-family: var(--font-family);
-  font-size: 8px;
-  font-weight: 700;
-  padding: 1.5px 4.5px;
-  border-radius: 2px;
-  letter-spacing: 0.4px;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-}
-
-.mini-month-card.is-current-month .mini-cmd-badge {
-  background-color: var(--accent-primary);
-  color: #000000;
-  border-color: var(--accent-primary);
-  font-weight: 800;
+.mini-month-card.is-current-month .mini-month-title {
+  color: var(--accent-primary);
+  text-shadow: 0 0 6px rgba(0, 255, 0, 0.45);
 }
 
 /* Mini Weekday Row (matching regular weekday badges with Thai daily colors) */
