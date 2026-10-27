@@ -3,4 +3,5 @@ _metadata/
 *.log
 dist/
 *.zip
+*.pem
 
