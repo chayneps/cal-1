@@ -58,7 +58,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-// Listen for messages from popup (e.g. interval changed or manual sync trigger)
+// Listen for messages from popup (e.g. interval changed, manual sync trigger, or Google OAuth sign-in)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'UPDATE_SYNC_INTERVAL') {
     setupSyncAlarm(request.interval).then(() => sendResponse({ success: true }));
@@ -68,7 +68,132 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     performBackgroundSync().then((result) => sendResponse(result));
     return true;
   }
+  if (request.action === 'GOOGLE_SIGN_IN') {
+    handleBackgroundGoogleSignIn(request.clientId)
+      .then((result) => sendResponse(result))
+      .catch((err) => sendResponse({
+        success: false,
+        error: err.message || 'Google Sign-In failed',
+        code: err.code || '',
+        diagnostic: err.diagnostic || ''
+      }));
+    return true;
+  }
+  if (request.action === 'REFRESH_GOOGLE_TOKEN') {
+    GoogleCalendarApi.refreshAuthToken()
+      .then((result) => sendResponse({ success: true, ...result }))
+      .catch((err) => sendResponse({ success: false, error: err.message }));
+    return true;
+  }
 });
+
+/**
+ * Runs Google OAuth WebAuthFlow in the background service worker so that when
+ * the extension popup closes upon opening the Google login window, authentication
+ * and initial calendar sync still complete and persist to chrome.storage.local.
+ */
+async function handleBackgroundGoogleSignIn(clientId) {
+  const authResult = await GoogleCalendarApi.authenticate({
+    clientId,
+    interactive: true
+  });
+
+  const token = typeof authResult === 'string' ? authResult : authResult?.token;
+  if (!token) {
+    throw new Error('Authentication did not return an access token.');
+  }
+
+  let userEmail = authResult?.userEmail || '';
+  let userName = authResult?.userName || '';
+
+  if (!userEmail || userEmail === 'Connected Google Account') {
+    try {
+      const profile = await GoogleCalendarApi.getUserProfile(token);
+      if (profile?.email) {
+        userEmail = profile.email;
+        userName = profile.name || '';
+      }
+    } catch (pErr) {
+      console.warn('[DarkCal] Could not fetch user profile:', pErr);
+    }
+  }
+  if (!userEmail) {
+    userEmail = 'Google User';
+  }
+
+  let calendars = [];
+  let syncError = '';
+  try {
+    calendars = await GoogleCalendarApi.getCalendarList(token, { includeTasks: true });
+  } catch (cErr) {
+    console.warn('[DarkCal] Could not fetch calendars list:', cErr);
+    syncError = cErr.message || '';
+    calendars = [{
+      id: 'primary',
+      summary: userEmail || 'Primary',
+      backgroundColor: '#4285F4',
+      primary: true,
+      selected: true
+    }];
+  }
+
+  const stored = await chrome.storage.local.get(['customCalendarName', 'calendarName', 'activeCalendarFilter']);
+  const calendarName = stored.customCalendarName || stored.calendarName || 'all';
+
+  let events = [];
+  try {
+    const now = new Date();
+    events = await GoogleCalendarApi.fetchMonthEvents(
+      token,
+      calendars,
+      now.getFullYear(),
+      now.getMonth(),
+      true
+    );
+  } catch (eErr) {
+    console.warn('[DarkCal] Could not fetch initial Google events:', eErr);
+    if (!syncError) syncError = eErr.message || '';
+  }
+
+  const nowTimestamp = Date.now();
+  const expiresIn = authResult?.expiresIn ? parseInt(authResult.expiresIn, 10) : 3600;
+  const tokenExpiresAt = authResult?.tokenExpiresAt || (nowTimestamp + (expiresIn * 1000) - 60000);
+
+  await chrome.storage.local.set({
+    googleAuthToken: token,
+    tokenExpiresAt,
+    googleUserEmail: userEmail,
+    googleUserName: userName,
+    googleCalendars: calendars,
+    savedGoogleEvents: events,
+    useDemoData: false,
+    calendarName,
+    activeCalendarFilter: stored.activeCalendarFilter || 'all',
+    lastSyncTimestamp: nowTimestamp,
+    googleSyncError: syncError
+  });
+
+  // Automatically re-open the extension popup if it closed while the OAuth window was focused
+  if (typeof chrome !== 'undefined' && chrome.action && chrome.action.openPopup) {
+    try {
+      await chrome.action.openPopup();
+    } catch (_) {
+      // Ignore if popup is already open or no active browser window
+    }
+  }
+
+  return {
+    success: true,
+    token,
+    userEmail,
+    userName,
+    calendars,
+    events,
+    calendarName,
+    lastSyncTimestamp: nowTimestamp,
+    syncError
+  };
+}
 
 /**
  * Fetches events in the background via Google Calendar REST API or iCal feed,
@@ -102,12 +227,16 @@ export async function performBackgroundSync() {
       const nowTimestamp = Date.now();
       await chrome.storage.local.set({
         savedGoogleEvents: events,
-        lastSyncTimestamp: nowTimestamp
+        lastSyncTimestamp: nowTimestamp,
+        googleSyncError: ''
       });
       console.log(`[DarkCal] Google REST API auto-sync complete: ${events.length} events updated at ${new Date(nowTimestamp).toLocaleTimeString()}`);
       return { success: true, count: events.length, timestamp: nowTimestamp, source: 'google-rest-api' };
     } catch (err) {
       console.warn('[DarkCal] Google REST API auto-sync background error:', err.message);
+      if (err.message === 'AUTH_EXPIRED') {
+        await chrome.storage.local.set({ googleSyncError: 'AUTH_EXPIRED' });
+      }
       return { success: false, error: err.message };
     }
   }

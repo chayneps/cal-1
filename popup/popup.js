@@ -19,7 +19,7 @@ class DarkCalApp {
     this.viewMonth = this.today.getMonth();
     this.calendars = [];
     this.events = [];
-    this.calendarName = 'main';
+    this.calendarName = 'all';
     this.detectedCalendarName = '';
     this.customCalendarName = '';
     this.activeCalendarFilter = 'all';
@@ -38,15 +38,17 @@ class DarkCalApp {
     this.holidaysMap = {};
     this.isUserEditingCommand = false;
     this.isQuadView = true;
+    this.quadRenderToken = 0;
+    this.isInternalStorageUpdate = false;
     this.toastAnimationId = 0;
     this.isToastAnimating = false;
+    this.hasAuthExpired = false;
 
     // Google Calendar REST API State
     this.googleAuthToken = '';
     this.googleUserEmail = '';
     this.googleUserName = '';
     this.googleCalendars = [];
-    this.customClientId = '';
 
     this.cacheDom();
     this.bindEvents();
@@ -104,8 +106,6 @@ class DarkCalApp {
     this.demoModeToggle = document.getElementById('demoModeToggle');
     this.autoSyncIntervalSelect = document.getElementById('autoSyncIntervalSelect');
     this.themeSelect = document.getElementById('themeSelect');
-    this.crtEffectToggle = document.getElementById('crtEffectToggle');
-    this.crtOverlay = document.getElementById('crtOverlay');
 
     // Google OAuth REST API Elements
     this.googleAuthSection = document.getElementById('googleAuthSection');
@@ -117,11 +117,6 @@ class DarkCalApp {
     this.googleAccountEmail = document.getElementById('googleAccountEmail');
     this.googleCalendarsList = document.getElementById('googleCalendarsList');
     this.googleAuthStatus = document.getElementById('googleAuthStatus');
-    this.googleClientDetails = document.getElementById('googleClientDetails');
-    this.googleClientIdInput = document.getElementById('googleClientIdInput');
-    this.saveClientIdBtn = document.getElementById('saveClientIdBtn');
-    this.googleRedirectUriText = document.getElementById('googleRedirectUriText');
-    this.copyRedirectUriBtn = document.getElementById('copyRedirectUriBtn');
   }
 
   bindEvents() {
@@ -130,7 +125,7 @@ class DarkCalApp {
       this.zoomViewBtn.addEventListener('click', () => {
         if (!this.isQuadView) {
           this.setQuadView(true);
-          this.showToast('cal-1 ➜ 4-Month Zoom View (2×2)');
+          this.showToast(`cal-1 ➜ 4-Month View (${this.getQuadViewRangeString()})`);
         }
       });
     }
@@ -142,16 +137,6 @@ class DarkCalApp {
         this.setTheme(theme);
         await Storage.set({ theme });
         this.showToast(`Theme updated: ${theme === 'homebrew' ? 'Homebrew Terminal' : 'Obsidian Dark'}`);
-      });
-    }
-
-    // CRT Monitor Effects Switcher
-    if (this.crtEffectToggle) {
-      this.crtEffectToggle.addEventListener('change', async (e) => {
-        const enabled = e.target.checked;
-        this.setCrtEffects(enabled);
-        await Storage.set({ crtEffects: enabled });
-        this.showToast(enabled ? 'CRT monitor effects enabled' : 'CRT monitor effects disabled');
       });
     }
 
@@ -256,6 +241,21 @@ class DarkCalApp {
     // Sync Button
     this.syncBtn.addEventListener('click', () => this.refreshCalendar(true));
 
+    // Bottom Status Line (reconnect on click if auth expired)
+    if (this.lastSyncTimeText) {
+      this.lastSyncTimeText.addEventListener('click', () => {
+        if (this.hasAuthExpired) {
+          this.handleGoogleSignIn();
+        }
+      });
+      this.lastSyncTimeText.addEventListener('keydown', (e) => {
+        if (this.hasAuthExpired && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          this.handleGoogleSignIn();
+        }
+      });
+    }
+
     // Settings Modal
     this.settingsBtn.addEventListener('click', () => this.openSettings());
     this.closeSettingsBtn.addEventListener('click', () => this.closeSettings());
@@ -278,35 +278,6 @@ class DarkCalApp {
     }
     if (this.syncGoogleBtn) {
       this.syncGoogleBtn.addEventListener('click', () => this.syncGoogleEvents(true));
-    }
-    if (this.copyRedirectUriBtn) {
-      this.copyRedirectUriBtn.addEventListener('click', async () => {
-        const uri = this.googleRedirectUriText ? this.googleRedirectUriText.textContent : GoogleCalendarApi.getRedirectUri();
-        if (uri && navigator.clipboard) {
-          try {
-            await navigator.clipboard.writeText(uri);
-            this.copyRedirectUriBtn.textContent = 'Copied!';
-            setTimeout(() => {
-              if (this.copyRedirectUriBtn) this.copyRedirectUriBtn.textContent = 'Copy';
-            }, 2000);
-            this.showToast('Copied Redirect URI to clipboard!');
-          } catch (e) {
-            this.showToast('Redirect URI: ' + uri);
-          }
-        }
-      });
-    }
-    if (this.saveClientIdBtn && this.googleClientIdInput) {
-      this.saveClientIdBtn.addEventListener('click', async () => {
-        const id = this.googleClientIdInput.value.trim();
-        this.customClientId = id;
-        await Storage.set({ customClientId: id });
-        this.saveClientIdBtn.textContent = 'Saved!';
-        setTimeout(() => {
-          if (this.saveClientIdBtn) this.saveClientIdBtn.textContent = 'Save';
-        }, 2000);
-        this.showToast('Google OAuth Client ID saved');
-      });
     }
 
     this.firstDaySelect.addEventListener('change', async (e) => {
@@ -334,8 +305,15 @@ class DarkCalApp {
       await Storage.set({ useDemoData: this.useDemoData });
       if (this.useDemoData) {
         this.calendarName = this.customCalendarName || (this.activeCalendarFilter !== 'all' ? this.activeCalendarFilter : 'demo');
+      } else if (this.googleAuthToken) {
+        if (this.activeCalendarFilter === 'all') {
+          this.calendarName = this.getAllSelectedDisplayName();
+        } else {
+          const matched = (this.googleCalendars || []).find(c => c.id === this.activeCalendarFilter || c.summary === this.activeCalendarFilter);
+          this.calendarName = matched ? this.formatCalendarShortName(matched.summary) : this.getAllSelectedDisplayName();
+        }
       } else {
-        this.calendarName = this.customCalendarName || (this.googleUserEmail ? this.googleUserEmail : (this.detectedCalendarName || 'main'));
+        this.calendarName = this.customCalendarName || this.detectedCalendarName || 'all';
       }
       this.updateCalendarHeader();
       this.loadCalendarData();
@@ -473,17 +451,79 @@ class DarkCalApp {
       }
     });
 
-    // Listen for storage changes from background auto-sync worker
+    // Listen for storage changes from background auto-sync worker or background OAuth sign-in
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener((changes, area) => {
         if (area === 'local') {
-          if (changes.savedIcalEvents) {
+          if (this.isInternalStorageUpdate) {
+            return;
+          }
+          if (changes.googleAuthToken) {
+            this.googleAuthToken = changes.googleAuthToken.newValue || '';
+          }
+          if (changes.googleUserEmail) {
+            this.googleUserEmail = changes.googleUserEmail.newValue || '';
+          }
+          if (changes.googleUserName) {
+            this.googleUserName = changes.googleUserName.newValue || '';
+          }
+          if (changes.googleCalendars) {
+            this.googleCalendars = changes.googleCalendars.newValue || [];
+            this.renderGoogleCalendarsList();
+            this.updateCalendarHeader();
+          }
+          if (changes.useDemoData !== undefined) {
+            this.useDemoData = changes.useDemoData.newValue !== false;
+            if (this.demoModeToggle) {
+              this.demoModeToggle.checked = this.useDemoData;
+            }
+          }
+          if (changes.googleAuthToken) {
+            this.showGoogleConnectedState(Boolean(this.googleAuthToken));
+          }
+          if (changes.googleSyncError !== undefined) {
+            const syncErr = changes.googleSyncError.newValue || '';
+            this.hasAuthExpired = (syncErr === 'AUTH_EXPIRED');
+            this.updateFooterSync();
+            if (this.hasAuthExpired) {
+              this.showGoogleStatus(
+                `<span>Google session expired.</span> <button id="reconnectGoogleBtn" class="reconnect-inline-btn" type="button">Reconnect</button>`,
+                'error',
+                true
+              );
+              const reconnectBtn = document.getElementById('reconnectGoogleBtn');
+              if (reconnectBtn) {
+                reconnectBtn.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  this.handleGoogleSignIn();
+                });
+              }
+            } else if (syncErr) {
+              this.showGoogleStatus(syncErr, 'error');
+            } else {
+              this.showGoogleStatus('');
+            }
+          }
+          if (changes.savedGoogleEvents && this.googleAuthToken && !this.useDemoData) {
+            this.events = changes.savedGoogleEvents.newValue || [];
+            if (changes.lastSyncTimestamp) {
+              this.lastSyncTimestamp = changes.lastSyncTimestamp.newValue;
+            }
+            this.updateStatus(false, this.events.length);
+            this.renderMonthGrid();
+            if (this.isQuadView) {
+              this.renderQuadView(false);
+            }
+          } else if (changes.savedIcalEvents && !this.googleAuthToken) {
             this.events = changes.savedIcalEvents.newValue || [];
             if (changes.lastSyncTimestamp) {
               this.lastSyncTimestamp = changes.lastSyncTimestamp.newValue;
             }
             this.updateStatus(false, this.events.length);
             this.renderMonthGrid();
+            if (this.isQuadView) {
+              this.renderQuadView(false);
+            }
           }
           if (changes.calendarName && !this.customCalendarName) {
             this.calendarName = changes.calendarName.newValue || 'main';
@@ -497,7 +537,6 @@ class DarkCalApp {
   async init() {
     const stored = await Storage.get([
       'theme',
-      'crtEffects',
       'firstDayOfWeek',
       'useDemoData',
       'autoSyncInterval',
@@ -513,17 +552,13 @@ class DarkCalApp {
       'googleUserEmail',
       'googleUserName',
       'googleCalendars',
-      'customClientId',
-      'savedGoogleEvents'
+      'savedGoogleEvents',
+      'googleSyncError'
     ]);
 
     this.theme = stored.theme || 'homebrew';
     this.setTheme(this.theme);
     if (this.themeSelect) this.themeSelect.value = this.theme;
-
-    this.crtEffects = stored.crtEffects !== false;
-    this.setCrtEffects(this.crtEffects);
-    if (this.crtEffectToggle) this.crtEffectToggle.checked = this.crtEffects;
 
     this.firstDayOfWeek = stored.firstDayOfWeek !== undefined ? stored.firstDayOfWeek : 0;
     this.useDemoData = stored.useDemoData !== false;
@@ -536,18 +571,36 @@ class DarkCalApp {
     this.googleUserEmail = stored.googleUserEmail || '';
     this.googleUserName = stored.googleUserName || '';
     this.googleCalendars = stored.googleCalendars || [];
-    this.customClientId = stored.customClientId || '';
-
-    if (this.googleClientIdInput) {
-      this.googleClientIdInput.value = this.customClientId || GoogleCalendarApi.DEFAULT_CLIENT_ID || '';
-    }
-    if (this.googleRedirectUriText) {
-      this.googleRedirectUriText.textContent = GoogleCalendarApi.getRedirectUri() || `https://${GoogleCalendarApi.getExtensionId()}.chromiumapp.org/`;
-    }
 
     if (this.googleAuthToken) {
+      if (this.googleCalendars.length > 0) {
+        const ensured = GoogleCalendarApi.ensureSystemCalendars(this.googleCalendars);
+        if (ensured.length !== this.googleCalendars.length) {
+          this.googleCalendars = ensured;
+          Storage.set({ googleCalendars: ensured });
+        }
+      }
       this.showGoogleConnectedState(true);
       this.renderGoogleCalendarsList();
+      this.hasAuthExpired = (stored.googleSyncError === 'AUTH_EXPIRED');
+      if (stored.googleSyncError) {
+        if (stored.googleSyncError === 'AUTH_EXPIRED') {
+          this.showGoogleStatus(
+            `<span>Google session expired.</span> <button id="reconnectGoogleBtn" class="reconnect-inline-btn" type="button">Reconnect</button>`,
+            'error',
+            true
+          );
+          const reconnectBtn = document.getElementById('reconnectGoogleBtn');
+          if (reconnectBtn) {
+            reconnectBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              this.handleGoogleSignIn();
+            });
+          }
+        } else {
+          this.showGoogleStatus(stored.googleSyncError, 'error');
+        }
+      }
     } else {
       this.showGoogleConnectedState(false);
     }
@@ -558,8 +611,16 @@ class DarkCalApp {
 
     if (this.customCalendarName) {
       this.calendarName = this.customCalendarName;
-    } else if (this.googleUserEmail && !this.useDemoData) {
-      this.calendarName = this.googleUserEmail;
+    } else if (this.googleAuthToken && !this.useDemoData) {
+      if (this.activeCalendarFilter === 'all') {
+        this.calendarName = this.getAllSelectedDisplayName();
+      } else {
+        const matched = (this.googleCalendars || []).find(c => c.id === this.activeCalendarFilter || c.summary === this.activeCalendarFilter);
+        this.calendarName = matched ? this.formatCalendarShortName(matched.summary) : this.getAllSelectedDisplayName();
+        if (!matched) {
+          this.activeCalendarFilter = 'all';
+        }
+      }
     } else if (stored.calendarName) {
       this.calendarName = stored.calendarName;
     } else if (stored.savedIcalEvents && stored.savedIcalEvents[0]?.calendarName) {
@@ -567,7 +628,7 @@ class DarkCalApp {
     } else if (this.useDemoData) {
       this.calendarName = this.activeCalendarFilter !== 'all' ? this.activeCalendarFilter : 'demo';
     } else {
-      this.calendarName = 'main';
+      this.calendarName = 'all';
     }
 
     this.firstDaySelect.value = String(this.firstDayOfWeek);
@@ -602,18 +663,16 @@ class DarkCalApp {
     this.updateCalendarHeader();
 
     if (this.googleAuthToken && !this.useDemoData) {
-      if (stored.savedGoogleEvents && stored.savedGoogleEvents.length > 0) {
-        this.events = stored.savedGoogleEvents;
-        this.updateStatus(false, this.events.length);
-        this.renderMonthGrid();
-        if (this.isQuadView) {
-          await this.renderQuadView(false);
-        }
-      } else {
-        await this.syncGoogleEvents(false);
+      this.events = Array.isArray(stored.savedGoogleEvents) ? stored.savedGoogleEvents : [];
+      this.updateStatus(false, this.events.length);
+      this.renderMonthGrid();
+      if (this.isQuadView) {
+        await this.renderQuadView(false);
       }
 
-      if (this.autoSyncInterval > 0) {
+      if (!stored.savedGoogleEvents || stored.savedGoogleEvents.length === 0) {
+        await this.syncGoogleEvents(false);
+      } else if (this.autoSyncInterval > 0) {
         const staleThreshold = this.autoSyncInterval * 60 * 1000;
         const isStale = !this.lastSyncTimestamp || (Date.now() - this.lastSyncTimestamp > staleThreshold);
         if (isStale) {
@@ -645,19 +704,6 @@ class DarkCalApp {
     requestAnimationFrame(() => this.focusCommandLine());
   }
 
-  setCrtEffects(enabled) {
-    this.crtEffects = enabled;
-    if (this.crtOverlay) {
-      if (enabled) {
-        this.crtOverlay.classList.remove('hidden');
-        document.body.classList.add('crt-active');
-      } else {
-        this.crtOverlay.classList.add('hidden');
-        document.body.classList.remove('crt-active');
-      }
-    }
-  }
-
   setTheme(themeName) {
     this.theme = themeName;
     if (themeName === 'obsidian') {
@@ -683,21 +729,49 @@ class DarkCalApp {
       this.calendarSourceStatus.textContent = '';
     }
     if (!this.isToastAnimating) {
-      if (isDemo) {
-        this.lastSyncTimeText.textContent = '';
-      } else {
-        this.lastSyncTimeText.textContent = this.formatLastSync(this.lastSyncTimestamp);
-      }
+      this.updateFooterSync();
     }
     this.updateCalendarHeader();
   }
 
+  formatCalendarShortName(summary) {
+    if (!summary || typeof summary !== 'string') return 'cal';
+    let name = summary.replace(/\s*\(Primary\)$/i, '').trim();
+    if (name.includes('@')) {
+      name = name.split('@')[0].trim();
+    }
+    return name || 'cal';
+  }
+
+  getAllSelectedDisplayName() {
+    const selectedCals = (this.googleCalendars || []).filter(c => c.selected !== false);
+    if (selectedCals.length === 0) return 'none';
+    if (selectedCals.length <= 3) {
+      return selectedCals.map(c => this.formatCalendarShortName(c.summary)).join('+');
+    }
+    return 'all';
+  }
+
   updateCalendarHeader() {
     if (!this.spCalendarName) return;
-    const name = this.calendarName || (this.useDemoData ? 'demo' : 'main');
+    let name;
+    if (this.googleAuthToken && !this.useDemoData) {
+      if (!this.activeCalendarFilter || this.activeCalendarFilter === 'all') {
+        name = this.getAllSelectedDisplayName();
+      } else {
+        const matched = (this.googleCalendars || []).find(c => c.id === this.activeCalendarFilter || c.summary === this.activeCalendarFilter);
+        name = matched ? this.formatCalendarShortName(matched.summary) : this.getAllSelectedDisplayName();
+      }
+      this.calendarName = name;
+    } else {
+      name = this.calendarName || (this.useDemoData ? 'demo' : 'all');
+    }
+
     this.spCalendarName.textContent = name;
     if (this.spCalendarBtn) {
-      const modeDesc = this.useDemoData ? 'click to cycle demo feeds' : 'active calendar';
+      const modeDesc = this.googleAuthToken && !this.useDemoData
+        ? (this.activeCalendarFilter === 'all' ? `${name} — click to cycle` : `filtered by ${name} — click to cycle`)
+        : (this.useDemoData ? 'click to cycle demo feeds' : 'active calendar');
       this.spCalendarBtn.title = `Calendar: ${name} (${modeDesc})`;
       this.spCalendarBtn.setAttribute('aria-label', `Calendar: ${name}`);
     }
@@ -716,7 +790,62 @@ class DarkCalApp {
 
       this.updateCalendarHeader();
       this.renderMonthGrid();
+      if (this.isQuadView) {
+        this.renderQuadView(false);
+      }
       this.showToast(`Switched calendar filter to "${this.calendarName}"`);
+    } else if (this.googleAuthToken) {
+      const selectedCals = (this.googleCalendars || []).filter(c => c.selected !== false);
+      if (selectedCals.length === 0) {
+        this.activeCalendarFilter = 'all';
+        this.calendarName = 'none';
+        this.updateCalendarHeader();
+        this.showToast('No active calendars selected in settings');
+        return;
+      }
+
+      const allDisplayName = this.getAllSelectedDisplayName();
+      if (selectedCals.length === 1) {
+        this.activeCalendarFilter = 'all';
+        this.calendarName = allDisplayName;
+        await Storage.set({ activeCalendarFilter: 'all', calendarName: allDisplayName });
+        this.updateCalendarHeader();
+        this.renderMonthGrid();
+        if (this.isQuadView) {
+          this.renderQuadView(false);
+        }
+        this.showToast(`Active calendar: "${allDisplayName}"`);
+        return;
+      }
+
+      const options = [
+        { id: 'all', name: allDisplayName },
+        ...selectedCals.map(c => ({ id: c.id, name: this.formatCalendarShortName(c.summary) }))
+      ];
+
+      const currentIdx = options.findIndex(opt => opt.id === this.activeCalendarFilter || opt.name === this.activeCalendarFilter);
+      const nextIdx = (currentIdx + 1) % options.length;
+      const nextOption = options[nextIdx];
+
+      this.activeCalendarFilter = nextOption.id;
+      this.calendarName = nextOption.name;
+      await Storage.set({ activeCalendarFilter: nextOption.id, calendarName: nextOption.name });
+
+      this.updateCalendarHeader();
+      this.renderMonthGrid();
+      if (this.isQuadView) {
+        this.renderQuadView(false);
+      }
+
+      if (nextOption.id === 'all') {
+        if (selectedCals.length <= 3) {
+          this.showToast(`Switched to "${allDisplayName}" (${selectedCals.length} selected calendars)`);
+        } else {
+          this.showToast(`Switched to "all" (${selectedCals.length} selected calendars)`);
+        }
+      } else {
+        this.showToast(`Switched calendar to "${nextOption.name}"`);
+      }
     } else {
       this.showToast(`Active calendar: "${this.calendarName}" (${this.events.length} events loaded)`);
     }
@@ -810,7 +939,7 @@ class DarkCalApp {
     this.updateStatus(true);
     this.renderMonthGrid();
     if (this.isQuadView) {
-      this.renderQuadView();
+      this.renderQuadView(true);
     }
   }
 
@@ -850,16 +979,86 @@ class DarkCalApp {
     }
   }
 
-  showGoogleStatus(message, type = 'error') {
+  showGoogleStatus(message, type = 'error', isHtml = false) {
     if (!this.googleAuthStatus) return;
     if (!message) {
-      this.googleAuthStatus.textContent = '';
+      this.googleAuthStatus.innerHTML = '';
       this.googleAuthStatus.className = 'google-status-banner hidden';
       return;
     }
-    this.googleAuthStatus.textContent = message;
+    if (isHtml) {
+      this.googleAuthStatus.innerHTML = message;
+    } else {
+      this.googleAuthStatus.textContent = message;
+    }
     this.googleAuthStatus.className = `google-status-banner ${type}`;
     this.googleAuthStatus.classList.remove('hidden');
+  }
+
+  isMyCalendar(cal) {
+    if (cal.primary) return true;
+    if (cal.id === 'primary' || cal.id === 'tasks') return true;
+    const summary = (cal.summary || '').toLowerCase();
+    if (summary === 'birthdays' || summary === 'tasks') return true;
+    if (cal.id && cal.id.includes('contacts@group.v.calendar.google.com')) return true;
+    if (cal.accessRole === 'owner') return true;
+
+    // Distinguish other calendars
+    if (cal.id && (cal.id.includes('holiday@group.v.calendar.google.com') || cal.id.includes('#holiday@'))) {
+      return false;
+    }
+    if (summary.includes('holiday')) {
+      return false;
+    }
+    if (cal.accessRole && cal.accessRole !== 'owner') {
+      return false;
+    }
+
+    return true;
+  }
+
+  createCalendarItemElement(cal) {
+    const item = document.createElement('label');
+    item.className = 'google-cal-item';
+    item.setAttribute('data-calendar-id', cal.id);
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'cal-checkbox-input sr-only';
+    checkbox.checked = cal.selected !== false;
+    checkbox.addEventListener('change', async (e) => {
+      cal.selected = e.target.checked;
+      await Storage.set({ googleCalendars: this.googleCalendars });
+      if (!cal.selected && (this.activeCalendarFilter === cal.id || this.activeCalendarFilter === cal.summary)) {
+        this.activeCalendarFilter = 'all';
+        this.calendarName = this.getAllSelectedDisplayName();
+        await Storage.set({ activeCalendarFilter: 'all', calendarName: this.calendarName });
+      }
+      this.updateCalendarHeader();
+      this.syncGoogleEvents(false);
+    });
+
+    const dot = document.createElement('span');
+    dot.className = 'cal-color-dot cal-checkbox';
+    const calColor = cal.backgroundColor || cal.color || '#4285F4';
+    dot.style.setProperty('--cal-color', calColor);
+    dot.style.backgroundColor = calColor;
+    dot.style.borderColor = calColor;
+
+    dot.innerHTML = `
+      <svg class="cal-check-icon" viewBox="0 0 24 24" width="12" height="12">
+        <path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+      </svg>
+    `;
+
+    const name = document.createElement('span');
+    name.className = 'cal-name';
+    name.textContent = cal.summary + (cal.primary ? ' (Primary)' : '');
+
+    item.appendChild(checkbox);
+    item.appendChild(dot);
+    item.appendChild(name);
+    return item;
   }
 
   renderGoogleCalendarsList() {
@@ -876,35 +1075,68 @@ class DarkCalApp {
       return;
     }
 
-    this.googleCalendars.forEach((cal) => {
-      const item = document.createElement('label');
-      item.className = 'google-cal-item';
+    const myCalendars = this.googleCalendars.filter(cal => this.isMyCalendar(cal));
+    const otherCalendars = this.googleCalendars.filter(cal => !this.isMyCalendar(cal));
 
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.checked = cal.selected !== false;
-      checkbox.addEventListener('change', async (e) => {
-        cal.selected = e.target.checked;
-        await Storage.set({ googleCalendars: this.googleCalendars });
-        this.syncGoogleEvents(false);
+    const renderSection = (title, cals, sectionKey) => {
+      if (cals.length === 0) return;
+
+      const section = document.createElement('div');
+      section.className = 'google-cal-section';
+      section.dataset.section = sectionKey;
+
+      const header = document.createElement('div');
+      header.className = 'google-cal-section-header';
+      header.setAttribute('role', 'button');
+      header.setAttribute('tabindex', '0');
+      header.setAttribute('aria-expanded', 'true');
+      header.innerHTML = `
+        <span class="section-title">${title}</span>
+        <span class="section-chevron">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+        </span>
+      `;
+
+      const itemsContainer = document.createElement('div');
+      itemsContainer.className = 'google-cal-section-items';
+
+      cals.forEach(cal => {
+        const item = this.createCalendarItemElement(cal);
+        itemsContainer.appendChild(item);
       });
 
-      const dot = document.createElement('span');
-      dot.className = 'cal-color-dot';
-      dot.style.backgroundColor = cal.backgroundColor || cal.color || '#4285F4';
+      const toggleSection = () => {
+        const isCollapsed = section.classList.toggle('collapsed');
+        header.setAttribute('aria-expanded', String(!isCollapsed));
+      };
 
-      const name = document.createElement('span');
-      name.className = 'cal-name';
-      name.textContent = cal.summary + (cal.primary ? ' (Primary)' : '');
+      header.addEventListener('click', toggleSection);
+      header.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleSection();
+        }
+      });
 
-      item.appendChild(checkbox);
-      item.appendChild(dot);
-      item.appendChild(name);
-      this.googleCalendarsList.appendChild(item);
-    });
+      section.appendChild(header);
+      section.appendChild(itemsContainer);
+      this.googleCalendarsList.appendChild(section);
+    };
+
+    renderSection('My calendars', myCalendars, 'my');
+    renderSection('Other calendars', otherCalendars, 'other');
   }
 
   async handleGoogleSignIn() {
+    if (this.hasAuthExpired && this.lastSyncTimeText) {
+      await this.transitionFooterText('SYNC: Connecting to Google...', {
+        animate: true,
+        isAlert: true,
+        title: 'Connecting to Google...'
+      });
+    }
     if (this.googleSignInBtn) {
       this.googleSignInBtn.disabled = true;
       this.googleSignInBtn.textContent = 'Signing in...';
@@ -912,9 +1144,70 @@ class DarkCalApp {
     this.showGoogleStatus('Authenticating with Google...', 'loading');
 
     try {
-      const clientId = this.customClientId || (this.googleClientIdInput ? this.googleClientIdInput.value.trim() : '');
+      const effectiveClientId = GoogleCalendarApi.DEFAULT_CLIENT_ID;
+
+      if (!effectiveClientId) {
+        const reqErr = new Error('CLIENT_ID_REQUIRED: Google OAuth Client ID is not configured.');
+        reqErr.code = 'CLIENT_ID_REQUIRED';
+        throw reqErr;
+      }
+
+      // Delegate interactive OAuth flow to the background service worker when running in the extension runtime
+      // so that if Chrome closes the extension popup when the Google Sign-In window opens, the background
+      // service worker completes authentication, fetches calendars & events, and persists them to chrome.storage.local.
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
+        const bgRes = await new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage({ action: 'GOOGLE_SIGN_IN', clientId: effectiveClientId }, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+              return;
+            }
+            resolve(response);
+          });
+        });
+
+        if (!bgRes || !bgRes.success) {
+          const err = new Error(bgRes?.error || 'Google Sign-In failed.');
+          if (bgRes?.diagnostic) err.diagnostic = bgRes.diagnostic;
+          if (bgRes?.code) err.code = bgRes.code;
+          throw err;
+        }
+
+        this.googleAuthToken = bgRes.token;
+        this.googleUserEmail = bgRes.userEmail || 'Google User';
+        this.googleUserName = bgRes.userName || '';
+        this.googleCalendars = bgRes.calendars || [];
+        this.events = bgRes.events || [];
+        this.useDemoData = false;
+        this.hasAuthExpired = false;
+        this.lastSyncTimestamp = Date.now();
+        if (this.demoModeToggle) {
+          this.demoModeToggle.checked = false;
+        }
+        this.activeCalendarFilter = 'all';
+        this.calendarName = this.getAllSelectedDisplayName();
+        await Storage.set({ googleSyncError: '', activeCalendarFilter: 'all', calendarName: this.calendarName });
+
+        this.showGoogleConnectedState(true);
+        this.renderGoogleCalendarsList();
+        if (bgRes.syncError) {
+          this.showGoogleStatus(`Connected, but calendar sync failed: ${bgRes.syncError}`, 'error');
+        } else {
+          this.showGoogleStatus('');
+        }
+
+        this.updateStatus(false, this.events.length);
+        this.updateCalendarHeader();
+        this.renderMonthGrid();
+        if (this.isQuadView) {
+          await this.renderQuadView(false);
+        }
+        this.showToast(`Connected as ${this.googleUserEmail}!`);
+        return;
+      }
+
       const authResult = await GoogleCalendarApi.authenticate({
-        clientId: clientId,
+        clientId: effectiveClientId,
         interactive: true
       });
 
@@ -925,6 +1218,7 @@ class DarkCalApp {
       }
 
       this.googleAuthToken = token;
+      this.hasAuthExpired = false;
       this.showGoogleStatus('Fetching account profile & calendars...', 'loading');
 
       // Profile email & name
@@ -949,7 +1243,7 @@ class DarkCalApp {
       // Fetch user calendars
       let calendars = [];
       try {
-        calendars = await GoogleCalendarApi.getCalendarList(token);
+        calendars = await GoogleCalendarApi.getCalendarList(token, { includeTasks: true });
       } catch (cErr) {
         console.warn('Could not fetch calendars list:', cErr);
       }
@@ -960,9 +1254,8 @@ class DarkCalApp {
       if (this.demoModeToggle) {
         this.demoModeToggle.checked = false;
       }
-      if (!this.customCalendarName && this.googleUserEmail) {
-        this.calendarName = this.googleUserEmail;
-      }
+      this.activeCalendarFilter = 'all';
+      this.calendarName = this.getAllSelectedDisplayName();
 
       await Storage.set({
         googleAuthToken: token,
@@ -970,7 +1263,9 @@ class DarkCalApp {
         googleUserName: this.googleUserName,
         googleCalendars: calendars,
         useDemoData: false,
-        calendarName: this.calendarName
+        activeCalendarFilter: 'all',
+        calendarName: this.calendarName,
+        googleSyncError: ''
       });
 
       this.showGoogleConnectedState(true);
@@ -982,18 +1277,10 @@ class DarkCalApp {
       this.showToast(`Connected as ${this.googleUserEmail}!`);
     } catch (err) {
       console.error('Google Sign-In failed:', err);
-      if (err.code === 'CLIENT_ID_REQUIRED' || err.message?.includes('CLIENT_ID_REQUIRED') || err.message?.includes('OAuth Client ID is required')) {
-        this.showGoogleStatus('OAuth Client ID is required. Expand "OAuth 2.0 Client ID Configuration" below to paste your Client ID.', 'error');
-        if (this.googleClientDetails) {
-          this.googleClientDetails.open = true;
-        }
-        if (this.googleClientIdInput) {
-          this.googleClientIdInput.focus();
-        }
-      } else {
-        this.showGoogleStatus(`Sign-In Error: ${err.message}`, 'error');
-      }
+      const displayMsg = err.diagnostic || err.message;
+      this.showGoogleStatus(`Sign-In Error: ${displayMsg}`, 'error');
       this.showToast(`Google Sign-In: ${err.message}`, 4000);
+      this.updateFooterSync();
     } finally {
       if (this.googleSignInBtn) {
         this.googleSignInBtn.disabled = false;
@@ -1040,6 +1327,7 @@ class DarkCalApp {
         this.calendarName = 'demo';
       }
 
+      this.hasAuthExpired = false;
       await Storage.set({
         googleAuthToken: '',
         googleUserEmail: '',
@@ -1047,7 +1335,8 @@ class DarkCalApp {
         googleCalendars: [],
         savedGoogleEvents: [],
         useDemoData: this.useDemoData,
-        calendarName: this.calendarName
+        calendarName: this.calendarName,
+        googleSyncError: ''
       });
 
       this.showGoogleConnectedState(false);
@@ -1076,23 +1365,56 @@ class DarkCalApp {
     }
 
     try {
+      const syncYear = this.viewYear;
+      const syncMonth = this.viewMonth;
+
+      // Update token in case the background worker refreshed it
+      const stored = await Storage.get(['googleAuthToken']);
+      if (stored?.googleAuthToken) {
+        this.googleAuthToken = stored.googleAuthToken;
+      }
+
+      if (!this.googleCalendars || this.googleCalendars.length === 0) {
+        this.googleCalendars = await GoogleCalendarApi.getCalendarList(this.googleAuthToken, { includeTasks: true });
+        this.renderGoogleCalendarsList();
+      }
+
       const activeCals = (this.googleCalendars || []).filter(c => c.selected !== false);
       const events = await GoogleCalendarApi.fetchMonthEvents(
         this.googleAuthToken,
         activeCals,
-        this.viewYear,
-        this.viewMonth,
+        syncYear,
+        syncMonth,
         this.isQuadView
       );
+
+      // In case fetchMonthEvents silently refreshed the token, update local reference
+      const freshStored = await Storage.get(['googleAuthToken']);
+      if (freshStored?.googleAuthToken) {
+        this.googleAuthToken = freshStored.googleAuthToken;
+      }
+
+      // If user navigated away while fetching, do not overwrite the newer view
+      if (this.viewYear !== syncYear || this.viewMonth !== syncMonth) {
+        return;
+      }
 
       const now = Date.now();
       this.events = events;
       this.lastSyncTimestamp = now;
 
-      await Storage.set({
-        savedGoogleEvents: events,
-        lastSyncTimestamp: now
-      });
+      this.hasAuthExpired = false;
+      this.isInternalStorageUpdate = true;
+      try {
+        await Storage.set({
+          googleCalendars: this.googleCalendars,
+          savedGoogleEvents: events,
+          lastSyncTimestamp: now,
+          googleSyncError: ''
+        });
+      } finally {
+        this.isInternalStorageUpdate = false;
+      }
 
       this.updateStatus(false, events.length);
       this.updateCalendarHeader();
@@ -1110,9 +1432,24 @@ class DarkCalApp {
       }
     } catch (err) {
       console.error('Google sync error:', err);
-      if (err.message && err.message.includes('401')) {
-        this.showGoogleStatus('Session expired. Please sign in with Google again.', 'error');
-        if (showFeedback) this.showToast('Google session expired. Please sign in again.', 4000);
+      const isAuthExpired = err.message && (err.message === 'AUTH_EXPIRED' || err.message.includes('401'));
+      if (isAuthExpired) {
+        this.hasAuthExpired = true;
+        await Storage.set({ googleSyncError: 'AUTH_EXPIRED' });
+        this.updateFooterSync();
+        this.showGoogleStatus(
+          `<span>Google session expired.</span> <button id="reconnectGoogleBtn" class="reconnect-inline-btn" type="button">Reconnect</button>`,
+          'error',
+          true
+        );
+        const reconnectBtn = document.getElementById('reconnectGoogleBtn');
+        if (reconnectBtn) {
+          reconnectBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.handleGoogleSignIn();
+          });
+        }
+        if (showFeedback) this.showToast('Google session expired. Click "Reconnect" to renew.', 5000);
       } else {
         this.showGoogleStatus(`Sync error: ${err.message}`, 'error');
         if (showFeedback) this.showToast(`Google sync failed: ${err.message}`, 4000);
@@ -1231,8 +1568,30 @@ class DarkCalApp {
       this.calCommandLine.setSelectionRange(len, len);
     }
     if (this.currentMonthYear) {
-      this.currentMonthYear.textContent = `${monthStr} ${this.viewYear}`;
+      if (this.isQuadView) {
+        this.currentMonthYear.textContent = this.getQuadViewRangeString();
+      } else {
+        this.currentMonthYear.textContent = `${monthStr} ${this.viewYear}`;
+      }
     }
+  }
+
+  getQuadViewRangeString() {
+    const p = this.getMonthOffset(this.viewYear, this.viewMonth, -1);
+    const n = this.getMonthOffset(this.viewYear, this.viewMonth, 2);
+    const pShort = new Date(p.year, p.month, 1).toLocaleDateString('en-US', { month: 'short' });
+    const nShort = new Date(n.year, n.month, 1).toLocaleDateString('en-US', { month: 'short' });
+    if (p.year === n.year) {
+      return `${pShort} - ${nShort} ${p.year}`;
+    }
+    return `${pShort} ${p.year} - ${nShort} ${n.year}`;
+  }
+
+  getViewRangeLabel() {
+    if (this.isQuadView) {
+      return this.getQuadViewRangeString();
+    }
+    return `${this.getMonthName()} ${this.viewYear}`;
   }
 
   getMonthOffset(baseYear, baseMonth, delta) {
@@ -1268,7 +1627,7 @@ class DarkCalApp {
         void this.quadMonthContainer.offsetWidth; // Reflow to restart animation cleanly
         this.quadMonthContainer.classList.add('anim-zoom-out');
       }
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
         this.renderQuadView();
@@ -1289,7 +1648,7 @@ class DarkCalApp {
         void this.calendarViewport.offsetWidth; // Reflow to restart animation cleanly
         this.calendarViewport.classList.add('anim-zoom-in');
       }
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
         this.renderMonthGrid();
@@ -1302,13 +1661,19 @@ class DarkCalApp {
 
   toggleQuadView() {
     this.setQuadView(!this.isQuadView, true);
-    this.showToast(this.isQuadView ? 'cal-1 ➜ 4-Month Zoom View (2×2)' : 'cal-1 ➜ 1-Month View');
+    if (this.isQuadView) {
+      this.showToast(`cal-1 ➜ 4-Month View (${this.getQuadViewRangeString()})`);
+    } else {
+      this.showToast(`cal-1 ➜ 1-Month View (${this.getMonthName()} ${this.viewYear})`);
+    }
   }
 
   async renderQuadView(animate = true) {
     if (!this.quadMonthContainer) return;
     this.hidePopover();
-    this.quadMonthContainer.innerHTML = '';
+
+    const currentToken = ++this.quadRenderToken;
+    const isBackward = this.navDirection === 'backward';
 
     // 4 Months:
     // [0] Top-Left: -1 month
@@ -1331,33 +1696,40 @@ class DarkCalApp {
       }
     }
 
+    if (currentToken !== this.quadRenderToken) return;
+
+    const fragment = document.createDocumentFragment();
     for (const info of months) {
-      const card = this.createMiniMonthCard(info, animate);
-      this.quadMonthContainer.appendChild(card);
+      const card = this.createMiniMonthCard(info, animate, isBackward);
+      fragment.appendChild(card);
     }
+
+    if (currentToken !== this.quadRenderToken) return;
+    this.quadMonthContainer.replaceChildren(fragment);
 
     // Clean up temporary scan animation classes after sequence finishes
     if (animate) {
       if (this.quadAnimationTimer) clearTimeout(this.quadAnimationTimer);
       this.quadAnimationTimer = setTimeout(() => {
         if (!this.quadMonthContainer) return;
-        this.quadMonthContainer.querySelectorAll('.scan-appear, .scan-appear-other').forEach(el => {
-          el.classList.remove('scan-appear', 'scan-appear-other');
+        this.quadMonthContainer.querySelectorAll('.scan-appear, .scan-appear-other, .scan-appear-reverse, .scan-appear-other-reverse').forEach(el => {
+          el.classList.remove('scan-appear', 'scan-appear-other', 'scan-appear-reverse', 'scan-appear-other-reverse');
           el.style.animationDelay = '';
         });
       }, 1300);
     }
   }
 
-  createMiniMonthCard({ year, month }, animate = true) {
+  createMiniMonthCard({ year, month, monthIndex = 0 }, animate = true, isBackward = false) {
     const card = document.createElement('div');
     card.className = 'mini-month-card';
     if (animate) {
-      card.classList.add('scan-appear');
+      const cardAnimClass = isBackward ? 'scan-appear-reverse' : 'scan-appear';
+      card.classList.add(cardAnimClass);
       card.style.animationDelay = '0ms';
       card.addEventListener('animationend', (e) => {
         if (e.target === card) {
-          card.classList.remove('scan-appear');
+          card.classList.remove('scan-appear', 'scan-appear-reverse');
           card.style.animationDelay = '';
         }
       }, { once: true });
@@ -1377,7 +1749,7 @@ class DarkCalApp {
         this.viewYear = year;
         this.viewMonth = month;
         this.setQuadView(false);
-        this.showToast(`cal-1 ➜ ${monthName} ${year}`);
+        this.showToast(`cal-1 ➜ 1-Month View (${monthName} ${year})`);
       }, 70);
     });
 
@@ -1407,10 +1779,12 @@ class DarkCalApp {
       col.className = `mini-weekday-col ${dayClasses[dayIdx]} ${isThisCardCurrentMonth && dayIdx === todayDayOfWeek ? 'is-today' : ''}`;
       col.textContent = weekdaysBase[dayIdx];
       if (animate) {
-        col.classList.add('scan-appear');
-        col.style.animationDelay = `${15 + d * 10}ms`;
+        const colAnim = isBackward ? 'scan-appear-reverse' : 'scan-appear';
+        col.classList.add(colAnim);
+        const colDelay = isBackward ? (6 - d) * 10 : d * 10;
+        col.style.animationDelay = `${15 + colDelay}ms`;
         col.addEventListener('animationend', () => {
-          col.classList.remove('scan-appear');
+          col.classList.remove('scan-appear', 'scan-appear-reverse');
           col.style.animationDelay = '';
         }, { once: true });
       }
@@ -1442,8 +1816,9 @@ class DarkCalApp {
       const dayNum = prevMonthLastDay - i;
       const prevDate = new Date(year, month - 1, dayNum);
       const dayKey = this.formatDateKey(prevDate);
-      const delay = animate ? 60 + Math.round(cellIndex * cellStep) : null;
-      const cell = this.createMiniDayCell(prevDate, dayNum, dayKey, true, false, delay);
+      const animIndex = isBackward ? (totalCells - 1 - cellIndex) : cellIndex;
+      const delay = animate ? 60 + Math.round(animIndex * cellStep) : null;
+      const cell = this.createMiniDayCell(prevDate, dayNum, dayKey, true, false, delay, isBackward);
       daysGrid.appendChild(cell);
       cellIndex++;
     }
@@ -1453,8 +1828,9 @@ class DarkCalApp {
       const curDate = new Date(year, month, day);
       const dayKey = this.formatDateKey(curDate);
       const isToday = dayKey === todayDateStr;
-      const delay = animate ? 60 + Math.round(cellIndex * cellStep) : null;
-      const cell = this.createMiniDayCell(curDate, day, dayKey, false, isToday, delay);
+      const animIndex = isBackward ? (totalCells - 1 - cellIndex) : cellIndex;
+      const delay = animate ? 60 + Math.round(animIndex * cellStep) : null;
+      const cell = this.createMiniDayCell(curDate, day, dayKey, false, isToday, delay, isBackward);
       daysGrid.appendChild(cell);
       cellIndex++;
     }
@@ -1464,8 +1840,9 @@ class DarkCalApp {
     for (let day = 1; day <= trailingDays; day++) {
       const nextDate = new Date(year, month + 1, day);
       const dayKey = this.formatDateKey(nextDate);
-      const delay = animate ? 60 + Math.round(cellIndex * cellStep) : null;
-      const cell = this.createMiniDayCell(nextDate, day, dayKey, true, false, delay);
+      const animIndex = isBackward ? (totalCells - 1 - cellIndex) : cellIndex;
+      const delay = animate ? 60 + Math.round(animIndex * cellStep) : null;
+      const cell = this.createMiniDayCell(nextDate, day, dayKey, true, false, delay, isBackward);
       daysGrid.appendChild(cell);
       cellIndex++;
     }
@@ -1474,7 +1851,7 @@ class DarkCalApp {
     return card;
   }
 
-  createMiniDayCell(date, dayNum, dayKey, isOtherMonth, isToday, animDelay = null) {
+  createMiniDayCell(date, dayNum, dayKey, isOtherMonth, isToday, animDelay = null, isBackward = false) {
     const dayOfWeek = date.getDay();
     const dayClasses = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
     const dayClass = dayClasses[dayOfWeek];
@@ -1484,10 +1861,13 @@ class DarkCalApp {
     cell.dataset.date = dayKey;
 
     if (animDelay !== null) {
-      cell.classList.add(isOtherMonth ? 'scan-appear-other' : 'scan-appear');
+      const animClass = isBackward
+        ? (isOtherMonth ? 'scan-appear-other-reverse' : 'scan-appear-reverse')
+        : (isOtherMonth ? 'scan-appear-other' : 'scan-appear');
+      cell.classList.add(animClass);
       cell.style.animationDelay = `${animDelay}ms`;
       cell.addEventListener('animationend', () => {
-        cell.classList.remove('scan-appear', 'scan-appear-other');
+        cell.classList.remove('scan-appear', 'scan-appear-other', 'scan-appear-reverse', 'scan-appear-other-reverse');
         cell.style.animationDelay = '';
       }, { once: true });
     }
@@ -1561,7 +1941,7 @@ class DarkCalApp {
       this.viewMonth = date.getMonth();
       this.setQuadView(false);
       const monthName = date.toLocaleDateString('en-US', { month: 'long' });
-      this.showToast(`cal-1 ➜ ${monthName} ${this.viewYear}`);
+      this.showToast(`cal-1 ➜ 1-Month View (${monthName} ${this.viewYear})`);
     });
 
     return cell;
@@ -1597,7 +1977,11 @@ class DarkCalApp {
 
     if (result.isQuadSwitch) {
       this.setQuadView(result.enableQuad);
-      this.showToast(result.msg);
+      if (result.enableQuad) {
+        this.showToast(`cal-1 ➜ 4-Month View (${this.getQuadViewRangeString()})`);
+      } else {
+        this.showToast(`cal-1 ➜ 1-Month View (${this.getMonthName()} ${this.viewYear})`);
+      }
       return;
     }
 
@@ -1618,13 +2002,48 @@ class DarkCalApp {
           await Storage.set({ activeCalendarFilter: matched, calendarName: this.calendarName });
           this.updateCalendarHeader();
           if (this.isQuadView) {
-            this.renderQuadView();
+            this.renderQuadView(false);
           } else {
             this.renderMonthGrid();
           }
           this.showToast(`cal ➜ Switched calendar to "${this.calendarName}"`);
         } else {
           this.showToast(`Unknown calendar "${result.calendarName}". Try: @all, @work, @personal, @deadlines, @team`);
+        }
+      } else if (this.googleAuthToken) {
+        if (target === 'all') {
+          this.activeCalendarFilter = 'all';
+          this.calendarName = this.getAllSelectedDisplayName();
+          await Storage.set({ activeCalendarFilter: 'all', calendarName: this.calendarName });
+          this.updateCalendarHeader();
+          if (this.isQuadView) {
+            this.renderQuadView(false);
+          } else {
+            this.renderMonthGrid();
+          }
+          this.showToast(`cal ➜ Switched calendar to "${this.calendarName}"`);
+        } else {
+          const selectedCals = (this.googleCalendars || []).filter(c => c.selected !== false);
+          const matched = selectedCals.find(c =>
+            c.id.toLowerCase() === target ||
+            c.summary.toLowerCase() === target ||
+            c.summary.toLowerCase().startsWith(target)
+          );
+          if (matched) {
+            this.activeCalendarFilter = matched.id;
+            this.calendarName = this.formatCalendarShortName(matched.summary);
+            await Storage.set({ activeCalendarFilter: matched.id, calendarName: this.calendarName });
+            this.updateCalendarHeader();
+            if (this.isQuadView) {
+              this.renderQuadView(false);
+            } else {
+              this.renderMonthGrid();
+            }
+            this.showToast(`cal ➜ Switched calendar to "${this.calendarName}"`);
+          } else {
+            const avail = ['@all', ...selectedCals.map(c => `@${this.formatCalendarShortName(c.summary).toLowerCase()}`)];
+            this.showToast(`Unknown calendar "${result.calendarName}". Available: ${avail.join(', ')}`);
+          }
         }
       } else {
         this.calendarName = result.calendarName;
@@ -1633,7 +2052,7 @@ class DarkCalApp {
         await Storage.set({ customCalendarName: this.calendarName, calendarName: this.calendarName });
         this.updateCalendarHeader();
         if (this.isQuadView) {
-          this.renderQuadView();
+          this.renderQuadView(false);
         } else {
           this.renderMonthGrid();
         }
@@ -1657,24 +2076,26 @@ class DarkCalApp {
     this.updateMonthHeading();
 
     if (this.isQuadView) {
-      if (this.googleAuthToken && !this.useDemoData) {
-        await this.syncGoogleEvents(false);
-      } else if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
-        await this.renderQuadView(false);
+        await this.renderQuadView(true);
+        if (this.googleAuthToken && !this.useDemoData) {
+          this.syncGoogleEvents(false);
+        }
       }
     } else {
-      if (this.googleAuthToken && !this.useDemoData) {
-        await this.syncGoogleEvents(false);
-      } else if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
         this.renderMonthGrid();
+        if (this.googleAuthToken && !this.useDemoData) {
+          this.syncGoogleEvents(false);
+        }
       }
     }
 
-    this.showToast(result.msg || `cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
+    this.showToast(result.msg || `cal-1 ➜ ${this.getViewRangeLabel()}`);
   }
 
   parseCalCommand(cmdStr, currentYear, currentMonth) {
@@ -1851,23 +2272,25 @@ class DarkCalApp {
     }
     this.updateMonthHeading();
     if (this.isQuadView) {
-      if (this.googleAuthToken && !this.useDemoData) {
-        await this.syncGoogleEvents(false);
-      } else if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
-        await this.renderQuadView(false);
+        await this.renderQuadView(true);
+        if (this.googleAuthToken && !this.useDemoData) {
+          this.syncGoogleEvents(false);
+        }
       }
     } else {
-      if (this.googleAuthToken && !this.useDemoData) {
-        await this.syncGoogleEvents(false);
-      } else if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
         this.renderMonthGrid();
+        if (this.googleAuthToken && !this.useDemoData) {
+          this.syncGoogleEvents(false);
+        }
       }
     }
-    this.showToast(`cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
+    this.showToast(`cal-1 ➜ ${this.getViewRangeLabel()}`);
   }
 
   async navigateYear(delta) {
@@ -1878,23 +2301,25 @@ class DarkCalApp {
     await this.loadHolidays();
     this.updateMonthHeading();
     if (this.isQuadView) {
-      if (this.googleAuthToken && !this.useDemoData) {
-        await this.syncGoogleEvents(false);
-      } else if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
-        await this.renderQuadView(false);
+        await this.renderQuadView(true);
+        if (this.googleAuthToken && !this.useDemoData) {
+          this.syncGoogleEvents(false);
+        }
       }
     } else {
-      if (this.googleAuthToken && !this.useDemoData) {
-        await this.syncGoogleEvents(false);
-      } else if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
         this.renderMonthGrid();
+        if (this.googleAuthToken && !this.useDemoData) {
+          this.syncGoogleEvents(false);
+        }
       }
     }
-    this.showToast(`cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
+    this.showToast(`cal-1 ➜ ${this.getViewRangeLabel()}`);
   }
 
   async jumpToToday() {
@@ -1914,22 +2339,27 @@ class DarkCalApp {
     this.updateMonthHeading();
     this.focusCommandLine();
     if (this.isQuadView) {
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
-        await this.renderQuadView();
+        await this.renderQuadView(true);
+        if (this.googleAuthToken && !this.useDemoData) {
+          this.syncGoogleEvents(false);
+        }
       }
     } else {
-      if (this.useDemoData || !this.icalUrl) {
+      if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
         this.loadDemoEvents();
       } else {
         this.renderMonthGrid();
-        if (this.icalUrl) {
+        if (this.googleAuthToken && !this.useDemoData) {
+          this.syncGoogleEvents(false);
+        } else if (this.icalUrl) {
           this.handleIcalSync(false);
         }
       }
     }
-    this.showToast(`cal-1 ➜ ${this.getMonthName()} ${this.viewYear}`);
+    this.showToast(`cal-1 ➜ ${this.getViewRangeLabel()}`);
   }
 
   renderMonthGrid() {
@@ -2564,6 +2994,27 @@ class DarkCalApp {
         }
       }
 
+      // If filtering by specific Google calendar feed
+      if (!this.useDemoData && this.googleAuthToken) {
+        // Exclude events from calendars unchecked in config
+        if (this.googleCalendars && this.googleCalendars.length > 0) {
+          const cal = this.googleCalendars.find(c => c.id === evt.calendarId || c.summary === evt.calendarName);
+          if (cal && cal.selected === false) {
+            return false;
+          }
+        }
+
+        // When a single calendar is selected in the top bar (not 'all')
+        if (this.activeCalendarFilter && this.activeCalendarFilter !== 'all') {
+          const target = this.activeCalendarFilter.toLowerCase();
+          const calId = (evt.calendarId || '').toLowerCase();
+          const calName = (evt.calendarName || '').toLowerCase();
+          if (calId !== target && calName !== target) {
+            return false;
+          }
+        }
+      }
+
       if (evt.isAllDay) {
         const startDay = evt.start?.date;
         const endDay = evt.end?.date || evt.start?.date;
@@ -2614,7 +3065,7 @@ class DarkCalApp {
     const elem = this.lastSyncTimeText;
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    // 1. Remove original line by backspacing one by one character
+    // 1. Remove original line by backspacing one by one character (right to left)
     while (elem.textContent.length > 0) {
       if (this.toastAnimationId !== animId) return;
       elem.textContent = elem.textContent.slice(0, -1);
@@ -2624,7 +3075,7 @@ class DarkCalApp {
     if (this.toastAnimationId !== animId) return;
     elem.classList.add('status-active');
 
-    // 2. Type new message one by one character
+    // 2. Type new message one by one character (left to right)
     for (let i = 1; i <= msg.length; i++) {
       if (this.toastAnimationId !== animId) return;
       elem.textContent = msg.slice(0, i);
@@ -2638,7 +3089,7 @@ class DarkCalApp {
       await sleep(35);
     }
 
-    // 4. Remove by backspacing one by one character
+    // 4. Remove by backspacing one by one character (right to left)
     while (elem.textContent.length > 0) {
       if (this.toastAnimationId !== animId) return;
       elem.textContent = elem.textContent.slice(0, -1);
@@ -2648,7 +3099,20 @@ class DarkCalApp {
     if (this.toastAnimationId !== animId) return;
     elem.classList.remove('status-active');
 
-    // 5. Show up SYNC again one by one character
+    // Update alert attributes while empty before typing footer text
+    if (this.hasAuthExpired) {
+      elem.classList.add('auth-expired');
+      elem.setAttribute('role', 'button');
+      elem.setAttribute('tabindex', '0');
+      elem.title = 'Google Calendar session expired. Click here to sign in and reconnect';
+    } else {
+      elem.classList.remove('auth-expired');
+      elem.removeAttribute('role');
+      elem.removeAttribute('tabindex');
+      elem.title = '';
+    }
+
+    // 5. Show up SYNC again one by one character (left to right)
     const targetText = this.getDefaultFooterText();
     for (let i = 1; i <= targetText.length; i++) {
       if (this.toastAnimationId !== animId) return;
@@ -2662,18 +3126,97 @@ class DarkCalApp {
     }
   }
 
+  async transitionFooterText(targetText, { animate = true, isAlert = false, title = '' } = {}) {
+    if (!this.lastSyncTimeText) return;
+    const elem = this.lastSyncTimeText;
+
+    const prefersReducedMotion = typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const applyAttributes = () => {
+      if (isAlert) {
+        elem.classList.add('auth-expired');
+        elem.setAttribute('role', 'button');
+        elem.setAttribute('tabindex', '0');
+        elem.title = title || 'Google Calendar session expired. Click here to sign in and reconnect';
+      } else {
+        elem.classList.remove('auth-expired');
+        elem.removeAttribute('role');
+        elem.removeAttribute('tabindex');
+        elem.title = title || '';
+      }
+    };
+
+    if (elem.textContent === targetText) {
+      applyAttributes();
+      return;
+    }
+
+    if (!animate || prefersReducedMotion) {
+      applyAttributes();
+      elem.textContent = targetText;
+      return;
+    }
+
+    const animId = ++this.toastAnimationId;
+    this.isToastAnimating = true;
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // 1. Remove current text from right to left (backspacing)
+    while (elem.textContent.length > 0) {
+      if (this.toastAnimationId !== animId) return;
+      elem.textContent = elem.textContent.slice(0, -1);
+      await sleep(10);
+    }
+
+    if (this.toastAnimationId !== animId) return;
+    applyAttributes();
+
+    // 2. Type target text from left to right
+    for (let i = 1; i <= targetText.length; i++) {
+      if (this.toastAnimationId !== animId) return;
+      elem.textContent = targetText.slice(0, i);
+      await sleep(15);
+    }
+
+    if (this.toastAnimationId === animId) {
+      elem.textContent = targetText;
+      this.isToastAnimating = false;
+    }
+  }
+
   getDefaultFooterText() {
+    if (this.hasAuthExpired) {
+      return 'SYNC: AUTH EXPIRED ➜ Click to Reconnect';
+    }
     if (this.useDemoData || (!this.icalUrl && !this.googleAuthToken)) {
       return '';
     }
     return this.formatLastSync(this.lastSyncTimestamp);
   }
 
+  async updateFooterSync(animate = true) {
+    if (!this.lastSyncTimeText) return;
+    if (this.isToastAnimating) return;
+
+    let targetText = '';
+    let isAlert = false;
+    let title = '';
+
+    if (this.hasAuthExpired) {
+      targetText = 'SYNC: AUTH EXPIRED ➜ Click to Reconnect';
+      isAlert = true;
+      title = 'Google Calendar session expired. Click here to sign in and reconnect';
+    } else if (!this.useDemoData && (this.icalUrl || this.googleAuthToken)) {
+      targetText = this.formatLastSync(this.lastSyncTimestamp);
+    }
+
+    await this.transitionFooterText(targetText, { animate, isAlert, title });
+  }
+
   openSettings() {
     this.hidePopover();
-    if (this.googleRedirectUriText) {
-      this.googleRedirectUriText.textContent = GoogleCalendarApi.getRedirectUri() || `https://${GoogleCalendarApi.getExtensionId()}.chromiumapp.org/`;
-    }
     this.settingsModal.classList.remove('hidden');
   }
 

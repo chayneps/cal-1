@@ -406,4 +406,133 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
       assert.strictEqual(details.isMonotonic, true, `Card ${i} cells should strictly increase from top-left to bottom-right`);
     }
   });
+
+  await t.test('Arrow key navigation in 4-month view never duplicates cards and applies directional scan animations', async () => {
+    const res = await browser.eval(`
+      (async () => {
+        window.app.setQuadView(true);
+
+        // Test backward arrow navigation
+        await window.app.navigateMonth(-1);
+        const backwardCards = Array.from(document.querySelectorAll('.mini-month-card'));
+        const backwardNavDir = window.app.navDirection;
+        const backwardHasReverseAnim = Array.from(document.querySelectorAll('.mini-day-cell'))
+          .some(c => c.classList.contains('scan-appear-reverse') || c.classList.contains('scan-appear-other-reverse'));
+
+        // Test forward arrow navigation
+        await window.app.navigateMonth(1);
+        const forwardCards = Array.from(document.querySelectorAll('.mini-month-card'));
+        const forwardNavDir = window.app.navDirection;
+        const forwardHasAnim = Array.from(document.querySelectorAll('.mini-day-cell'))
+          .some(c => c.classList.contains('scan-appear') || c.classList.contains('scan-appear-other'));
+
+        // Test rapid arrow key presses (overlapping calls)
+        const rapidPromises = [
+          window.app.navigateMonth(-1),
+          window.app.navigateMonth(-1),
+          window.app.navigateMonth(1),
+          window.app.navigateMonth(-1)
+        ];
+        await Promise.all(rapidPromises);
+        await new Promise(r => setTimeout(r, 100));
+
+        const rapidCards = Array.from(document.querySelectorAll('.mini-month-card'));
+        return {
+          backwardCardCount: backwardCards.length,
+          backwardNavDir,
+          backwardHasReverseAnim,
+          forwardCardCount: forwardCards.length,
+          forwardNavDir,
+          forwardHasAnim,
+          rapidCardCount: rapidCards.length
+        };
+      })()
+    `);
+
+    assert.strictEqual(res.backwardCardCount, 4, 'Must have exactly 4 cards on backward navigation');
+    assert.strictEqual(res.backwardNavDir, 'backward', 'navDirection should be backward');
+    assert.strictEqual(res.backwardHasReverseAnim, true, 'Mini day cells must have scan-appear-reverse animation class');
+    assert.strictEqual(res.forwardCardCount, 4, 'Must have exactly 4 cards on forward navigation');
+    assert.strictEqual(res.forwardNavDir, 'forward', 'navDirection should be forward');
+    assert.strictEqual(res.forwardHasAnim, true, 'Mini day cells must have scan-appear animation class');
+    assert.strictEqual(res.rapidCardCount, 4, 'Rapid navigation must NEVER duplicate cards (strictly 4 cards)');
+  });
+
+  await t.test('Config modal in 4-month view utilizes full space (not just middle)', async () => {
+    const res = await browser.eval(`
+      (() => {
+        window.app.setQuadView(true);
+        window.app.openSettings();
+
+        const modalCard = document.querySelector('.modal-card');
+        const modalBackdrop = document.querySelector('.modal-backdrop');
+        const cardRect = modalCard.getBoundingClientRect();
+        const backdropRect = modalBackdrop.getBoundingClientRect();
+
+        window.app.closeSettings();
+
+        return {
+          cardWidth: cardRect.width,
+          backdropWidth: backdropRect.width,
+          cardHeight: cardRect.height,
+          backdropHeight: backdropRect.height
+        };
+      })()
+    `);
+
+    assert.ok(res.cardWidth > 600, `Modal card width in 4-month view (${res.cardWidth}px) should use full space (>600px)`);
+    assert.ok(res.cardHeight > 480, `Modal card height in 4-month view (${res.cardHeight}px) should use full space (>480px)`);
+  });
+
+  await t.test('Bottom line shows month range on arrow navigation in 4-month view and view switch statuses', async () => {
+    const res = await browser.eval(`
+      (async () => {
+        window.app.viewYear = 2026;
+        window.app.viewMonth = 9; // October 2026 -> 4-month range: Sep - Dec 2026
+        window.app.setQuadView(true);
+
+        const rangeStr = window.app.getQuadViewRangeString();
+
+        // 1. Arrow navigation in 4-month view
+        let toastCaptured = '';
+        const originalShowToast = window.app.showToast;
+        window.app.showToast = (msg) => {
+          toastCaptured = msg;
+        };
+
+        await window.app.navigateMonth(1); // Nov 2026 -> Oct 2026 - Jan 2027
+        const forwardToast = toastCaptured;
+
+        await window.app.navigateMonth(-1); // back to Oct 2026 -> Sep - Dec 2026
+        const backwardToast = toastCaptured;
+
+        // 2. Switch from 4-month view to 1-month view
+        const firstCard = document.querySelector('.mini-month-card');
+        firstCard.click();
+        await new Promise(r => setTimeout(r, 120));
+        const toSingleToast = toastCaptured;
+
+        // 3. Switch back from 1-month view to 4-month view
+        const zoomBtn = document.getElementById('zoomViewBtn');
+        zoomBtn.click();
+        const toQuadToast = toastCaptured;
+
+        window.app.showToast = originalShowToast;
+
+        return {
+          rangeStr,
+          forwardToast,
+          backwardToast,
+          toSingleToast,
+          toQuadToast
+        };
+      })()
+    `);
+
+    assert.strictEqual(res.rangeStr, 'Sep - Dec 2026');
+    assert.strictEqual(res.forwardToast, 'cal-1 ➜ Oct 2026 - Jan 2027', 'Forward navigation in 4-month view should show month range');
+    assert.strictEqual(res.backwardToast, 'cal-1 ➜ Sep - Dec 2026', 'Backward navigation in 4-month view should show month range');
+    assert.ok(res.toSingleToast.includes('1-Month View'), `Status should indicate 1-Month View: ${res.toSingleToast}`);
+    assert.ok(res.toQuadToast.includes('4-Month View'), `Status should indicate 4-Month View: ${res.toQuadToast}`);
+  });
 });

@@ -4,15 +4,6 @@
   "version": "1",
   "version_name": "v1",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiGznh3U76hLvfTGtClHsTDegBKOh7O//uJ9NzApvxyOAKQk6MkVta54tiz4WruqUdfMh/fmmicn7H4ZHSGIUbzpWduqoapktoPwRMDyXFBliY4eiDyrxc0b0CvuQaP6EvanYrAuPM5ZCdfzK2nyXHHbNMVT7fa7oq7mSWZq1qVF16JNpKMOs9f3bL+icmCX2376bgkPLayPKF+8nwvjW3t0N+YNeNAKv3akzJQnUqU48F1CKr00VNa2e538NK4iYeOGiOUu+uuT4TJRUkf3Pe2xmkzkm4PaIT6yG8SIxLMaiHW+cMwwFPU8cqXZ/cdxvNbWJdXpAYYiZTOUh8J1gRwIDAQAB",
-  "oauth2": {
-    "client_id": "159345734386-vqiad77b5amviiv2ve4j8s32dqi74fi8.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/calendar.readonly",
-      "https://www.googleapis.com/auth/calendar.events.readonly",
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile"
-    ]
-  },
   "description": "cal-1 - Unix cal-inspired dropdown calendar with Spaceship prompt, month view, hover schedules, and Google Calendar sync.",
   "permissions": [
     "storage",

@@ -128,6 +128,39 @@ test('Google Calendar REST API Unit Tests', async (t) => {
     }
   });
 
+  await t.test('getCalendarList with includeTasks guarantees Birthdays and Tasks are included', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = async (url, opts) => {
+      assert.ok(url.includes('showHidden=true'), 'Should request showHidden=true for Birthdays');
+      return {
+        ok: true,
+        json: async () => ({
+          items: [
+            { id: 'primary-id', summary: 'Personal', primary: true, accessRole: 'owner', backgroundColor: '#4285F4' },
+            { id: 'holidays-id', summary: 'Holidays in Canada', primary: false, accessRole: 'reader', backgroundColor: '#0B8043' }
+          ]
+        })
+      };
+    };
+
+    try {
+      const list = await GoogleCalendarApi.getCalendarList('token_123', { includeTasks: true });
+      assert.strictEqual(list.length, 4, 'Should contain Personal, Holidays, Birthdays, and Tasks');
+
+      const birthdays = list.find(c => c.summary === 'Birthdays');
+      assert.ok(birthdays, 'Birthdays calendar should be present');
+      assert.strictEqual(birthdays.accessRole, 'reader');
+      assert.strictEqual(birthdays.selected, false);
+
+      const tasks = list.find(c => c.summary === 'Tasks');
+      assert.ok(tasks, 'Tasks calendar should be present');
+      assert.strictEqual(tasks.accessRole, 'owner');
+      assert.strictEqual(tasks.selected, true);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   await t.test('normalizeEvent extracts meetLink, dates, and color mapping', () => {
     const calendar = { id: 'cal-1', summary: 'Work', backgroundColor: '#33B679' };
 
@@ -230,6 +263,95 @@ test('Google Calendar REST API Unit Tests', async (t) => {
       assert.ok(maxDate.getMonth() >= 11 || maxDate.getFullYear() > 2026, 'Window reaches at least December');
     } finally {
       global.fetch = originalFetch;
+    }
+  });
+
+  await t.test('refreshAuthToken runs silent WebAuthFlow with prompt=none and login_hint', async () => {
+    let capturedOpts = null;
+    const originalLaunch = global.chrome.identity.launchWebAuthFlow;
+    global.chrome.identity.launchWebAuthFlow = (opts, cb) => {
+      capturedOpts = opts;
+      cb('https://mock-extension-id.chromiumapp.org/#access_token=refreshed_token_xyz&expires_in=3600');
+    };
+
+    try {
+      const res = await GoogleCalendarApi.refreshAuthToken();
+      assert.strictEqual(res.token, 'refreshed_token_xyz');
+      assert.ok(capturedOpts, 'launchWebAuthFlow should have been called');
+      assert.strictEqual(capturedOpts.interactive, false, 'Must be non-interactive');
+
+      const u = new URL(capturedOpts.url);
+      assert.strictEqual(u.searchParams.get('prompt'), 'none', 'Must pass prompt=none for silent refresh');
+      assert.strictEqual(u.searchParams.get('response_type'), 'token');
+    } finally {
+      global.chrome.identity.launchWebAuthFlow = originalLaunch;
+    }
+  });
+
+  await t.test('getCalendarList automatically retries on 401 using refreshed token', async () => {
+    let calendarListAttempts = 0;
+    const originalFetch = global.fetch;
+    const originalLaunch = global.chrome.identity.launchWebAuthFlow;
+
+    global.chrome.identity.launchWebAuthFlow = (opts, cb) => {
+      cb('https://mock-extension-id.chromiumapp.org/#access_token=auto_refreshed_token&expires_in=3600');
+    };
+
+    global.fetch = async (url, opts) => {
+      if (url.includes('userinfo')) {
+        return {
+          ok: true,
+          json: async () => ({ email: 'test@example.com', name: 'Test User' })
+        };
+      }
+      calendarListAttempts++;
+      if (calendarListAttempts === 1) {
+        assert.strictEqual(opts.headers.Authorization, 'Bearer expired_token');
+        return { ok: false, status: 401, statusText: 'Unauthorized' };
+      }
+      assert.strictEqual(opts.headers.Authorization, 'Bearer auto_refreshed_token');
+      return {
+        ok: true,
+        json: async () => ({
+          items: [{ id: 'primary', summary: 'Primary', primary: true }]
+        })
+      };
+    };
+
+    try {
+      const list = await GoogleCalendarApi.getCalendarList('expired_token');
+      assert.strictEqual(calendarListAttempts, 2, 'Should have retried with refreshed token');
+      assert.strictEqual(list.length, 1);
+      assert.strictEqual(list[0].id, 'primary');
+    } finally {
+      global.fetch = originalFetch;
+      global.chrome.identity.launchWebAuthFlow = originalLaunch;
+    }
+  });
+
+  await t.test('refreshAuthToken deduplicates concurrent calls into a single WebAuthFlow invocation', async () => {
+    let launchCount = 0;
+    const originalLaunch = global.chrome.identity.launchWebAuthFlow;
+    global.chrome.identity.launchWebAuthFlow = (opts, cb) => {
+      launchCount++;
+      setTimeout(() => {
+        cb('https://mock-extension-id.chromiumapp.org/#access_token=shared_token&expires_in=3600');
+      }, 20);
+    };
+
+    try {
+      const [r1, r2, r3] = await Promise.all([
+        GoogleCalendarApi.refreshAuthToken(),
+        GoogleCalendarApi.refreshAuthToken(),
+        GoogleCalendarApi.refreshAuthToken()
+      ]);
+
+      assert.strictEqual(launchCount, 1, 'Only 1 launchWebAuthFlow call should be made for concurrent requests');
+      assert.strictEqual(r1.token, 'shared_token');
+      assert.strictEqual(r2.token, 'shared_token');
+      assert.strictEqual(r3.token, 'shared_token');
+    } finally {
+      global.chrome.identity.launchWebAuthFlow = originalLaunch;
     }
   });
 });

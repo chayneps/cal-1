@@ -84,32 +84,24 @@ test('E2E Regression: Appearance, Today Header & Theme Settings', async (t) => {
     assert.strictEqual(res.starColor, 'rgb(0, 0, 0)', 'Holiday star on today cell must be solid black for phosphor contrast');
   });
 
-  await t.test('CRT Effects toggle controls crt-active class and overlay', async () => {
+  await t.test('CRT Effects toggle and overlay are removed', async () => {
     const res = await browser.eval(`
       (async () => {
-        // Turn CRT off
-        window.app.setCrtEffects(false);
-        const offActive = document.body.classList.contains('crt-active');
-        const offOverlayHidden = document.getElementById('crtOverlay').classList.contains('hidden');
-
-        // Turn CRT on
-        window.app.setCrtEffects(true);
-        const onActive = document.body.classList.contains('crt-active');
-        const onOverlayHidden = document.getElementById('crtOverlay').classList.contains('hidden');
+        const crtOverlay = document.getElementById('crtOverlay');
+        const crtEffectToggle = document.getElementById('crtEffectToggle');
+        const hasCrtActive = document.body.classList.contains('crt-active');
 
         return {
-          offActive,
-          offOverlayHidden,
-          onActive,
-          onOverlayHidden
+          hasOverlay: Boolean(crtOverlay),
+          hasToggle: Boolean(crtEffectToggle),
+          hasCrtActive
         };
       })()
     `);
 
-    assert.strictEqual(res.offActive, false, 'body should not have crt-active when disabled');
-    assert.strictEqual(res.offOverlayHidden, true, 'overlay should be hidden when disabled');
-    assert.strictEqual(res.onActive, true, 'body should have crt-active when enabled');
-    assert.strictEqual(res.onOverlayHidden, false, 'overlay should be visible when enabled');
+    assert.strictEqual(res.hasOverlay, false, 'crtOverlay element should not exist');
+    assert.strictEqual(res.hasToggle, false, 'crtEffectToggle should not exist');
+    assert.strictEqual(res.hasCrtActive, false, 'body should not have crt-active class');
   });
 
   await t.test('Theme switcher applies theme class to document body', async () => {

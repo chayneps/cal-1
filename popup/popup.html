@@ -6,12 +6,7 @@
   <title>cal-1 - Google Calendar</title>
   <link rel="stylesheet" href="popup.css">
 </head>
-<body class="theme-homebrew crt-active view-quad">
-  <!-- Retro CRT Scanline Overlay -->
-  <div id="crtOverlay" class="crt-overlay" aria-hidden="true">
-    <div class="crt-scanlines"></div>
-  </div>
-
+<body class="theme-homebrew view-quad">
   <div class="calendar-app">
     <!-- Top Header with Spaceship Prompt Brand -->
     <header class="app-header">
@@ -25,14 +20,14 @@
         <div class="spaceship-segments">
           <span class="sp-name">cal-1</span>
           <span class="sp-dir" title="Working directory">~</span>
-          <button id="spCalendarBtn" class="sp-git" type="button" title="Active calendar: main (click to cycle/filter)" aria-label="Active calendar">
+          <button id="spCalendarBtn" class="sp-git" type="button" title="Active calendar: all (click to cycle/filter)" aria-label="Active calendar">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="sp-git-icon" aria-hidden="true">
               <line x1="6" y1="3" x2="6" y2="15"></line>
               <circle cx="18" cy="6" r="3"></circle>
               <circle cx="6" cy="18" r="3"></circle>
               <path d="M18 9a9 9 0 0 1-9 9"></path>
             </svg>
-            <span id="spCalendarName" class="sp-branch">main</span>
+            <span id="spCalendarName" class="sp-branch">all</span>
           </button>
         </div>
       </div>
@@ -207,14 +202,6 @@
                 <option value="obsidian">Obsidian Dark (Blue & Slate)</option>
               </select>
             </label>
-
-            <label class="toggle-setting-row">
-              <div class="toggle-label-wrap">
-                <span class="setting-title">Green Screen CRT Monitor</span>
-                <span class="setting-desc">Scanlines & phosphor bloom</span>
-              </div>
-              <input type="checkbox" id="crtEffectToggle" class="switch-input" checked>
-            </label>
           </div>
 
           <!-- Google Calendar Connection (REST API & OAuth Multi-Calendar) -->
@@ -238,30 +225,6 @@
                   </svg>
                   <span>Sign in with Google</span>
                 </button>
-
-                <!-- Expandable Google Cloud Client ID Config -->
-                <details id="googleClientDetails" class="google-details-collapsible">
-                  <summary class="details-summary">OAuth 2.0 Client ID Configuration</summary>
-                  <div class="details-content">
-                    <p class="section-tip">
-                      To connect your own Google Cloud project:
-                    </p>
-                    <div class="oauth-setup-steps">
-                      <div>1. In Google Cloud Console &rarr; <em>APIs & Services &rarr; Credentials</em>.</div>
-                      <div>2. Create <strong>OAuth client ID</strong> &rarr; Application type: <strong>Web application</strong>.</div>
-                      <div>3. Add this Authorized Redirect URI:</div>
-                      <div class="redirect-uri-row">
-                        <code id="googleRedirectUriText" class="redirect-uri-code"></code>
-                        <button id="copyRedirectUriBtn" type="button" class="icon-btn-text" title="Copy Redirect URI">Copy</button>
-                      </div>
-                      <div>4. Paste your Client ID below:</div>
-                    </div>
-                    <div class="input-with-button" style="margin-top: 6px;">
-                      <input type="text" id="googleClientIdInput" class="text-input" placeholder="e.g. 123456789-xyz.apps.googleusercontent.com">
-                      <button id="saveClientIdBtn" type="button" class="secondary-btn">Save</button>
-                    </div>
-                  </div>
-                </details>
               </div>
 
               <!-- When Connected -->
