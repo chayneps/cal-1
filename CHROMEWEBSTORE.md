@@ -53,10 +53,11 @@ cal-1 communicates directly and exclusively with official Google Calendar APIs. 
 | Asset | Dimensions | Status | Notes |
 |---|---|---|---|
 | Store Icon [REQUIRED] | 128×128 PNG | ✅ Ready | `icons/icon-128.png` |
-| Screenshot 1 [REQUIRED] | 1280×800 or 640×400 | ⬜ To Capture | 4-Month 2×2 overview with Spaceship header |
-| Screenshot 2 [RECOMMENDED] | 1280×800 or 640×400 | ⬜ To Capture | Hover popover showing split schedule details |
-| Screenshot 3 [RECOMMENDED] | 1280×800 or 640×400 | ⬜ To Capture | 1-Month focused view with event indicators |
-| Screenshot 4 [RECOMMENDED] | 1280×800 or 640×400 | ⬜ To Capture | Settings dialog with Google Calendar selection |
+| Screenshot 1 [REQUIRED] | 1280×800 JPEG | ✅ Ready | `store-assets/screenshots/screenshot-1-quad-view.jpg` |
+| Screenshot 2 [RECOMMENDED] | 1280×800 JPEG | ✅ Ready | `store-assets/screenshots/screenshot-2-hover-popover.jpg` |
+| Screenshot 3 [RECOMMENDED] | 1280×800 JPEG | ✅ Ready | `store-assets/screenshots/screenshot-3-single-view.jpg` |
+| Screenshot 4 [RECOMMENDED] | 1280×800 JPEG | ✅ Ready | `store-assets/screenshots/screenshot-4-config-modal.jpg` |
+| Screenshot 5 [RECOMMENDED] | 1280×800 JPEG | ✅ Ready | `store-assets/screenshots/screenshot-5-terminal-themes.jpg` |
 | Small Promo Tile [RECOMMENDED] | 440×280 PNG | ⬜ To Create | Retro terminal logo and headline |
 | Marquee Promo Tile | 1400×560 PNG | ⬜ Optional | For Chrome Web Store home banner |
 
