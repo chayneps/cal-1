@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Paste Google Search Console verification meta tag below this line if needed -->
+  <title>cal-1 — Unix Terminal Calendar for Chrome</title>
+  <meta name="description" content="cal-1 is a lightweight, Unix cal-inspired dropdown calendar Chrome extension with Spaceship prompt, 4-month 2x2 overview, hover schedules, and Google Calendar sync." />
+  <style>
+    :root {
+      --bg: #080b0f;
+      --card: #0f141c;
+      --border: #1e293b;
+      --green: #00ff66;
+      --cyan: #00e5ff;
+      --magenta: #ff55ff;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      line-height: 1.6;
+      padding: 48px 20px;
+    }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .prompt-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .sp-name { color: var(--green); font-weight: 700; }
+    .sp-dir { color: var(--cyan); font-weight: 700; }
+    .sp-branch { color: var(--magenta); font-weight: 700; }
+    h1 {
+      font-size: 36px;
+      color: #ffffff;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      font-size: 17px;
+      color: var(--muted);
+      margin-bottom: 36px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .card h2 {
+      font-size: 16px;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+    .card p {
+      font-size: 13.5px;
+      color: var(--muted);
+    }
+    .footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+    a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="prompt-header">
+      <span class="sp-name">cal-1</span>
+      <span class="sp-dir">~</span>
+      <span>on</span>
+      <span class="sp-branch">main</span>
+    </div>
+
+    <h1>cal-1</h1>
+    <p class="subtitle">
+      Unix <code>cal(1)</code>-inspired dropdown calendar for Google Chrome with Spaceship prompt styling, 4-month 2×2 overview, hover schedule inspection, and Google Calendar &amp; Tasks synchronization.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <h2>4-Month 2×2 Overview</h2>
+        <p>Glance across four consecutive months with Thai daily color coding, blinking today indicator, and smooth directional scan transitions.</p>
+      </div>
+      <div class="card">
+        <h2>Hover Schedule Split</h2>
+        <p>Hover over any date to immediately inspect scheduled events, multi-calendar badges, tasks, and public holidays.</p>
+      </div>
+      <div class="card">
+        <h2>Google Calendar &amp; Tasks</h2>
+        <p>Connect your Google Account to view events from your personal, work, birthday, and task calendars directly in your browser toolbar.</p>
+      </div>
+      <div class="card">
+        <h2>100% Local &amp; Private</h2>
+        <p>Communicates directly with official Google APIs from your browser. All cached events and preferences remain strictly on your device.</p>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div>&copy; 2026 cal-1. Open-source Chrome Extension.</div>
+      <div class="footer-links">
+        <a href="https://chayneps.github.io/cal-1/privacy.html">Privacy Policy</a>
+        <a href="https://chayneps.github.io/cal-1/terms.html">Terms of Service</a>
+        <a href="https://github.com/chayneps/cal-1">GitHub Repository</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

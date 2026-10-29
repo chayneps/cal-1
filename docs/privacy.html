@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — cal-1</title>
+  <style>
+    :root {
+      --bg: #080b0f;
+      --card: #0f141c;
+      --border: #1e293b;
+      --green: #00ff66;
+      --cyan: #00e5ff;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      line-height: 1.7;
+      padding: 48px 20px;
+    }
+    .container { max-width: 780px; margin: 0 auto; }
+    h1 { font-size: 30px; color: #ffffff; margin-bottom: 8px; }
+    .meta { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+    h2 { font-size: 18px; color: var(--green); margin-top: 28px; margin-bottom: 10px; }
+    p, ul { font-size: 14px; color: var(--text); margin-bottom: 14px; }
+    ul { padding-left: 22px; }
+    li { margin-bottom: 6px; }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .nav { margin-bottom: 24px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav"><a href="https://chayneps.github.io/cal-1/">&larr; Back to cal-1 Home</a></div>
+    <h1>Privacy Policy for cal-1</h1>
+    <p class="meta">Last updated: October 28, 2026</p>
+
+    <p><code>cal-1</code> is committed to protecting your privacy. This Privacy Policy explains how data is handled by the <code>cal-1</code> Chrome extension.</p>
+
+    <h2>1. What Data We Access and Collect</h2>
+    <ul>
+      <li><strong>Google Account Profile</strong>: When you connect your Google account, <code>cal-1</code> retrieves your display name and email address strictly to display your connected status in the settings menu.</li>
+      <li><strong>Calendar Feeds &amp; Events</strong>: <code>cal-1</code> accesses your Google Calendars (and optional Google Tasks) via official Google APIs to fetch event titles, start/end dates, color coding, and tasks.</li>
+      <li><strong>User Preferences</strong>: Your chosen calendar filter, visual theme, active view (1-month or 4-month), sync interval, and custom calendar selections are stored.</li>
+    </ul>
+
+    <h2>2. How Data Is Stored</h2>
+    <ul>
+      <li><strong>100% Local Storage</strong>: All calendar events, user preferences, and OAuth tokens are stored locally on your device in your browser's private <code>chrome.storage.local</code>.</li>
+      <li><strong>No External Servers</strong>: <code>cal-1</code> does not operate or communicate with any private developer servers, databases, or analytics services. All network requests are made directly between your browser and official Google API endpoints (<code>https://www.googleapis.com/*</code> and <code>https://accounts.google.com/*</code>).</li>
+    </ul>
+
+    <h2>3. How Data Is Used</h2>
+    <p>The accessed data is used solely to provide core calendar functionality:</p>
+    <ul>
+      <li>Rendering the interactive 1-month and 4-month terminal calendar views.</li>
+      <li>Displaying scheduled events and tasks on hover popovers and daily indicators.</li>
+      <li>Synchronizing event updates on your requested schedule.</li>
+    </ul>
+
+    <h2>4. Data Sharing &amp; Third Parties</h2>
+    <ul>
+      <li><strong>No Third-Party Sharing</strong>: We do <strong>not</strong> sell, rent, trade, or transfer your personal data or calendar contents to any third parties or advertisers.</li>
+      <li><strong>No Telemetry / Analytics</strong>: <code>cal-1</code> does not include tracking pixels, telemetry scripts, or analytics libraries.</li>
+    </ul>
+
+    <h2>5. Google API Limited Use Disclosure</h2>
+    <p><code>cal-1</code>'s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+
+    <h2>6. User Control &amp; Data Deletion</h2>
+    <ul>
+      <li>You can disconnect your Google Account at any time by clicking <strong>Disconnect</strong> in the settings panel. Disconnecting immediately deletes the stored access token and clears all cached Google events from your device.</li>
+      <li>Uninstalling the <code>cal-1</code> extension removes all stored data and preferences from your browser automatically.</li>
+    </ul>
+
+    <h2>7. Contact</h2>
+    <p>If you have any questions or feedback regarding this Privacy Policy, please open an issue on GitHub: <a href="https://github.com/chayneps/cal-1">https://github.com/chayneps/cal-1</a></p>
+  </div>
+</body>
+</html>
