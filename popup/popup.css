@@ -2327,45 +2327,71 @@ body.view-quad .google-calendars-list {
 }
 
 .mini-weekday-col.day-sun {
+  --day-color: var(--thai-sun-bright);
+  --day-glow: rgba(239, 68, 68, 0.85);
+  --day-dim: rgba(239, 68, 68, 0.25);
   background: rgba(239, 68, 68, 0.35);
   border: 1px solid var(--thai-sun-border);
   color: var(--thai-sun-bright);
 }
 .mini-weekday-col.day-mon {
+  --day-color: var(--thai-mon-bright);
+  --day-glow: rgba(234, 179, 8, 0.85);
+  --day-dim: rgba(234, 179, 8, 0.25);
   background: rgba(234, 179, 8, 0.32);
   border: 1px solid var(--thai-mon-border);
   color: var(--thai-mon-bright);
 }
 .mini-weekday-col.day-tue {
+  --day-color: var(--thai-tue-bright);
+  --day-glow: rgba(236, 72, 153, 0.85);
+  --day-dim: rgba(236, 72, 153, 0.25);
   background: rgba(236, 72, 153, 0.35);
   border: 1px solid var(--thai-tue-border);
   color: var(--thai-tue-bright);
 }
 .mini-weekday-col.day-wed {
+  --day-color: var(--thai-wed-bright);
+  --day-glow: rgba(34, 197, 94, 0.85);
+  --day-dim: rgba(34, 197, 94, 0.25);
   background: rgba(34, 197, 94, 0.32);
   border: 1px solid var(--thai-wed-border);
   color: var(--thai-wed-bright);
 }
 .mini-weekday-col.day-thu {
+  --day-color: var(--thai-thu-bright);
+  --day-glow: rgba(249, 115, 22, 0.85);
+  --day-dim: rgba(249, 115, 22, 0.25);
   background: rgba(249, 115, 22, 0.35);
   border: 1px solid var(--thai-thu-border);
   color: var(--thai-thu-bright);
 }
 .mini-weekday-col.day-fri {
+  --day-color: var(--thai-fri-bright);
+  --day-glow: rgba(56, 189, 248, 0.85);
+  --day-dim: rgba(56, 189, 248, 0.25);
   background: rgba(56, 189, 248, 0.32);
   border: 1px solid var(--thai-fri-border);
   color: var(--thai-fri-bright);
 }
 .mini-weekday-col.day-sat {
+  --day-color: var(--thai-sat-bright);
+  --day-glow: rgba(168, 85, 247, 0.85);
+  --day-dim: rgba(168, 85, 247, 0.25);
   background: rgba(168, 85, 247, 0.35);
   border: 1px solid var(--thai-sat-border);
   color: var(--thai-sat-bright);
 }
 
 .mini-weekday-col.is-today {
-  border-color: #ffffff !important;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8) !important;
-  filter: brightness(1.3);
+  border-color: var(--day-color, #ffffff) !important;
+  box-shadow: 0 0 0 1px var(--day-color, #ffffff), 0 0 8px var(--day-glow, rgba(255, 255, 255, 0.8)) !important;
+  z-index: 2;
+}
+
+.mini-weekday-col.today-blinking {
+  animation: weekdayTodayBlink 0.75s ease-in-out infinite !important;
+  z-index: 2;
 }
 
 /* Mini Days Grid */
@@ -2516,6 +2542,15 @@ body.view-quad .google-calendars-list {
   font-size: 9px;
   font-weight: 800;
   box-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+}
+
+.mini-day-cell.today-blinking {
+  animation: todayBlink 0.75s ease-in-out infinite !important;
+  z-index: 4;
+}
+
+.mini-day-cell.today-blinking .mini-day-number {
+  animation: todayNumberBlink 0.75s ease-in-out infinite !important;
 }
 
 /* Mini Cell Top Row (day number on left, event pill on right) */

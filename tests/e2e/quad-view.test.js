@@ -535,4 +535,56 @@ test('E2E Regression: 4-Month 2x2 Zoom View', async (t) => {
     assert.ok(res.toSingleToast.includes('1-Month View'), `Status should indicate 1-Month View: ${res.toSingleToast}`);
     assert.ok(res.toQuadToast.includes('4-Month View'), `Status should indicate 4-Month View: ${res.toQuadToast}`);
   });
+
+  await t.test('Today cell and weekday header blink in 4-month view and stop on user interaction', async () => {
+    const res = await browser.eval(`
+      (async () => {
+        const now = new Date();
+        window.app.viewYear = now.getFullYear();
+        window.app.viewMonth = now.getMonth();
+        window.app.setQuadView(true);
+        await window.app.renderQuadView(false);
+
+        const todayMiniCell = document.querySelector('.mini-day-cell.is-today:not(.other-month)');
+        const todayMiniWeekday = document.querySelector('.mini-weekday-col.is-today');
+
+        const cellBlinkingBefore = todayMiniCell ? todayMiniCell.classList.contains('today-blinking') : false;
+        const weekdayBlinkingBefore = todayMiniWeekday ? todayMiniWeekday.classList.contains('today-blinking') : false;
+
+        const cellAnimName = todayMiniCell ? window.getComputedStyle(todayMiniCell).animationName : '';
+        const weekdayAnimName = todayMiniWeekday ? window.getComputedStyle(todayMiniWeekday).animationName : '';
+
+        window.app.stopTodayBlinking();
+
+        const cellBlinkingAfter = todayMiniCell ? todayMiniCell.classList.contains('today-blinking') : false;
+        const weekdayBlinkingAfter = todayMiniWeekday ? todayMiniWeekday.classList.contains('today-blinking') : false;
+        const cellStillToday = todayMiniCell ? todayMiniCell.classList.contains('is-today') : false;
+        const weekdayStillToday = todayMiniWeekday ? todayMiniWeekday.classList.contains('is-today') : false;
+
+        return {
+          hasTodayMiniCell: !!todayMiniCell,
+          hasTodayMiniWeekday: !!todayMiniWeekday,
+          cellBlinkingBefore,
+          weekdayBlinkingBefore,
+          cellAnimName,
+          weekdayAnimName,
+          cellBlinkingAfter,
+          weekdayBlinkingAfter,
+          cellStillToday,
+          weekdayStillToday
+        };
+      })()
+    `);
+
+    assert.strictEqual(res.hasTodayMiniCell, true, '4-month view must have a .mini-day-cell.is-today');
+    assert.strictEqual(res.hasTodayMiniWeekday, true, '4-month view must have a .mini-weekday-col.is-today');
+    assert.strictEqual(res.cellBlinkingBefore, true, 'Today mini cell should have .today-blinking initially');
+    assert.strictEqual(res.weekdayBlinkingBefore, true, 'Today mini weekday header should have .today-blinking initially');
+    assert.strictEqual(res.cellAnimName, 'todayBlink', 'Today mini cell should run todayBlink animation');
+    assert.strictEqual(res.weekdayAnimName, 'weekdayTodayBlink', 'Today mini weekday should run weekdayTodayBlink animation');
+    assert.strictEqual(res.cellBlinkingAfter, false, 'Today mini cell should stop blinking on user interaction');
+    assert.strictEqual(res.weekdayBlinkingAfter, false, 'Today mini weekday should stop blinking on user interaction');
+    assert.strictEqual(res.cellStillToday, true, 'Today mini cell must remain .is-today after blinking stops');
+    assert.strictEqual(res.weekdayStillToday, true, 'Today mini weekday must remain .is-today after blinking stops');
+  });
 });

@@ -667,7 +667,7 @@ class DarkCalApp {
       this.updateStatus(false, this.events.length);
       this.renderMonthGrid();
       if (this.isQuadView) {
-        await this.renderQuadView(false);
+        await this.renderQuadView(true);
       }
 
       if (!stored.savedGoogleEvents || stored.savedGoogleEvents.length === 0) {
@@ -684,7 +684,7 @@ class DarkCalApp {
       this.updateStatus(false, this.events.length);
       this.renderMonthGrid();
       if (this.isQuadView) {
-        await this.renderQuadView(false);
+        await this.renderQuadView(true);
       }
 
       // Check if cache is stale (older than sync interval) -> perform silent background auto-sync!
@@ -1705,9 +1705,13 @@ class DarkCalApp {
     }
 
     if (currentToken !== this.quadRenderToken) return;
+    if (this.quadBlinkTimeout) {
+      clearTimeout(this.quadBlinkTimeout);
+      this.quadBlinkTimeout = null;
+    }
     this.quadMonthContainer.replaceChildren(fragment);
 
-    // Clean up temporary scan animation classes after sequence finishes
+    // Clean up temporary scan animation classes after sequence finishes & trigger today blinking
     if (animate) {
       if (this.quadAnimationTimer) clearTimeout(this.quadAnimationTimer);
       this.quadAnimationTimer = setTimeout(() => {
@@ -1717,6 +1721,12 @@ class DarkCalApp {
           el.style.animationDelay = '';
         });
       }, 1300);
+
+      this.quadBlinkTimeout = setTimeout(() => {
+        this.startQuadTodayBlinking();
+      }, 1225);
+    } else {
+      this.startQuadTodayBlinking();
     }
   }
 
@@ -2369,7 +2379,14 @@ class DarkCalApp {
       clearTimeout(this.todayBlinkTimeout);
       this.todayBlinkTimeout = null;
     }
-    this.stopTodayBlinking();
+    if (this.activeTodayCell) {
+      this.activeTodayCell.classList.remove('today-blinking');
+      this.activeTodayCell = null;
+    }
+    if (this.activeTodayHeaderCol) {
+      this.activeTodayHeaderCol.classList.remove('today-blinking');
+      this.activeTodayHeaderCol = null;
+    }
 
     // Reset any previous is-today / today-blinking classes on weekday headers
     if (this.weekdayHeader) {
@@ -2495,6 +2512,32 @@ class DarkCalApp {
       todayHeaderCol.classList.add('is-today', 'today-blinking');
     }
 
+    this.bindTodayInteractionListeners();
+  }
+
+  startQuadTodayBlinking() {
+    if (!this.quadMonthContainer) return;
+    const miniTodayCell = this.quadMonthContainer.querySelector('.mini-day-cell.is-today:not(.other-month)');
+    const miniTodayHeaderCol = this.quadMonthContainer.querySelector('.mini-weekday-col.is-today');
+    if (!miniTodayCell && !miniTodayHeaderCol) return;
+
+    if (miniTodayCell) {
+      this.activeQuadTodayCell = miniTodayCell;
+      miniTodayCell.classList.add('is-today', 'today-blinking');
+    }
+    if (miniTodayHeaderCol) {
+      this.activeQuadTodayHeaderCol = miniTodayHeaderCol;
+      miniTodayHeaderCol.classList.add('is-today', 'today-blinking');
+    }
+
+    this.bindTodayInteractionListeners();
+  }
+
+  bindTodayInteractionListeners() {
+    if (this.todayInteractionCleanup) {
+      this.todayInteractionCleanup();
+    }
+
     const onUserInteraction = (e) => {
       // Ignore phantom mousemoves with no actual displacement
       if (e.type === 'mousemove' && e.movementX === 0 && e.movementY === 0) {
@@ -2532,6 +2575,21 @@ class DarkCalApp {
       this.activeTodayHeaderCol.classList.remove('today-blinking');
       this.activeTodayHeaderCol.classList.add('is-today');
       this.activeTodayHeaderCol = null;
+    }
+    if (this.activeQuadTodayCell) {
+      this.activeQuadTodayCell.classList.remove('today-blinking');
+      this.activeQuadTodayCell.classList.add('is-today');
+      this.activeQuadTodayCell = null;
+    }
+    if (this.activeQuadTodayHeaderCol) {
+      this.activeQuadTodayHeaderCol.classList.remove('today-blinking');
+      this.activeQuadTodayHeaderCol.classList.add('is-today');
+      this.activeQuadTodayHeaderCol = null;
+    }
+    if (this.quadMonthContainer) {
+      this.quadMonthContainer.querySelectorAll('.today-blinking').forEach(el => {
+        el.classList.remove('today-blinking');
+      });
     }
   }
 

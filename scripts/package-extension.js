@@ -5,7 +5,11 @@ const { execSync } = require('child_process');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DIST_DIR = path.resolve(ROOT_DIR, 'dist');
-const ZIP_FILE = path.join(DIST_DIR, 'cal-1-v1.zip');
+const manifestRaw = fs.readFileSync(path.join(ROOT_DIR, 'manifest.json'), 'utf8');
+const manifest = JSON.parse(manifestRaw);
+const VERSION = manifest.version || '2';
+const ZIP_NAME = `cal-1-v${VERSION}.zip`;
+const ZIP_FILE = path.join(DIST_DIR, ZIP_NAME);
 const STAGING_DIR = path.join(DIST_DIR, 'staging');
 
 if (!fs.existsSync(DIST_DIR)) {
@@ -21,11 +25,9 @@ if (fs.existsSync(STAGING_DIR)) {
 }
 fs.mkdirSync(STAGING_DIR, { recursive: true });
 
-console.log('📦 Packaging cal-1 extension for distribution...\n');
+console.log(`📦 Packaging cal-1 v${VERSION} extension for distribution...\n`);
 
 // 1. Prepare clean manifest.json without "key" (Chrome Web Store rejects manifests with "key")
-const manifestRaw = fs.readFileSync(path.join(ROOT_DIR, 'manifest.json'), 'utf8');
-const manifest = JSON.parse(manifestRaw);
 delete manifest.key;
 fs.writeFileSync(path.join(STAGING_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
@@ -54,7 +56,7 @@ const stats = fs.statSync(ZIP_FILE);
 const sizeKb = (stats.size / 1024).toFixed(1);
 
 console.log(`\n✅ Successfully generated clean release archive:`);
-console.log(`   File: dist/cal-1-v1.zip (${sizeKb} KB)`);
+console.log(`   File: dist/${ZIP_NAME} (${sizeKb} KB)`);
 console.log(`\n🚀 This ZIP is ready to:`);
 console.log(`   1. Upload directly to the Chrome Web Store Developer Dashboard (No "key" field error)`);
 console.log(`   2. Attach to a GitHub Release for direct ZIP download`);
