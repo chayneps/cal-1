@@ -20,6 +20,7 @@ const CHROME_BIN = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
   const server = http.createServer((req, res) => {
     let p = path.join(ROOT_DIR, req.url.split('?')[0]);
     if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+      res.setHeader('Cache-Control', 'no-store');
       if (p.endsWith('.html')) res.setHeader('Content-Type', 'text/html');
       else if (p.endsWith('.png')) res.setHeader('Content-Type', 'image/png');
       else if (p.endsWith('.css')) res.setHeader('Content-Type', 'text/css');
@@ -80,6 +81,20 @@ const CHROME_BIN = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 
   await send('Runtime.enable');
   await send('Page.enable');
+  // Allow iframes and popup apps to load
+  await new Promise(r => setTimeout(r, 1200));
+
+  await send('Runtime.evaluate', {
+    expression: `(() => {
+      document.querySelectorAll('iframe').forEach(f => {
+        try {
+          if (f.contentWindow && f.contentWindow.app) {
+            f.contentWindow.app.closeSettings();
+          }
+        } catch {}
+      });
+    })()`
+  });
   await new Promise(r => setTimeout(r, 600));
 
   // 3. Capture Small Promo Tile (440 x 280)

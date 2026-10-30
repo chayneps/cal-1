@@ -2295,6 +2295,7 @@ body.keyboard-nav .day-cell.other-month:hover {
   box-shadow: var(--glow-green) !important;
 }
 
+html:has(body.view-quad),
 body.view-quad {
   --app-width: 650px;
   --app-height: 520px;

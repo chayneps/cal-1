@@ -18,136 +18,162 @@
       background: #000;
     }
 
-    /* Small Promo Tile: 440 x 280 */
+    /* -------------------------------------------------------------
+       Small Promo Tile: 440 x 280
+       ------------------------------------------------------------- */
     #promoSmall {
       width: 440px;
       height: 280px;
       position: relative;
-      background: radial-gradient(circle at 50% 15%, #182230 0%, #0a0d13 85%);
+      background: radial-gradient(circle at 35% 20%, #151e2b 0%, #07090d 90%);
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 24px 20px;
-      border: 1px solid #1f2937;
+      justify-content: space-between;
+      padding: 16px 14px 16px 18px;
+      border: 1px solid #1e2633;
       overflow: hidden;
     }
 
-    /* Ambient background grid */
     .ambient-grid {
       position: absolute;
       inset: 0;
       background-image: 
-        linear-gradient(to right, rgba(0, 255, 100, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 255, 100, 0.05) 1px, transparent 1px);
-      background-size: 20px 20px;
-      mask-image: radial-gradient(circle at 50% 40%, black 40%, transparent 85%);
+        linear-gradient(to right, rgba(0, 255, 100, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 255, 100, 0.04) 1px, transparent 1px);
+      background-size: 16px 16px;
+      mask-image: radial-gradient(circle at 40% 40%, black 40%, transparent 85%);
       pointer-events: none;
     }
 
-    .glow-orb {
+    .glow-orb-small {
       position: absolute;
-      top: 20%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 200px;
-      height: 120px;
-      background: radial-gradient(ellipse at center, rgba(0, 255, 100, 0.18) 0%, transparent 70%);
-      filter: blur(24px);
+      top: 30%;
+      left: 20%;
+      width: 180px;
+      height: 140px;
+      background: radial-gradient(ellipse at center, rgba(0, 255, 100, 0.15) 0%, transparent 70%);
+      filter: blur(28px);
       pointer-events: none;
     }
 
-    .icon-wrap {
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 255, 100, 0.35);
-      position: relative;
-      z-index: 2;
-      margin-bottom: 12px;
-      background: #111;
+    /* Left branding column */
+    .small-left {
+      width: 175px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .icon-wrap img {
-      width: 100%;
-      height: 100%;
-      border-radius: 18px;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 2;
     }
 
-    .brand-title {
-      font-family: "Courier New", Courier, monospace;
-      font-size: 28px;
-      font-weight: 800;
-      color: #00ff66;
-      text-shadow: 0 0 16px rgba(0, 255, 102, 0.6);
-      letter-spacing: -0.5px;
-      margin-bottom: 4px;
-      z-index: 2;
+    .small-brand-header {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .brand-arrow {
-      color: #ff007f;
-      text-shadow: 0 0 12px rgba(255, 0, 127, 0.7);
+
+    .small-app-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 255, 100, 0.3);
+      flex-shrink: 0;
     }
 
-    .tagline {
-      font-size: 13px;
-      font-weight: 500;
-      color: #94a3b8;
-      margin-bottom: 14px;
-      z-index: 2;
-      text-align: center;
-      letter-spacing: 0.2px;
-    }
-
-    .badges-row {
+    .small-title {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 20px;
+      font-weight: 800;
+      color: #00ff66;
+      text-shadow: 0 0 12px rgba(0, 255, 102, 0.5);
+      letter-spacing: -0.5px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      z-index: 2;
+      gap: 5px;
     }
+    .brand-arrow {
+      color: #ff007f;
+      text-shadow: 0 0 10px rgba(255, 0, 127, 0.7);
+    }
+
+    .small-tagline {
+      font-size: 11px;
+      line-height: 1.35;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .small-pills {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
     .pill {
-      font-size: 9.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
       font-weight: 700;
       padding: 3px 8px;
       border-radius: 9999px;
-      letter-spacing: 0.3px;
-    }
-    .pill-cyan {
-      background: rgba(0, 229, 229, 0.12);
-      border: 1px solid rgba(0, 229, 229, 0.4);
-      color: #00e5e5;
+      letter-spacing: 0.2px;
+      width: fit-content;
     }
     .pill-green {
-      background: rgba(0, 255, 100, 0.12);
-      border: 1px solid rgba(0, 255, 100, 0.4);
+      background: rgba(0, 255, 100, 0.1);
+      border: 1px solid rgba(0, 255, 100, 0.35);
       color: #00ff66;
     }
-    .pill-gold {
-      background: rgba(234, 179, 8, 0.12);
-      border: 1px solid rgba(234, 179, 8, 0.4);
-      color: #eab308;
+    .pill-cyan {
+      background: rgba(0, 229, 229, 0.1);
+      border: 1px solid rgba(0, 229, 229, 0.35);
+      color: #00e5e5;
     }
 
-    /* Marquee Promo Tile: 1400 x 560 */
+    /* Right app screenshot container */
+    .small-right {
+      position: relative;
+      z-index: 2;
+      width: 252px;
+      height: 202px;
+      border-radius: 7px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 255, 100, 0.45);
+      box-shadow: 
+        0 14px 35px rgba(0, 0, 0, 0.9),
+        0 0 16px rgba(0, 255, 100, 0.25);
+      background: #0c1017;
+      display: block;
+    }
+
+    .small-right iframe {
+      width: 650px !important;
+      min-width: 650px !important;
+      max-width: 650px !important;
+      height: 520px !important;
+      min-height: 520px !important;
+      border: none;
+      transform: scale(0.3876);
+      transform-origin: top left;
+      pointer-events: none;
+      display: block;
+    }
+
+    /* -------------------------------------------------------------
+       Marquee Promo Tile: 1400 x 560
+       ------------------------------------------------------------- */
     #promoMarquee {
       width: 1400px;
       height: 560px;
       position: relative;
-      background: radial-gradient(circle at 60% 40%, #151e2b 0%, #07090d 85%);
+      background: radial-gradient(circle at 65% 35%, #16202d 0%, #06080b 85%);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 100px;
+      padding: 0 70px 0 80px;
+      border: 1px solid #1a222d;
       overflow: hidden;
-    }
-
-    #promoMarquee .ambient-grid {
-      background-size: 32px 32px;
     }
 
     .marquee-left {
@@ -155,7 +181,7 @@
       flex-direction: column;
       gap: 16px;
       z-index: 2;
-      max-width: 620px;
+      max-width: 660px;
     }
 
     .prompt-chip {
@@ -163,7 +189,7 @@
       align-items: center;
       gap: 8px;
       padding: 6px 14px;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.55);
       border: 1px solid rgba(0, 255, 100, 0.3);
       border-radius: 6px;
       font-family: "Courier New", Courier, monospace;
@@ -177,14 +203,14 @@
 
     .marquee-title {
       font-family: "Courier New", Courier, monospace;
-      font-size: 64px;
+      font-size: 60px;
       font-weight: 800;
       color: #00ff66;
       text-shadow: 0 0 35px rgba(0, 255, 102, 0.5);
       line-height: 1;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .marquee-desc {
@@ -197,34 +223,44 @@
     .marquee-pills {
       display: flex;
       gap: 10px;
-      margin-top: 8px;
+      margin-top: 6px;
     }
     .marquee-pills .pill {
       font-size: 13px;
       padding: 6px 14px;
     }
+    .pill-gold {
+      background: rgba(234, 179, 8, 0.12);
+      border: 1px solid rgba(234, 179, 8, 0.4);
+      color: #eab308;
+    }
 
     .marquee-right {
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       position: relative;
+      z-index: 2;
+      width: 618px;
+      height: 494px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1.5px solid rgba(0, 255, 100, 0.45);
+      box-shadow: 
+        0 25px 65px rgba(0, 0, 0, 0.9),
+        0 0 35px rgba(0, 255, 100, 0.3);
+      background: #0c1017;
+      display: block;
     }
-    .marquee-icon-wrap {
-      width: 240px;
-      height: 240px;
-      border-radius: 54px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 50px rgba(0, 255, 100, 0.35);
-      background: #111;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .marquee-icon-wrap img {
-      width: 100%;
-      height: 100%;
-      border-radius: 54px;
+
+    .marquee-right iframe {
+      width: 650px !important;
+      min-width: 650px !important;
+      max-width: 650px !important;
+      height: 520px !important;
+      min-height: 520px !important;
+      border: none;
+      transform: scale(0.95);
+      transform-origin: top left;
+      pointer-events: none;
+      display: block;
     }
   </style>
 </head>
@@ -233,31 +269,36 @@
   <!-- Small Promo Tile (440 x 280) -->
   <div id="promoSmall">
     <div class="ambient-grid"></div>
-    <div class="glow-orb"></div>
+    <div class="glow-orb-small"></div>
 
-    <div class="icon-wrap">
-      <img src="../icons/icon-128.png" alt="cal-1 icon">
+    <div class="small-left">
+      <div class="small-brand-header">
+        <img class="small-app-icon" src="../icons/icon-128.png" alt="icon">
+        <div class="small-title">
+          <span class="brand-arrow">➜</span>
+          <span>cal-1</span>
+        </div>
+      </div>
+
+      <div class="small-tagline">
+        Unix cal & Spaceship Prompt for Chrome
+      </div>
+
+      <div class="small-pills">
+        <span class="pill pill-green">✓ 4-Month 2×2 View</span>
+        <span class="pill pill-cyan">✓ Google Sync</span>
+      </div>
     </div>
 
-    <div class="brand-title">
-      <span class="brand-arrow">➜</span>
-      <span>cal-1</span>
-    </div>
-
-    <div class="tagline">
-      Unix cal & Spaceship Prompt for Chrome
-    </div>
-
-    <div class="badges-row">
-      <span class="pill pill-green">4-Month 2×2</span>
-      <span class="pill pill-cyan">Google Sync</span>
-      <span class="pill pill-gold">100% Local</span>
+    <!-- App Screen Mockup (No Chrome frame) -->
+    <div class="small-right">
+      <iframe width="650" height="520" src="../popup/popup.html"></iframe>
     </div>
   </div>
 
   <!-- Marquee Promo Tile (1400 x 560) -->
   <div id="promoMarquee" style="margin-top: 40px;">
-    <div class="ambient-grid"></div>
+    <div class="ambient-grid" style="background-size: 28px 28px;"></div>
 
     <div class="marquee-left">
       <div class="prompt-chip">
@@ -279,14 +320,13 @@
       <div class="marquee-pills">
         <span class="pill pill-green">4-Month 2×2 Overview</span>
         <span class="pill pill-cyan">Google Calendar &amp; Tasks</span>
-        <span class="pill pill-gold">Private &amp; Offline Ready</span>
+        <span class="pill pill-gold">100% Local &amp; Private</span>
       </div>
     </div>
 
+    <!-- App Screen Mockup (No Chrome frame) -->
     <div class="marquee-right">
-      <div class="marquee-icon-wrap">
-        <img src="../icons/icon-128.png" alt="cal-1 icon">
-      </div>
+      <iframe width="650" height="520" src="../popup/popup.html"></iframe>
     </div>
   </div>
 
