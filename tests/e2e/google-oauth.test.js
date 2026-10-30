@@ -373,4 +373,98 @@ test('E2E Regression: Google Calendar REST API & Multi-Calendar UI', async (t) =
     assert.strictEqual(res.isCollapsedAfterClick, true, 'Section header click should collapse section');
     assert.strictEqual(res.isCollapsedAfterSecondClick, false, 'Second click should uncollapse section');
   });
+
+  await t.test('First login selects only Primary calendar, while relogin preserves selections', async () => {
+    const res = await browser.eval(`
+      (async () => {
+        const { Storage } = await import('../../lib/storage.js');
+        const rawCalendars = [
+          { id: 'primary-cal', summary: 'Personal (Primary)', primary: true, selected: true },
+          { id: 'work-cal', summary: 'Work Meetings', primary: false, selected: true },
+          { id: 'holidays-cal', summary: 'Holidays', primary: false, selected: true }
+        ];
+
+        // 1. First login scenario (no stored user email)
+        await Storage.remove(['googleUserEmail', 'googleCalendars']);
+        let firstLoginCals = JSON.parse(JSON.stringify(rawCalendars));
+        
+        const stored1 = await Storage.get(['googleUserEmail', 'googleCalendars']);
+        const isRelogin1 = Boolean(
+          stored1.googleUserEmail &&
+          stored1.googleUserEmail.toLowerCase() === 'user@example.com'.toLowerCase() &&
+          Array.isArray(stored1.googleCalendars) &&
+          stored1.googleCalendars.length > 0
+        );
+
+        if (!isRelogin1) {
+          const hasPrimary = firstLoginCals.some(c => c.primary);
+          firstLoginCals.forEach((c, idx) => {
+            c.selected = hasPrimary ? Boolean(c.primary) : (idx === 0);
+          });
+        }
+
+        // 2. User customizes selections (selects work too) and saves
+        firstLoginCals[1].selected = true; // user checked work
+        await Storage.set({
+          googleUserEmail: 'user@example.com',
+          googleCalendars: firstLoginCals
+        });
+
+        // 3. Relogin to same account
+        let reloginCals = JSON.parse(JSON.stringify(rawCalendars));
+        const stored2 = await Storage.get(['googleUserEmail', 'googleCalendars']);
+        const isRelogin2 = Boolean(
+          stored2.googleUserEmail &&
+          stored2.googleUserEmail.toLowerCase() === 'user@example.com'.toLowerCase() &&
+          Array.isArray(stored2.googleCalendars) &&
+          stored2.googleCalendars.length > 0
+        );
+
+        if (isRelogin2) {
+          const prevMap = new Map((stored2.googleCalendars || []).map(c => [c.id, c.selected]));
+          reloginCals.forEach(c => {
+            if (prevMap.has(c.id)) {
+              c.selected = prevMap.get(c.id);
+            }
+          });
+        }
+
+        // 4. Login with a NEW Google account
+        let newAccountCals = JSON.parse(JSON.stringify(rawCalendars));
+        const isRelogin3 = Boolean(
+          stored2.googleUserEmail &&
+          stored2.googleUserEmail.toLowerCase() === 'newperson@example.com'.toLowerCase() &&
+          Array.isArray(stored2.googleCalendars) &&
+          stored2.googleCalendars.length > 0
+        );
+
+        if (!isRelogin3) {
+          const hasPrimary = newAccountCals.some(c => c.primary);
+          newAccountCals.forEach((c, idx) => {
+            c.selected = hasPrimary ? Boolean(c.primary) : (idx === 0);
+          });
+        }
+
+        return {
+          firstLoginPrimarySelected: firstLoginCals[0].selected,
+          firstLoginWorkSelected: firstLoginCals[1].selected,
+          firstLoginHolidaysSelected: firstLoginCals[2].selected,
+          reloginPrimarySelected: reloginCals[0].selected,
+          reloginWorkSelected: reloginCals[1].selected,
+          reloginHolidaysSelected: reloginCals[2].selected,
+          newAccountPrimarySelected: newAccountCals[0].selected,
+          newAccountWorkSelected: newAccountCals[1].selected,
+          newAccountHolidaysSelected: newAccountCals[2].selected
+        };
+      })()
+    `);
+
+    assert.strictEqual(res.firstLoginPrimarySelected, true, 'First login must select Primary');
+    assert.strictEqual(res.firstLoginHolidaysSelected, false, 'First login must NOT select secondary calendar');
+    assert.strictEqual(res.reloginPrimarySelected, true, 'Relogin preserves Primary selection');
+    assert.strictEqual(res.reloginWorkSelected, true, 'Relogin preserves user-customized work selection');
+    assert.strictEqual(res.reloginHolidaysSelected, false, 'Relogin preserves user-customized holidays unselected');
+    assert.strictEqual(res.newAccountPrimarySelected, true, 'New account login must select Primary');
+    assert.strictEqual(res.newAccountWorkSelected, false, 'New account login must NOT select work');
+  });
 });

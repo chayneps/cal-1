@@ -774,6 +774,31 @@ class DarkCalApp {
   }
 
   /**
+   * Scrolls the Settings modal body down to the "Calendars in this account" list.
+   */
+  scrollCalendarSelectionIntoView() {
+    const modalBody = this.settingsModal ? this.settingsModal.querySelector('.modal-body') : null;
+    const target = this.googleCalendarsList || document.querySelector('.account-calendars-section');
+    if (!modalBody || !target) return;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const bodyRect = modalBody.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        if (!bodyRect.height) return;
+
+        const scale = modalBody.offsetHeight / bodyRect.height || 1;
+        const targetOffset = (targetRect.top - bodyRect.top) * scale + modalBody.scrollTop;
+        const top = Math.max(0, targetOffset - 16);
+
+        const reduceMotion = typeof window.matchMedia === 'function'
+          && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        modalBody.scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' });
+      });
+    });
+  }
+
+  /**
    * Ends first-run onboarding (on Settings close or successful sign-in) so it never shows again.
    */
   completeOnboarding() {
@@ -1275,6 +1300,7 @@ class DarkCalApp {
 
         this.showGoogleConnectedState(true);
         this.renderGoogleCalendarsList();
+        this.scrollCalendarSelectionIntoView();
         if (bgRes.syncError) {
           this.showGoogleStatus(`Connected, but calendar sync failed: ${bgRes.syncError}`, 'error');
         } else {
@@ -1333,6 +1359,34 @@ class DarkCalApp {
       } catch (cErr) {
         console.warn('Could not fetch calendars list:', cErr);
       }
+
+      // Check if relogin to same account vs first login / new account
+      const stored = await Storage.get(['googleUserEmail', 'googleCalendars']);
+      const isRelogin = Boolean(
+        stored.googleUserEmail &&
+        stored.googleUserEmail.toLowerCase() === this.googleUserEmail.toLowerCase() &&
+        Array.isArray(stored.googleCalendars) &&
+        stored.googleCalendars.length > 0
+      );
+
+      if (isRelogin) {
+        const prevMap = new Map((stored.googleCalendars || []).map(c => [c.id, c.selected]));
+        calendars.forEach(c => {
+          if (prevMap.has(c.id)) {
+            c.selected = prevMap.get(c.id);
+          }
+        });
+      } else {
+        // First login or new Google account: select only the Primary calendar
+        const hasPrimary = calendars.some(c => c.primary);
+        calendars.forEach((c, idx) => {
+          if (hasPrimary) {
+            c.selected = Boolean(c.primary);
+          } else {
+            c.selected = (idx === 0);
+          }
+        });
+      }
       this.googleCalendars = calendars;
 
       // Update state
@@ -1356,6 +1410,7 @@ class DarkCalApp {
 
       this.showGoogleConnectedState(true);
       this.renderGoogleCalendarsList();
+      this.scrollCalendarSelectionIntoView();
       this.showGoogleStatus('');
 
       // Fetch events

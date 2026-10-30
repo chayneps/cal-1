@@ -137,8 +137,55 @@ async function handleBackgroundGoogleSignIn(clientId) {
     }];
   }
 
-  const stored = await chrome.storage.local.get(['customCalendarName', 'calendarName', 'activeCalendarFilter']);
-  const calendarName = stored.customCalendarName || stored.calendarName || 'all';
+  const stored = await chrome.storage.local.get([
+    'customCalendarName',
+    'calendarName',
+    'activeCalendarFilter',
+    'googleUserEmail',
+    'googleCalendars'
+  ]);
+
+  // Check if relogin to same account vs first login / new account
+  const isRelogin = Boolean(
+    stored.googleUserEmail &&
+    stored.googleUserEmail.toLowerCase() === userEmail.toLowerCase() &&
+    Array.isArray(stored.googleCalendars) &&
+    stored.googleCalendars.length > 0
+  );
+
+  if (isRelogin) {
+    // Preserve existing calendar selections on relogin
+    const prevMap = new Map((stored.googleCalendars || []).map(c => [c.id, c.selected]));
+    calendars.forEach(c => {
+      if (prevMap.has(c.id)) {
+        c.selected = prevMap.get(c.id);
+      }
+    });
+  } else {
+    // First login or new Google account: select ONLY Primary calendar
+    const hasPrimary = calendars.some(c => c.primary);
+    calendars.forEach((c, idx) => {
+      if (hasPrimary) {
+        c.selected = Boolean(c.primary);
+      } else {
+        c.selected = (idx === 0);
+      }
+    });
+  }
+
+  // Determine calendar display name
+  const selectedCals = calendars.filter(c => c.selected !== false);
+  let computedCalendarName = 'all';
+  if (selectedCals.length === 0) {
+    computedCalendarName = 'none';
+  } else if (selectedCals.length <= 3) {
+    computedCalendarName = selectedCals.map(c => {
+      let name = c.summary || 'cal';
+      if (name.includes('@')) name = name.split('@')[0].trim();
+      return name || 'cal';
+    }).join('+');
+  }
+  const calendarName = stored.customCalendarName || computedCalendarName;
 
   let events = [];
   try {
