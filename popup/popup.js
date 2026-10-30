@@ -117,6 +117,7 @@ class DarkCalApp {
     this.googleAccountEmail = document.getElementById('googleAccountEmail');
     this.googleCalendarsList = document.getElementById('googleCalendarsList');
     this.googleAuthStatus = document.getElementById('googleAuthStatus');
+    this.exploreDemoBtn = document.getElementById('exploreDemoBtn');
   }
 
   bindEvents() {
@@ -272,6 +273,19 @@ class DarkCalApp {
     // Google OAuth Events
     if (this.googleSignInBtn) {
       this.googleSignInBtn.addEventListener('click', () => this.handleGoogleSignIn());
+    }
+    if (this.exploreDemoBtn) {
+      this.exploreDemoBtn.addEventListener('click', () => {
+        this.useDemoData = true;
+        if (this.demoModeToggle) {
+          this.demoModeToggle.checked = true;
+        }
+        Storage.set({ useDemoData: true });
+        this.loadCalendarData();
+        this.completeOnboarding();
+        this.closeSettings();
+        this.showToast('cal-1 ➜ Exploring with Demo Calendar');
+      });
     }
     if (this.googleDisconnectBtn) {
       this.googleDisconnectBtn.addEventListener('click', () => this.handleGoogleDisconnect());
@@ -553,7 +567,8 @@ class DarkCalApp {
       'googleUserName',
       'googleCalendars',
       'savedGoogleEvents',
-      'googleSyncError'
+      'googleSyncError',
+      'onboardingDone'
     ]);
 
     this.theme = stored.theme || 'homebrew';
@@ -700,8 +715,77 @@ class DarkCalApp {
       this.loadCalendarData();
     }
 
-    this.focusCommandLine();
-    requestAnimationFrame(() => this.focusCommandLine());
+    // First-run onboarding: brand-new users (no Google account / iCal feed yet) land
+    // directly on Settings with the "Sign in with Google" button centered and highlighted.
+    const isConfigured = Boolean(this.googleAuthToken || this.icalUrl);
+    if (!stored.onboardingDone && isConfigured) {
+      Storage.set({ onboardingDone: true });
+    }
+    if (!stored.onboardingDone && !isConfigured) {
+      this.startOnboarding();
+    } else {
+      this.focusCommandLine();
+      requestAnimationFrame(() => this.focusCommandLine());
+    }
+  }
+
+  /**
+   * Opens Settings for first-time users and guides them to the Google Sign-In button.
+   */
+  startOnboarding() {
+    this.isOnboarding = true;
+    this.openSettings();
+    if (this.googleSignInBtn) {
+      this.googleSignInBtn.classList.add('onboarding-pulse');
+    }
+    this.showGoogleStatus('👋 Welcome to cal-1! Sign in with Google or continue with Demo Mode.', 'info');
+
+    // Wait for the modal to lay out before measuring and scrolling
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.scrollSignInIntoCenter();
+        if (this.googleSignInBtn) {
+          this.googleSignInBtn.focus({ preventScroll: true });
+        }
+      });
+    });
+  }
+
+  /**
+   * Scrolls the Settings modal body so the Google Sign-In button sits in the vertical middle.
+   */
+  scrollSignInIntoCenter() {
+    const modalBody = this.settingsModal ? this.settingsModal.querySelector('.modal-body') : null;
+    const target = this.googleSignInBtn;
+    if (!modalBody || !target) return;
+
+    const bodyRect = modalBody.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    if (!bodyRect.height) return;
+
+    // Compensate for any transform scale applied during the modal entrance animation
+    const scale = modalBody.offsetHeight / bodyRect.height || 1;
+    const targetOffset = (targetRect.top - bodyRect.top) * scale + modalBody.scrollTop;
+    const top = Math.max(0, targetOffset - (modalBody.clientHeight - target.offsetHeight) / 2);
+
+    const reduceMotion = typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    modalBody.scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
+
+  /**
+   * Ends first-run onboarding (on Settings close or successful sign-in) so it never shows again.
+   */
+  completeOnboarding() {
+    if (this.googleSignInBtn) {
+      this.googleSignInBtn.classList.remove('onboarding-pulse');
+    }
+    if (this.googleAuthStatus && this.googleAuthStatus.classList.contains('info')) {
+      this.showGoogleStatus('');
+    }
+    if (!this.isOnboarding) return;
+    this.isOnboarding = false;
+    Storage.set({ onboardingDone: true });
   }
 
   setTheme(themeName) {
@@ -1138,6 +1222,7 @@ class DarkCalApp {
       });
     }
     if (this.googleSignInBtn) {
+      this.googleSignInBtn.classList.remove('onboarding-pulse');
       this.googleSignInBtn.disabled = true;
       this.googleSignInBtn.textContent = 'Signing in...';
     }
@@ -1203,6 +1288,7 @@ class DarkCalApp {
           await this.renderQuadView(false);
         }
         this.showToast(`Connected as ${this.googleUserEmail}!`);
+        this.completeOnboarding();
         return;
       }
 
@@ -1275,6 +1361,7 @@ class DarkCalApp {
       // Fetch events
       await this.syncGoogleEvents(true);
       this.showToast(`Connected as ${this.googleUserEmail}!`);
+      this.completeOnboarding();
     } catch (err) {
       console.error('Google Sign-In failed:', err);
       const displayMsg = err.diagnostic || err.message;
@@ -3280,6 +3367,9 @@ class DarkCalApp {
 
   closeSettings() {
     this.settingsModal.classList.add('hidden');
+    if (this.isOnboarding) {
+      this.completeOnboarding();
+    }
     this.focusCommandLine();
   }
 }

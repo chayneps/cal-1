@@ -58,8 +58,8 @@ cal-1 communicates directly and exclusively with official Google Calendar APIs. 
 | Screenshot 3 [RECOMMENDED] | 1280×800 JPEG | ✅ Ready | `store-assets/screenshots/screenshot-3-single-view.jpg` |
 | Screenshot 4 [RECOMMENDED] | 1280×800 JPEG | ✅ Ready | `store-assets/screenshots/screenshot-4-config-modal.jpg` |
 | Screenshot 5 [RECOMMENDED] | 1280×800 JPEG | ✅ Ready | `store-assets/screenshots/screenshot-5-terminal-themes.jpg` |
-| Small Promo Tile [RECOMMENDED] | 440×280 PNG | ⬜ To Create | Retro terminal logo and headline |
-| Marquee Promo Tile | 1400×560 PNG | ⬜ Optional | For Chrome Web Store home banner |
+| Small Promo Tile [RECOMMENDED] | 440×280 PNG | ✅ Ready | `store-assets/promo-tile-small-440x280.png` |
+| Marquee Promo Tile | 1400×560 PNG | ✅ Ready | `store-assets/promo-tile-marquee-1400x560.png` |
 
 ---
 

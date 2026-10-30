@@ -13,7 +13,8 @@ const testSuites = [
   { name: 'E2E: Month Navigation, Popovers & Animation', file: 'tests/e2e/navigation.test.js' },
   { name: 'E2E: Appearance, Today Header Sync & Themes', file: 'tests/e2e/appearance.test.js' },
   { name: 'E2E: 4-Month 2×2 Zoom View (cal 4)', file: 'tests/e2e/quad-view.test.js' },
-  { name: 'E2E: Google Calendar REST API & Multi-Calendar UI', file: 'tests/e2e/google-oauth.test.js' }
+  { name: 'E2E: Google Calendar REST API & Multi-Calendar UI', file: 'tests/e2e/google-oauth.test.js' },
+  { name: 'E2E: First-Run Onboarding (Settings + Sign-In)', file: 'tests/e2e/onboarding.test.js' }
 ];
 
 console.log('========================================================');

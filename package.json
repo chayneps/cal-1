@@ -1,7 +1,7 @@
 {
   "name": "cal-1",
   "version": "2",
-  "description": "cal-1 - Terminal-style retro dark mode calendar Chrome extension",
+  "description": "Unix cal-inspired terminal calendar with Spaceship prompt, 4-month view, hover schedules, and Google Calendar sync.",
   "scripts": {
     "test": "node tests/run-tests.js",
     "test:unit": "node --test tests/unit/*.test.js",

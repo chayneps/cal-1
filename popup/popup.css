@@ -1884,6 +1884,70 @@ body.keyboard-nav .day-cell.other-month:hover {
   flex-shrink: 0;
 }
 
+/* Divider between Google Sign-in and Demo option */
+.auth-or-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 4px 0 2px 0;
+  color: var(--text-dim);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.auth-or-divider::before,
+.auth-or-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.auth-or-divider span {
+  padding: 0 8px;
+}
+
+.demo-login-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-subtle);
+}
+
+.demo-login-box .demo-toggle-row {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.explore-demo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background-color: var(--bg-hover);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.explore-demo-btn:hover {
+  background-color: var(--accent-selection);
+  box-shadow: var(--glow-sm);
+}
+
+.explore-demo-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
+
 /* Connected State */
 .google-connected-card {
   display: flex;
@@ -2091,6 +2155,35 @@ body.keyboard-nav .day-cell.other-month:hover {
   background: rgba(0, 255, 0, 0.1);
   border: 1px solid rgba(0, 255, 0, 0.3);
   color: var(--accent-primary);
+}
+.google-status-banner.info {
+  background: rgba(0, 229, 229, 0.1);
+  border: 1px solid rgba(0, 229, 229, 0.4);
+  color: var(--accent-cyan);
+  justify-content: center;
+  text-align: center;
+}
+
+/* First-run onboarding: pulsing glow guides new users to the Sign-In button */
+@keyframes onboardingPulse {
+  0%, 100% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(0, 229, 229, 0.75);
+  }
+  50% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 5px rgba(0, 229, 229, 0);
+  }
+}
+
+.google-sign-in-btn.onboarding-pulse {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+  animation: onboardingPulse 1.4s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .google-sign-in-btn.onboarding-pulse {
+    animation: none;
+  }
 }
 
 .reconnect-inline-btn {

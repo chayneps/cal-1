@@ -10,6 +10,7 @@ class TestBrowser {
     this.port = options.port || 8890;
     this.debugPort = options.debugPort || 9250;
     this.chromeBin = options.chromeBin || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    this.onboarding = Boolean(options.onboarding);
     this.server = null;
     this.chromeProc = null;
     this.ws = null;
@@ -74,6 +75,13 @@ class TestBrowser {
     await this.send('Page.enable');
     // Allow initial app.init() and renders to complete
     await new Promise(r => setTimeout(r, 600));
+
+    // Most suites test the calendar itself, so skip the first-run onboarding (auto-open Settings)
+    // unless a suite explicitly opts in with { onboarding: true }.
+    if (!this.onboarding) {
+      await this.eval(`localStorage.setItem('darkcal_onboardingDone', 'true')`);
+      await this.reload();
+    }
   }
 
   send(method, params = {}) {

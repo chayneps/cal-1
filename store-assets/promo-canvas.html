@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>cal-1 Promotional Tiles Canvas</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, sans-serif;
+      user-select: none;
+      background: #000;
+    }
+
+    /* Small Promo Tile: 440 x 280 */
+    #promoSmall {
+      width: 440px;
+      height: 280px;
+      position: relative;
+      background: radial-gradient(circle at 50% 15%, #182230 0%, #0a0d13 85%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px;
+      border: 1px solid #1f2937;
+      overflow: hidden;
+    }
+
+    /* Ambient background grid */
+    .ambient-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(0, 255, 100, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 255, 100, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+      mask-image: radial-gradient(circle at 50% 40%, black 40%, transparent 85%);
+      pointer-events: none;
+    }
+
+    .glow-orb {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 120px;
+      background: radial-gradient(ellipse at center, rgba(0, 255, 100, 0.18) 0%, transparent 70%);
+      filter: blur(24px);
+      pointer-events: none;
+    }
+
+    .icon-wrap {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 255, 100, 0.35);
+      position: relative;
+      z-index: 2;
+      margin-bottom: 12px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-wrap img {
+      width: 100%;
+      height: 100%;
+      border-radius: 18px;
+    }
+
+    .brand-title {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 28px;
+      font-weight: 800;
+      color: #00ff66;
+      text-shadow: 0 0 16px rgba(0, 255, 102, 0.6);
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-arrow {
+      color: #ff007f;
+      text-shadow: 0 0 12px rgba(255, 0, 127, 0.7);
+    }
+
+    .tagline {
+      font-size: 13px;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-bottom: 14px;
+      z-index: 2;
+      text-align: center;
+      letter-spacing: 0.2px;
+    }
+
+    .badges-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
+    }
+    .pill {
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      letter-spacing: 0.3px;
+    }
+    .pill-cyan {
+      background: rgba(0, 229, 229, 0.12);
+      border: 1px solid rgba(0, 229, 229, 0.4);
+      color: #00e5e5;
+    }
+    .pill-green {
+      background: rgba(0, 255, 100, 0.12);
+      border: 1px solid rgba(0, 255, 100, 0.4);
+      color: #00ff66;
+    }
+    .pill-gold {
+      background: rgba(234, 179, 8, 0.12);
+      border: 1px solid rgba(234, 179, 8, 0.4);
+      color: #eab308;
+    }
+
+    /* Marquee Promo Tile: 1400 x 560 */
+    #promoMarquee {
+      width: 1400px;
+      height: 560px;
+      position: relative;
+      background: radial-gradient(circle at 60% 40%, #151e2b 0%, #07090d 85%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 100px;
+      overflow: hidden;
+    }
+
+    #promoMarquee .ambient-grid {
+      background-size: 32px 32px;
+    }
+
+    .marquee-left {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 2;
+      max-width: 620px;
+    }
+
+    .prompt-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 100, 0.3);
+      border-radius: 6px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 13px;
+      color: #94a3b8;
+      width: fit-content;
+    }
+    .prompt-chip .p-name { color: #00e5e5; font-weight: bold; }
+    .prompt-chip .p-dir { color: #00ff66; }
+    .prompt-chip .p-branch { color: #ff007f; }
+
+    .marquee-title {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 64px;
+      font-weight: 800;
+      color: #00ff66;
+      text-shadow: 0 0 35px rgba(0, 255, 102, 0.5);
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .marquee-desc {
+      font-size: 20px;
+      line-height: 1.45;
+      color: #cbd5e1;
+      font-weight: 400;
+    }
+
+    .marquee-pills {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .marquee-pills .pill {
+      font-size: 13px;
+      padding: 6px 14px;
+    }
+
+    .marquee-right {
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .marquee-icon-wrap {
+      width: 240px;
+      height: 240px;
+      border-radius: 54px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 50px rgba(0, 255, 100, 0.35);
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .marquee-icon-wrap img {
+      width: 100%;
+      height: 100%;
+      border-radius: 54px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Small Promo Tile (440 x 280) -->
+  <div id="promoSmall">
+    <div class="ambient-grid"></div>
+    <div class="glow-orb"></div>
+
+    <div class="icon-wrap">
+      <img src="../icons/icon-128.png" alt="cal-1 icon">
+    </div>
+
+    <div class="brand-title">
+      <span class="brand-arrow">➜</span>
+      <span>cal-1</span>
+    </div>
+
+    <div class="tagline">
+      Unix cal & Spaceship Prompt for Chrome
+    </div>
+
+    <div class="badges-row">
+      <span class="pill pill-green">4-Month 2×2</span>
+      <span class="pill pill-cyan">Google Sync</span>
+      <span class="pill pill-gold">100% Local</span>
+    </div>
+  </div>
+
+  <!-- Marquee Promo Tile (1400 x 560) -->
+  <div id="promoMarquee" style="margin-top: 40px;">
+    <div class="ambient-grid"></div>
+
+    <div class="marquee-left">
+      <div class="prompt-chip">
+        <span class="p-name">cal-1</span>
+        <span class="p-dir">~</span>
+        <span>on</span>
+        <span class="p-branch">⎇ main</span>
+      </div>
+
+      <div class="marquee-title">
+        <span class="brand-arrow">➜</span>
+        <span>cal-1</span>
+      </div>
+
+      <div class="marquee-desc">
+        Unix cal-inspired dropdown calendar with Spaceship prompt styling, 4-month overview, and seamless Google Calendar & Tasks sync.
+      </div>
+
+      <div class="marquee-pills">
+        <span class="pill pill-green">4-Month 2×2 Overview</span>
+        <span class="pill pill-cyan">Google Calendar &amp; Tasks</span>
+        <span class="pill pill-gold">Private &amp; Offline Ready</span>
+      </div>
+    </div>
+
+    <div class="marquee-right">
+      <div class="marquee-icon-wrap">
+        <img src="../icons/icon-128.png" alt="cal-1 icon">
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
