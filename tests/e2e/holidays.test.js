@@ -144,4 +144,59 @@ test('E2E Regression: Public Holidays', async (t) => {
     assert.strictEqual(state.d12Holiday, true, 'Canadian Thanksgiving should be marked as holiday');
     assert.strictEqual(state.d12Star, '*');
   });
+
+  await t.test('Selecting holiday in config immediately updates 4-month quad view and 1-month view after clicking Done', async () => {
+    const res = await browser.eval(`
+      (async () => {
+        // Ensure 4-month view active
+        window.app.setQuadView(true);
+
+        // Open settings, select Thailand (TH), and click Done
+        window.app.openSettings();
+        const sel = document.getElementById('holidayCountrySelect');
+        sel.value = 'TH';
+        sel.dispatchEvent(new Event('change'));
+        await new Promise(r => setTimeout(r, 200));
+
+        document.getElementById('closeModalFooterBtn').click();
+        await new Promise(r => setTimeout(r, 200));
+
+        const thQuadStars = Array.from(document.querySelectorAll('.mini-holiday-star')).map(s => s.title);
+
+        // Open settings, select None (Disabled), and click Done
+        window.app.openSettings();
+        sel.value = '';
+        sel.dispatchEvent(new Event('change'));
+        await new Promise(r => setTimeout(r, 200));
+
+        document.getElementById('closeModalFooterBtn').click();
+        await new Promise(r => setTimeout(r, 200));
+
+        const disabledQuadStars = document.querySelectorAll('.mini-holiday-star').length;
+
+        // In 1-month view, select Thailand again
+        window.app.setQuadView(false);
+        window.app.openSettings();
+        sel.value = 'TH';
+        sel.dispatchEvent(new Event('change'));
+        await new Promise(r => setTimeout(r, 200));
+
+        document.getElementById('closeModalFooterBtn').click();
+        await new Promise(r => setTimeout(r, 200));
+
+        const singleViewThStars = document.querySelectorAll('#monthGrid .holiday-star').length;
+
+        return {
+          thQuadStarsCount: thQuadStars.length,
+          thQuadStars,
+          disabledQuadStars,
+          singleViewThStars
+        };
+      })()
+    `);
+
+    assert.ok(res.thQuadStarsCount > 0, `4-month view must display holiday stars when selected (${res.thQuadStarsCount} found)`);
+    assert.strictEqual(res.disabledQuadStars, 0, '4-month view must remove holiday stars when disabled');
+    assert.ok(res.singleViewThStars > 0, '1-month view must display holiday stars when selected');
+  });
 });

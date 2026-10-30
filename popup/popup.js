@@ -299,6 +299,9 @@ class DarkCalApp {
       await Storage.set({ firstDayOfWeek: this.firstDayOfWeek });
       this.renderWeekdays();
       this.renderMonthGrid();
+      if (this.isQuadView) {
+        await this.renderQuadView(false);
+      }
     });
 
     if (this.holidayCountrySelect) {
@@ -307,6 +310,9 @@ class DarkCalApp {
         await Storage.set({ holidayCountry: this.holidayCountry });
         await this.loadHolidays();
         this.renderMonthGrid();
+        if (this.isQuadView) {
+          await this.renderQuadView(false);
+        }
         const msg = this.holidayCountry
           ? `cal ➜ Holidays: ${this.getCountryDisplayName(this.holidayCountry)}`
           : 'cal ➜ Holidays: Disabled';
@@ -1011,10 +1017,13 @@ class DarkCalApp {
       this.holidaysMap = {};
       return;
     }
-    const currentYearHolidays = await getHolidaysForYear(this.holidayCountry, this.viewYear);
-    const nextH = await getHolidaysForYear(this.holidayCountry, this.viewYear + 1);
-    const prevH = await getHolidaysForYear(this.holidayCountry, this.viewYear - 1);
-    this.holidaysMap = { ...prevH, ...currentYearHolidays, ...nextH };
+    const distinctYears = [this.viewYear - 1, this.viewYear, this.viewYear + 1];
+    const map = {};
+    for (const y of distinctYears) {
+      const yHolidays = await getHolidaysForYear(this.holidayCountry, y);
+      Object.assign(map, yHolidays);
+    }
+    this.holidaysMap = map;
   }
 
   loadCalendarData() {
@@ -1832,10 +1841,14 @@ class DarkCalApp {
     // Ensure holidays loaded for any involved years
     if (this.holidayCountry) {
       const distinctYears = [...new Set(months.map(m => m.year))];
+      const map = {};
       for (const y of distinctYears) {
         const yHolidays = await getHolidaysForYear(this.holidayCountry, y);
-        this.holidaysMap = { ...this.holidaysMap, ...yHolidays };
+        Object.assign(map, yHolidays);
       }
+      this.holidaysMap = map;
+    } else {
+      this.holidaysMap = {};
     }
 
     if (currentToken !== this.quadRenderToken) return;
@@ -2033,6 +2046,7 @@ class DarkCalApp {
 
     const holiday = this.holidaysMap[dayKey] || null;
     if (holiday) {
+      cell.classList.add('is-holiday');
       const starSpan = document.createElement('span');
       starSpan.className = 'mini-holiday-star';
       starSpan.textContent = '*';
@@ -3420,10 +3434,14 @@ class DarkCalApp {
     this.settingsModal.classList.remove('hidden');
   }
 
-  closeSettings() {
+  async closeSettings() {
     this.settingsModal.classList.add('hidden');
     if (this.isOnboarding) {
       this.completeOnboarding();
+    }
+    this.renderMonthGrid();
+    if (this.isQuadView) {
+      await this.renderQuadView(false);
     }
     this.focusCommandLine();
   }
