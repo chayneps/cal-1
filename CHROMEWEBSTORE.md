@@ -10,14 +10,14 @@
 `cal-1`
 
 **Short Description** [REQUIRED] (Max 132 characters)  
-`Unix cal-inspired terminal calendar with Spaceship prompt, 4-month 2x2 view, hover schedules, and Google Calendar sync.`
+`Unix cal-inspired terminal calendar with command line prompt, 4-month 2x2 view, hover schedules, and Google Calendar sync.`
 
 **Detailed Description** [REQUIRED]  
 ```text
-cal-1 brings the speed, minimalism, and aesthetic of the classic Unix cal utility into your Chrome browser, paired with modern Spaceship prompt styling and seamless Google Calendar sync.
+cal-1 brings the speed, minimalism, and aesthetic of the classic Unix cal utility into your Chrome browser, paired with a retro command line prompt and seamless Google Calendar sync.
 
 KEY FEATURES
-• Spaceship Prompt Header: Clean terminal-style prompt indicating the active calendar feed and quick switcher.
+• Command Line Prompt Header: Clean terminal-style prompt indicating the active calendar feed and quick switcher.
 • 4-Month 2×2 Overview: See four consecutive months side by side with uniform grid cards, Thai daily color coding, and directional scan transitions.
 • 1-Month Focused View: Click any month card or use arrow navigation to zoom into a detailed monthly calendar.
 • Full-Width Hover Popover: Hover over any day in 4-month view to immediately inspect scheduled meetings, tasks, and holiday banners.

@@ -45,7 +45,7 @@ const CHROME_BIN = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
   ]);
 
   let tabs = [];
-  for (let i = 0; i < 35; i++) {
+  for (let i = 0; i < 60; i++) {
     await new Promise(r => setTimeout(r, 200));
     try {
       const resp = await fetch(`http://127.0.0.1:${DEBUG_PORT}/json`);
