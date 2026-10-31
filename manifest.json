@@ -4,7 +4,7 @@
   "version": "2",
   "version_name": "v2",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiGznh3U76hLvfTGtClHsTDegBKOh7O//uJ9NzApvxyOAKQk6MkVta54tiz4WruqUdfMh/fmmicn7H4ZHSGIUbzpWduqoapktoPwRMDyXFBliY4eiDyrxc0b0CvuQaP6EvanYrAuPM5ZCdfzK2nyXHHbNMVT7fa7oq7mSWZq1qVF16JNpKMOs9f3bL+icmCX2376bgkPLayPKF+8nwvjW3t0N+YNeNAKv3akzJQnUqU48F1CKr00VNa2e538NK4iYeOGiOUu+uuT4TJRUkf3Pe2xmkzkm4PaIT6yG8SIxLMaiHW+cMwwFPU8cqXZ/cdxvNbWJdXpAYYiZTOUh8J1gRwIDAQAB",
-  "description": "Unix cal-inspired dropdown calendar with command line prompt, 4-month overview, hover schedules, and Google Calendar sync.",
+  "description": "Dropdown calendar designed to look like a Unix terminal with command prompt, 4-month overview, and Google Calendar sync.",
   "permissions": [
     "storage",
     "alarms",

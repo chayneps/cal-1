@@ -24,7 +24,7 @@
 ## 3. How Data Is Used
 
 The accessed data is used solely to provide core calendar functionality:
-- Rendering the interactive 1-month and 4-month terminal calendar views.
+- Rendering the interactive 1-month and 4-month calendar views.
 - Displaying scheduled events and tasks on hover popovers and daily indicators.
 - Synchronizing event updates on your requested schedule.
 

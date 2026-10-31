@@ -1,12 +1,12 @@
-# cal-1 (v1) - Unix Command-Line Google Calendar for Chrome
+# cal-1 - Dropdown Calendar Designed Like a Unix Terminal
 
-**cal-1** is a terminal-inspired dropdown calendar for Google Chrome inspired by the Unix [cal(1)](https://en.wikipedia.org/wiki/Cal_(command)) manual page and styled with [Spaceship Prompt](https://github.com/spaceship-prompt/spaceship-prompt) aesthetics, Homebrew iTerm2 ANSI colors, and the Hack monospace font.
+**cal-1** is a dropdown calendar for Google Chrome designed to look like a Unix terminal with a command prompt, featuring a 4-month overview, hover schedule inspection, and Google Calendar sync.
 
 ---
 
 ## Interactive Command Line
 
-Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any month or year, or switch calendars:
+Type commands directly at the command line prompt (`➜ cal ...`) to jump to any month or year, or switch calendars:
 
 * `cal 12 2026` or `cal dec 2026` &rarr; Jump to December 2026
 * `cal 2027` &rarr; Jump to January 2027
@@ -24,7 +24,7 @@ Type commands directly at the Spaceship prompt (`➜ cal ...`) to jump to any mo
   * `ESC`: Reload and reset to today
   * `Backspace`: Edit the command prompt directly
   * `/` or `:`: Focus and select the command line prompt
-* **Spaceship Calendar Segment**: Click `on ⎇ <calendar>` in the header to cycle through available calendar feeds or view active calendar details!
+* **Command Prompt Calendar Segment**: Click `on ⎇ <calendar>` in the header to cycle through available calendar feeds or view active calendar details!
 
 ---
 

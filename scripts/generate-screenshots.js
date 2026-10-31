@@ -158,7 +158,7 @@ async function run() {
     console.log('\n[1/5] Setting up Scene 1: 4-Month 2x2 Overview...');
     await gen.eval(`
       (() => {
-        document.getElementById('badgeText').textContent = 'cal-1 • Unix Terminal Calendar';
+        document.getElementById('badgeText').textContent = 'cal-1 • Calendar designed like a Unix terminal';
         document.getElementById('sceneTitle').textContent = '4-Month 2×2 Grid View';
         document.getElementById('sceneSubtitle').textContent = 'Glance across 4 consecutive months with Spaceship prompt and directional scan transitions';
         
