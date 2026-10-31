@@ -6,6 +6,7 @@
   <!-- Paste Google Search Console verification meta tag below this line if needed -->
   <title>cal-1 — Dropdown Calendar Designed Like a Unix Terminal</title>
   <meta name="description" content="cal-1 is a lightweight dropdown calendar for Google Chrome designed to look like a Unix terminal with command prompt, 4-month 2x2 overview, hover schedules, and Google Calendar sync." />
+  <link rel="icon" type="image/png" href="favicon.png" />
   <style>
     :root {
       --bg: #080b0f;
@@ -52,7 +53,19 @@
     .subtitle {
       font-size: 17px;
       color: var(--muted);
-      margin-bottom: 36px;
+      margin-bottom: 28px;
+    }
+    .hero-preview {
+      margin-bottom: 40px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+    }
+    .hero-preview img {
+      width: 100%;
+      height: auto;
+      display: block;
     }
     .grid {
       display: grid;
@@ -113,6 +126,10 @@
     <p class="subtitle">
       Dropdown calendar for Google Chrome designed to look like a Unix terminal with command prompt, 4-month 2×2 overview, hover schedule inspection, and Google Calendar &amp; Tasks synchronization.
     </p>
+
+    <div class="hero-preview">
+      <img src="preview.png" alt="cal-1 dropdown calendar preview" width="1400" height="560" />
+    </div>
 
     <div class="grid">
       <div class="card">
