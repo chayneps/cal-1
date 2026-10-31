@@ -160,7 +160,7 @@ async function run() {
       (() => {
         document.getElementById('badgeText').textContent = 'cal-1 • Calendar designed like a Unix terminal';
         document.getElementById('sceneTitle').textContent = '4-Month 2×2 Grid View';
-        document.getElementById('sceneSubtitle').textContent = 'Glance across 4 consecutive months with Spaceship prompt and directional scan transitions';
+        document.getElementById('sceneSubtitle').textContent = 'Glance across 4 consecutive months with command prompt and directional scan transitions';
         
         const ifr = document.getElementById('popupFrame');
         ifr.style.width = '650px';
@@ -230,7 +230,7 @@ async function run() {
       (() => {
         document.getElementById('badgeText').textContent = 'Single Month View';
         document.getElementById('sceneTitle').textContent = '1-Month Focused View & Today Tracker';
-        document.getElementById('sceneSubtitle').textContent = 'Deep dive into an individual month with blinking today indicator, event markers, and Spaceship prompt';
+        document.getElementById('sceneSubtitle').textContent = 'Deep dive into an individual month with blinking today indicator, event markers, and command prompt';
 
         const ifr = document.getElementById('popupFrame');
         ifr.style.width = '460px';
